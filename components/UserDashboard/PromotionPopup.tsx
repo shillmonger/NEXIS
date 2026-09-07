@@ -88,7 +88,7 @@ export default function GiftMember({ isOpen, onClose }: { isOpen: boolean; onClo
             <span className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-bold text-white uppercase tracking-widest">
               Rewards
             </span>
-            <span className="px-3 py-1 bg-primary/80 backdrop-blur-md rounded-full text-[10px] font-bold text-primary-foreground uppercase tracking-widest flex items-center gap-1">
+            <span className="px-3 py-1 bg-violet-600/80 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" /> Secure
             </span>
           </div>
@@ -110,39 +110,39 @@ export default function GiftMember({ isOpen, onClose }: { isOpen: boolean; onClo
         {/* Content Section */}
         <div className="p-5 lg:8 space-y-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-tighter">
+            <div className="flex items-center gap-2 text-violet-600 font-bold text-xs uppercase tracking-tighter">
               <ChartSpline className="w-4 h-4" />
               <span>Market Predictions Live</span>
             </div>
             <h2 className="text-2xl font-black text-foreground leading-tight tracking-tight">
-              Predict Gold Price
+              Market Predictions
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed font-medium">
-              Test your market analysis skills. Predict if gold prices will go up or down. Win predictions to earn $5 daily.
+              Test your market analysis skills. Predict if prices will go up or down across various markets. Win predictions to earn rewards daily.
             </p>
           </div>
 
           {/* Stats/Info Row */}
           <div className="flex items-center justify-between py-4 border-y border-border/50">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <TrendingUp className="w-5 h-5 text-primary" />
+              <div className="p-2 rounded-xl bg-violet-600/10">
+                <TrendingUp className="w-5 h-5 text-violet-600" />
               </div>
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Rewards</p>
-                <p className="text-sm font-bold">$5 Per Win</p>
+                <p className="text-sm font-bold">XP & Tokens</p>
               </div>
             </div>
-            <div className="text-right font-mono text-sm font-black text-primary">
+            <div className="text-right font-mono text-sm font-black text-violet-600">
               DAILY CHALLENGE
             </div>
           </div>
 
           {/* Action Button */}
-          <Link href="/user-dashboard/predict">
-            <button className="group relative w-full cursor-pointer bg-[#D4AF37] text-black font-bold py-3 px-6 rounded-2xl flex items-center justify-between overflow-hidden transition-all hover:pr-8 active:scale-[0.98]">
-              <span className="relative z-10">Predict XAUUSD</span>
-              <div className="h-8 w-8 bg-background/20 rounded-full flex items-center justify-center transition-transform group-hover:rotate-45">
+          <Link href="/UserDashboard/predict">
+            <button className="group relative w-full cursor-pointer bg-violet-600 text-white font-bold py-3 px-6 rounded-2xl flex items-center justify-between overflow-hidden transition-all hover:pr-8 hover:bg-violet-700 active:scale-[0.98] shadow-lg shadow-violet-600/30">
+              <span className="relative z-10">Start Predicting</span>
+              <div className="h-8 w-8 bg-white/20 rounded-full flex items-center justify-center transition-transform group-hover:rotate-45">
                 <ArrowUpRight className="w-5 h-5" />
               </div>
             </button>

@@ -16,9 +16,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Automated Trading Platform",
+  title: {
+    default: "NEXIS — Web3 Community Operating System & Discord Bot",
+    template: "%s | NEXIS",
+  },
   description:
-    "Connect your Deriv account and access automated XAUUSD trading with secure account connectivity, signal validation, trade execution, and real-time trade monitoring.",
+    "Empower your Web3 community with automated Discord moderation, NFT holder tier verification, prediction markets, Arena competitions, and real-time market intelligence.",
+  keywords: [
+    "NEXIS",
+    "Web3 Operating System",
+    "Discord Bot Subscriptions",
+    "Automated Moderation",
+    "NXAE NFT Verification",
+    "Prediction Markets",
+    "Web3 Community Tools",
+  ],
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 export const viewport: Viewport = {
   width: "device-width",

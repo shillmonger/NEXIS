@@ -11,31 +11,31 @@ const montserrat = Montserrat({
 
 const LEFT_FEATURES = [
   {
-    title: "Comprehensive Trade Analytics",
-    desc: "Access detailed XAUUSD performance analytics that empower you to make informed trading decisions at every step.",
+    title: "Automated Discord Moderation",
+    desc: "Configure rule sets, spam limits, auto-actions, and exempt roles to keep your community safe 24/7.",
   },
   {
-    title: "Real Time Gold Market Data",
-    desc: "Monitor gold price action, track spread and volatility, and seize opportunities as they unfold in live markets.",
+    title: "Web3 Identity Verification",
+    desc: "Cryptographic wallet signature verification without exposing private keys or risking asset custody.",
   },
   {
-    title: "Trailing Stop Automation",
-    desc: "Our bot follows XAUUSD price movements and adjusts stop levels automatically to lock in profit as the trade moves.",
+    title: "NXAE Holder Tier Engine",
+    desc: "Automated NFT holdings verification mapping token quantities directly to holder tiers and Discord roles.",
   },
 ];
 
 const RIGHT_FEATURES = [
   {
-    title: "Speed",
-    desc: "Our lightweight execution architecture makes SHILLMONGER one of the fastest bots for placing MT5 trades on gold.",
+    title: "Arena Prediction Markets",
+    desc: "Engage your community with interactive prediction challenges, streak tracking, and automated settlement.",
   },
   {
-    title: "Privacy",
-    desc: "SHILLMONGER will never share your account data without your explicit permission. Your security is our priority.",
+    title: "Ecosystem XP & Rewards",
+    desc: "Reward activity and accuracy with on-platform XP, achievements, and real-time community leaderboards.",
   },
   {
-    title: "Disciplined Risk Management",
-    desc: "Our system sizes every XAUUSD position and manages drawdown to protect your capital across changing market conditions.",
+    title: "Real-time Operations & Analytics",
+    desc: "Monitor bot health, server incidents, membership growth, and active moderation events in one dashboard.",
   },
 ];
 
@@ -64,9 +64,9 @@ function FeatureItem({
         transition: `opacity 0.6s ease ${index * 0.12}s, transform 0.6s ease ${index * 0.12}s`,
       }}
     >
-      {/* Dot */}
-      <div className="shrink-0 mt-1 h-8 w-8 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center">
-        <span className="h-2.5 w-2.5 rounded-full bg-primary block" />
+      {/* Violet Dot Indicator using project color scale */}
+      <div className="shrink-0 mt-1 h-8 w-8 rounded-full bg-violet-500/15 border border-violet-500/40 flex items-center justify-center">
+        <span className="h-2.5 w-2.5 rounded-full bg-violet-500 block" />
       </div>
 
       {/* Text */}
@@ -88,9 +88,7 @@ export default function FeaturesSection() {
   const visible = true;
 
   return (
-    <section
-      className="relative w-full overflow-hidden bg-background py-5 md:py-20"
-    >
+    <section className="relative w-full overflow-hidden bg-background py-5 md:py-20">
       {/* Subtle grid texture */}
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-[0.03]"
@@ -101,8 +99,8 @@ export default function FeaturesSection() {
         }}
       />
 
-      {/* Glow behind phone — indigo to match Hero accent */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-indigo-500/10 blur-[120px] z-0" />
+      {/* Glow behind center media — violet-600 accent */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-violet-600/15 blur-[120px] z-0" />
 
       {/* ── SECTION HEADER ── */}
       <div
@@ -119,8 +117,7 @@ export default function FeaturesSection() {
           Core Capabilities
         </h2>
         <p className="text-muted-foreground max-w-2xl mx-auto text-base md:text-lg">
-          Connect your MetaTrader 5 account to an elite XAUUSD trading system leveraging institutional-grade infrastructure for seamless execution,
-          deep gold market liquidity, and dedicated 24/7 technical expertise
+          Powering Web3 communities with an integrated operating system for automated Discord moderation, NXAE holder synchronization, predictions, and engagement analytics.
         </p>
       </div>
 
@@ -134,8 +131,8 @@ export default function FeaturesSection() {
           }}
         >
           <Image
-            src="/Trade.png"
-            alt="SHILLMONGER XAUUSD Bot App"
+            src="/discord-broken.png"
+            alt="NEXIS Web3 Community Operating System"
             width={450}
             height={900}
             className="relative z-10 object-contain w-[100vw] max-w-[300px]"
@@ -147,7 +144,7 @@ export default function FeaturesSection() {
           {[...LEFT_FEATURES, ...RIGHT_FEATURES].map((f, i) => (
             <FeatureItem
               key={i}
-              title={f.title} 
+              title={f.title}
               desc={f.desc}
               align="right"
               index={i}
@@ -157,12 +154,11 @@ export default function FeaturesSection() {
         </div>
       </div>
 
-
-
       {/* ── DESKTOP LAYOUT (lg+) ── */}
-      <div className="hidden lg:grid relative z-10 mx-auto max-w-[1440px] px-8 xl:px-12"
+      <div
+        className="hidden lg:grid relative z-10 mx-auto max-w-[1440px] px-8 xl:px-12"
         style={{
-          gridTemplateColumns: "1fr 400px 1fr", // Increased center column width
+          gridTemplateColumns: "1fr 400px 1fr",
           gap: "0 2rem",
           alignItems: "center",
         }}
@@ -181,7 +177,7 @@ export default function FeaturesSection() {
           ))}
         </div>
 
-        {/* CENTER PHONE (Enlarged) */}
+        {/* CENTER MEDIA */}
         <div
           className="relative flex justify-center items-center py-4"
           style={{
@@ -189,10 +185,9 @@ export default function FeaturesSection() {
             transition: "opacity 0.8s ease 0.1s",
           }}
         >
-          {/* <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-10 bg-[#D4AF37]/30 blur-3xl rounded-full z-500" /> */}
           <Image
-            src="/Trade.png"
-            alt="SHILLMONGER XAUUSD Bot App"
+            src="/discord-broken.png"
+            alt="NEXIS Web3 Community Operating System"
             width={400}
             height={800}
             className="relative z-10 object-contain w-[360px] xl:w-[400px]"

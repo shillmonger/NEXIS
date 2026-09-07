@@ -21,10 +21,9 @@ export default function UserNav() {
   const basePath = "/UserDashboard";
 
   const navItems = [
-    { name: "Home", icon: LayoutDashboard, href: `${basePath}/dashboard` },
     { name: "Billing", icon: Wallet, href: `${basePath}/subscription` },
-    { name: "Broker", icon: Unplug, href: `${basePath}/mt5-connection` },
     { name: "Predict", icon: BarChart3, href: `#` },
+    { name: "Home", icon: LayoutDashboard, href: `${basePath}/dashboard` },
     { name: "Analytics", icon: PieChart, href: `${basePath}/my-investments` },
     { name: "Settings", icon: Settings, href: `${basePath}/user-settings` },
   ];
@@ -53,7 +52,7 @@ export default function UserNav() {
             href={href}
             className={`
               flex flex-col items-center transition-all duration-300
-              ${active ? "text-[#D4AF37] scale-105" : "text-muted-foreground hover:text-foreground"}
+              ${active ? "text-violet-600 scale-105" : "text-muted-foreground hover:text-foreground"}
             `}
           >
             <div
@@ -63,7 +62,7 @@ export default function UserNav() {
                 transition-all duration-300
                 ${
                   active
-                    ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/30"
+                    ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
                     : "bg-secondary/50"
                 }
               `}
@@ -71,7 +70,7 @@ export default function UserNav() {
               <Icon className={`w-5 h-5 transition-transform ${active ? "scale-110" : ""}`} />
             </div>
 
-            <span className={`text-[9px] font-black tracking-[0.15em] uppercase ${active ? "text-[#D4AF37] opacity-100" : "opacity-60"}`}>
+            <span className={`text-[9px] font-black tracking-[0.15em] uppercase ${active ? "text-violet-600 opacity-100" : "opacity-60"}`}>
               {name}
             </span>
           </Link>

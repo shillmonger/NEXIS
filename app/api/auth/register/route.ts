@@ -52,9 +52,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate random avatar
-    const avatarNumber = Math.floor(Math.random() * 33) + 1;
-    const avatar = `/PFP_IMG/${avatarNumber}.jfif`;
+    // Set fixed avatar
+    const avatar = 'https://github.com/shadcn.png';
 
     // Hash password
     const passwordHash = await hashPassword(password);
@@ -80,7 +79,7 @@ export async function POST(request: NextRequest) {
     const verificationUrl = `${appUrl}/auth-page/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
     const emailSent = await sendEmail(
       email,
-      'Welcome to SHILLMONGER — Verify Your Email Address',
+      'Welcome to NEXIS — Verify Your Email Address',
       getVerificationEmail(username, verificationUrl)
     );
 

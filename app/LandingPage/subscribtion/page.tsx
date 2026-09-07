@@ -18,113 +18,113 @@ export default function SubscriptionPage() {
       amount: 0,
       type: "Free",
       period: "No expiry",
-      description: "Practice XAUUSD automation on a demo account, risk-free.",
-      accountSize: "Demo account",
+      description: "Test bot deployment and custom commands on a staging server, risk-free.",
+      accountSize: "1 Server",
       duration: "Unlimited",
-      lotSize: "0.01",
-      maxTrades: 5,
-      targetLabel: "Practice",
+      lotSize: "50 MB",
+      maxTrades: 3,
+      targetLabel: "Testing",
       popular: false,
       isFree: true,
       planFeatures: [
-        "Full bot access on demo",
-        "Demo balance never expires",
-        "Lot Size: 0.01",
-        "No live capital at risk",
+        "Full dashboard access",
+        "Basic moderation & commands",
+        "Max RAM: 50 MB",
+        "Up to 3 Custom Commands",
       ],
       note:
-        "The Free plan runs exclusively on a demo MT5 account so you can test SHILLMONGER's execution and behavior with zero risk, for as long as you like.",
+        "The Free plan is designed for testing bot features and staging your Discord integration with zero downtime or hosting costs for as long as you like.",
     },
     {
       amount: 10,
-      type: "Days",
+      type: "Starter",
       period: "per 5 days",
-      description: "Short-term automated access for smaller live accounts.",
-      accountSize: "$50 – $200",
+      description: "Short-term automated bot hosting for small growing communities.",
+      accountSize: "Up to 3 Servers",
       duration: "5 Days",
-      lotSize: "0.01",
-      maxTrades: 5,
-      targetLabel: "Up to 40%",
+      lotSize: "256 MB",
+      maxTrades: 15,
+      targetLabel: "99.9% Uptime",
       popular: false,
       isFree: false,
       planFeatures: [
-        "Maximum 5 Open Trades",
-        "Unlimited Profit Potential",
-        "Lot Size: 0.01",
+        "Maximum 15 Active Integrations",
+        "24/7 Automated Bot Hosting",
+        "RAM Allocation: 256 MB",
         "Duration: 5 Days",
       ],
       note:
-        "The bot only trades when a valid trading opportunity is detected, so the target is not guaranteed within the subscription period. Quality entries are prioritized over trade frequency.",
+        "The bot manager executes scheduled tasks and event listeners continuously. System capacity prioritizes uptime and reaction times over heavy background jobs.",
     },
     {
       amount: 20,
-      type: "Weeks",
+      type: "Pro",
       period: "per 14 days",
-      description: "Our most popular plan for consistent, ongoing automation.",
-      accountSize: "$200 – $500",
+      description: "Our most popular plan for active communities needing automated moderation.",
+      accountSize: "Up to 10 Servers",
       duration: "14 Days",
-      lotSize: "0.02",
-      maxTrades: 10,
-      targetLabel: "Up to 60%",
+      lotSize: "512 MB",
+      maxTrades: 50,
+      targetLabel: "Priority Host",
       popular: true,
       isFree: false,
       planFeatures: [
-        "Maximum 10 Open Trades",
-        "Unlimited Profit Potential",
-        "Lot Size: 0.02",
+        "Maximum 50 Active Integrations",
+        "Automated Auto-Role & Embeds",
+        "RAM Allocation: 512 MB",
         "Duration: 14 Days",
       ],
       note:
-        "The bot only trades when valid opportunities are available, so the target is not guaranteed. Trades are never forced simply to reach it.",
+        "High-frequency events like auto-moderation and welcoming users are processed in real-time. Execution rate limits are managed automatically to avoid Discord API blocks.",
     },
     {
       amount: 50,
-      type: "Months",
+      type: "Enterprise",
       period: "per month",
-      description: "Full-scale access for larger accounts, no profit cap.",
-      accountSize: "$500 – $1,000",
+      description: "Full-scale bot management for massive Discord networks with no limits.",
+      accountSize: "Unlimited Servers",
       duration: "1 Month",
-      lotSize: "0.03",
-      maxTrades: 10,
-      targetLabel: "Unlimited",
+      lotSize: "2 GB",
+      maxTrades: 200,
+      targetLabel: "Uncapped",
       popular: false,
       isFree: false,
       planFeatures: [
-        "Maximum 10 Open Trades",
-        "Unlimited Profit Potential",
-        "Lot Size: 0.03",
+        "Maximum 200 Active Integrations",
+        "Custom Webhooks & API Access",
+        "RAM Allocation: 2 GB",
         "Duration: 1 Month",
       ],
       note:
-        "Unlike the Days and Weeks plans, the Months plan has no profit cap. The bot trades for the full subscription period whenever valid opportunities exist; profits depend entirely on market conditions and are not guaranteed.",
+        "Unlike short-term plans, Enterprise grants unrestricted bandwidth, priority thread handling, custom white-label bot instances, and full database persistence.",
     },
   ];
 
   const comparisonData = [
     {
-      metric: "Execution Speed",
-      manual: "Slow, limited by human reaction",
-      automated: "Instant, algorithmic execution",
+      metric: "Command Execution",
+      manual: "Slow, manual staff responses",
+      automated: "Instant, sub-millisecond bot response",
     },
     {
-      metric: "Strategy",
-      manual: "Driven by greed and FOMO",
-      automated: "Guided by predefined rules",
+      metric: "Moderation",
+      manual: "Subjective, prone to fatigue/bias",
+      automated: "Strict, continuous rule enforcement",
     },
     {
       metric: "Consistency",
-      manual: "Depends on mood and focus",
-      automated: "Stable and rules-based",
+      manual: "Varies depending on online moderators",
+      automated: "Always active with automated triggers",
     },
     {
       metric: "Availability",
-      manual: "Active only when the trader is online",
-      automated: "Runs 24/5 without interruptions",
+      manual: "Active only when staff members are online",
+      automated: "Runs 24/7/365 without interruption",
     },
     {
-      metric: "Setup & Ease",
-      manual: "Complex analysis and a steep learning curve",
-      automated: "AI Presets with ready-made GRID/DCA setups",
+      metric: "Setup & Maintenance",
+      manual: "Complex setup & custom script debugging",
+      automated: "1-Click deployment with ready-made modules",
     },
   ];
 
@@ -137,27 +137,27 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col bg-background text-foreground font-sans pb-24">
+    <main className="min-h-screen flex flex-col bg-background text-foreground font-sans pb-15">
       {/* Hero Header */}
-      <section className="max-w-[1400px] mx-auto px-4 lg:px-10 pt-15 pb-10 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[10px] font-bold uppercase tracking-widest mb-2 text-[#B8912A] dark:text-[#D4AF37]">
+      <section className="max-w-[1200px] mx-auto px-4 lg:px-10 pt-15 pb-10 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-[10px] font-bold uppercase tracking-widest mb-2 text-violet-600 dark:text-violet-400">
           {/* <Sparkles className="w-3.5 h-3.5" /> */}
-          <span>XAUUSD Automated Trading Plans</span>
+          <span>Discord Bot Management Plans</span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-foreground">
-          Choose Your <span className="text-[#D4AF37]">Trading Rhythm</span>
+          Choose Your <span className="text-violet-600 dark:text-violet-400">Automation Scale</span>
         </h1>
 
         <p className="text-muted-foreground max-w-2xl text-sm md:text-base leading-relaxed mx-auto font-normal">
-          Start free on demo, then scale into Days, Weeks, or Months access as your
-          account grows. Every paid plan includes automated execution, 24/7 support,
-          upgrade flexibility, and risk-managed trading on XAUUSD.
+          Start free on a testing server, then scale into Starter, Pro, or Enterprise access as your
+          community grows. Every paid plan includes automated 24/7 uptime, ticket management,
+          auto-moderation, and full Discord API integration.
         </p>
       </section>
 
       {/* Plans Grid */}
-      <section className="max-w-[1500px] mx-auto px-4 lg:px-8 pb-10 lg:pb-16 w-full">
+      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 pb-10 lg:pb-15 w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
           {accessPlans.map((plan, i) => (
             <Card
@@ -165,12 +165,12 @@ export default function SubscriptionPage() {
               className={`flex flex-col cursor-pointer justify-between rounded-3xl transition-all duration-300 overflow-hidden relative border bg-card text-card-foreground p-6
                 ${
                   plan.popular
-                    ? "lg:scale-[1.04] z-10 border-[#D4AF37]/60 shadow-2xl shadow-[#D4AF37]/10 ring-1 ring-[#D4AF37]/40"
+                    ? "lg:scale-[1.04] z-10 border-violet-500/60 shadow-2xl shadow-violet-500/10 ring-1 ring-violet-500/40"
                     : plan.isFree
                     ? "border-dashed border-border shadow-sm opacity-95 hover:opacity-100"
                     : "border-border shadow-sm opacity-95 hover:opacity-100"
                 }
-                hover:border-[#D4AF37]/40 group
+                hover:border-violet-500/40 group
               `}
             >
               {/* Header */}
@@ -181,7 +181,7 @@ export default function SubscriptionPage() {
                   </span>
 
                   {plan.popular && (
-                    <div className="bg-[#D4AF37] text-black text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm">
+                    <div className="bg-violet-600 text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm">
                       Popular
                     </div>
                   )}
@@ -209,7 +209,7 @@ export default function SubscriptionPage() {
                   className={`w-full cursor-pointer text-sm py-3 px-4 rounded-full transition-all duration-300 flex items-center justify-center gap-2 font-bold
                     ${
                       plan.popular
-                        ? "bg-[#D4AF37] hover:bg-[#C9A22E] text-black shadow-lg shadow-[#D4AF37]/20"
+                        ? "bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/25"
                         : "bg-foreground text-background hover:opacity-90"
                     }
                   `}
@@ -230,17 +230,17 @@ export default function SubscriptionPage() {
                 {/* Stats row */}
                 <div className="space-y-3 pt-5 border-t border-border">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-medium">Account Size</span>
+                    <span className="text-muted-foreground font-medium">Server Limits</span>
                     <span className="text-foreground font-semibold">{plan.accountSize}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-medium">Target</span>
-                    <span className="font-semibold px-2.5 py-0.5 rounded-md text-[11px] bg-[#D4AF37]/10 text-[#B8912A] dark:text-[#D4AF37]">
+                    <span className="text-muted-foreground font-medium">Performance</span>
+                    <span className="font-semibold px-2.5 py-0.5 rounded-md text-[11px] bg-violet-500/10 text-violet-600 dark:text-violet-400">
                       {plan.targetLabel}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-medium">Lot Size &middot; Max Trades</span>
+                    <span className="text-muted-foreground font-medium">RAM &middot; Max Webhooks</span>
                     <span className="text-foreground font-semibold">
                       {plan.lotSize} &middot; {plan.maxTrades}
                     </span>
@@ -251,7 +251,7 @@ export default function SubscriptionPage() {
                 <ul className="space-y-2.5 border-t border-border pt-4">
                   {[...commonFeatures, ...plan.planFeatures].map((benefit, idx) => (
                     <li key={idx} className="flex items-start gap-2.5">
-                      <Check className="w-4 h-4 text-[#D4AF37] stroke-[2.5] shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 text-violet-600 dark:text-violet-400 stroke-[2.5] shrink-0 mt-0.5" />
                       <span className="text-xs text-muted-foreground font-normal leading-tight">
                         {benefit}
                       </span>
@@ -261,7 +261,7 @@ export default function SubscriptionPage() {
 
                 {/* Important note */}
                 <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/50 border border-border">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#D4AF37]" />
+                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-violet-600 dark:text-violet-400" />
                   <p className="text-[11px] text-muted-foreground leading-relaxed font-normal">
                     {plan.note}
                   </p>
@@ -273,14 +273,14 @@ export default function SubscriptionPage() {
       </section>
 
       {/* Comparison Section (Automated vs Manual) */}
-      <section className="max-w-[1500px] mx-auto px-4 lg:px-8 mt-6 w-full">
+      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 mt-6 w-full">
         <div className="max-w-3xl mx-auto pb-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-            Automated vs Manual
+            Automated Bot vs Manual Moderation
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed mx-auto font-normal">
-            Choose a plan and let our advanced trading systems work for you.
-            Earnings topped up automatically every 24 hours.
+            Choose a plan and let our automated bot management systems protect and run your community.
+            Logs and analytics updated continuously every 24 hours.
           </p>
         </div>
 
@@ -289,8 +289,8 @@ export default function SubscriptionPage() {
           {/* Header Row */}
           <div className="hidden md:grid grid-cols-3 border-b border-border bg-muted p-5 text-xs font-bold uppercase tracking-wider">
             <div className="text-foreground">Metric</div>
-            <div className="text-rose-500">Manual Trading</div>
-            <div className="text-emerald-500">Automated Trading</div>
+            <div className="text-rose-500">Manual Management</div>
+            <div className="text-emerald-500">Automated Bot Management</div>
           </div>
 
           {/* Table Body rows */}

@@ -10,6 +10,7 @@ import CoreCapabilities from "@/components/LandingPage/CoreCapabilities";
 import GlobalExecutionSection from "@/components/LandingPage/GlobalExecutionSection";
 import NumbersThatSpeaks from "@/components/LandingPage/NumbersThatSpeaks";
 import FQ from "@/components/LandingPage/F&Q";
+import JoinTelegram from "@/components/LandingPage/JoinTelegram";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
       <GlobalExecutionSection />
       <NumbersThatSpeaks />
       <FQ />
+      <JoinTelegram />
     </div>
   );
 }

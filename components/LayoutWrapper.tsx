@@ -11,14 +11,15 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isUserDashboard = pathname?.startsWith("/UserDashboard");
   const isAdminDashboard = pathname?.startsWith("/AdminDashboard");
 
-  // if (isAuthPage) {
-  //   return (
-  //     <>
-  //       {children}
-  //       <Footer />
-  //     </>
-  //   );
-  // }
+  if (isAuthPage) {
+    return (
+      <>
+        {children}
+        <Footer />
+        <CookieConsent />
+      </>
+    );
+  }
 
   if (isAuthPage || isUserDashboard || isAdminDashboard) {
     return <>{children}</>;

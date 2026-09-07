@@ -3,23 +3,23 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowDownRight,
-  ArrowRight,
-  ArrowUpRight,
-  BarChart3,
-  Brain,
+  ChevronDown,
   ChevronRight,
-  Unplug,
-  Eye,
-  EyeOff,
-  History,
-  Link2,
-  Loader2,
-  RefreshCw,
-  Rocket,
   ShieldCheck,
-  TrendingUp,
-  XCircle,
+  Gem,
+  LineChart,
+  Sparkles,
+  Target,
+  Trophy,
+  Users,
+  WalletCards,
+  CheckCircle2,
+  CheckCircle,
+  Building2,
+  Bitcoin,
+  Crown,
+  Flame,
+  Unplug,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -88,21 +88,14 @@ interface DashboardData {
   };
 }
 
-type Tab = "Billing" | "Bonus" | "Trading";
+// Banner images for hero section
+const BANNER_IMAGES = ["/banner.png", "/banner1.png", "/banner2.png", "/banner3.png"];
 
-const GOLD = "#D4AF37";
+// NFT images for Featured NFT section
+const NFT_IMAGES = ["/nft1.jpeg", "/nft2.jpeg", "/nft3.jpeg", "/nft4.jpeg"];
 
-// TODO: replace with real thumbnails per article once the news API is wired up.
 const MOCK_NEWS_IMAGE =
   "https://i.postimg.cc/q7C5L9zC/The-West-Is-Losing-Control-Over-The-Gold-Price.jpg";
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(date));
-}
 
 function formatCurrency(value: number) {
   return `$${Math.abs(value).toLocaleString("en-US", {
@@ -111,130 +104,12 @@ function formatCurrency(value: number) {
   })}`;
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: "CONNECTED" | "DISCONNECTED" | "ONLINE" | "OFFLINE" | "RUNNING" | "IDLE" | "STOPPED";
-}) {
-  const isPositive = ["CONNECTED", "ONLINE", "RUNNING"].includes(status);
-  const isWarning = ["IDLE", "STOPPED"].includes(status);
-
-  return (
-    <span
-      className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-        isPositive
-          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
-          : isWarning
-            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
-            : "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"
-      }`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          isPositive
-            ? "bg-emerald-500"
-            : isWarning
-              ? "bg-amber-500"
-              : "bg-red-500"
-        }`}
-      />
-      {status}
-    </span>
-  );
-}
-
-function QuickAction({
-  href,
-  title,
-  description,
-  icon,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center justify-between rounded-xl border border-border/50 p-3 transition-all hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5"
-    >
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-950 text-[#D4AF37] dark:bg-zinc-100">
-          {icon}
-        </div>
-
-        <div className="min-w-0">
-          <p className="truncate text-xs font-bold uppercase tracking-wider">
-            {title}
-          </p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-            {description}
-          </p>
-        </div>
-      </div>
-
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-[#D4AF37]" />
-    </Link>
-  );
-}
-
-function NewsRow({ item }: { item: NewsItem }) {
-  const content = (
-    <div className="group flex items-start gap-4 py-3 first:pt-0 last:pb-0">
-      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={item.image}
-          alt={item.title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      </div>
-
-      <div className="min-w-0">
-        <p className="line-clamp-2 text-sm font-bold leading-snug text-foreground transition-colors group-hover:text-[#B28D16]">
-          {item.title}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">{item.source}</p>
-      </div>
-    </div>
-  );
-
-  if (!item.url) {
-    return content;
-  }
-
-  return (
-    <Link href={item.url} target="_blank" rel="noopener noreferrer">
-      {content}
-    </Link>
-  );
-}
-
-function CalendarRow({ item }: { item: any }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 dark:bg-blue-950/50 dark:text-blue-400">
-          {item.country}
-        </span>
-        <div>
-          <p className="text-sm font-bold leading-tight">{item.title}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{item.time}</p>
-        </div>
-      </div>
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {item.impact}
-      </span>
-    </div>
-  );
-}
 
 function LoadingDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl animate-pulse space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="h-64 rounded-3xl bg-muted" />
+        <div className="h-72 rounded-3xl bg-muted" />
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="h-96 rounded-2xl bg-muted lg:col-span-2" />
           <div className="h-96 rounded-2xl bg-muted" />
@@ -244,13 +119,237 @@ function LoadingDashboard() {
   );
 }
 
+/**
+ * Cycles through a list of local images, cross-fading the current image
+ * out while the next one fades in. Loops forever every `intervalMs`.
+ */
+function CyclingImage({
+  images,
+  alt = "",
+  className = "",
+  intervalMs = 5000,
+}: {
+  images: string[];
+  alt?: string;
+  className?: string;
+  intervalMs?: number;
+}) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % images.length);
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [images.length, intervalMs]);
+
+  return (
+    <div className={`relative h-full w-full ${className}`}>
+      {images.map((src, index) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={src}
+          src={src}
+          alt={alt}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+            index === activeIndex ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function GlassCard({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card
+      className={`border-border bg-card/70 text-card-foreground shadow-2xl backdrop-blur-xl dark:bg-card/45 ${className}`}
+    >
+      {children}
+    </Card>
+  );
+}
+
+function QuickAccess({
+  href,
+  icon,
+  title,
+  description,
+  tone = "violet",
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  tone?: "violet" | "gold" | "green" | "blue";
+}) {
+  const tones = {
+    violet:
+      "border-violet-500/30 bg-violet-500/10 text-violet-600 hover:border-violet-400 dark:text-violet-300",
+    gold: "border-primary/40 bg-primary/10 text-primary hover:border-primary",
+    green:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 hover:border-emerald-400 dark:text-emerald-300",
+    blue: "border-blue-500/30 bg-blue-500/10 text-blue-600 hover:border-blue-400 dark:text-blue-300",
+  };
+
+  return (
+    <Link href={href}>
+      <div
+        className={`group flex min-h-[50px] items-center justify-between rounded-xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:bg-accent/60 ${tones[tone]}`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background/60">
+            {icon}
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-foreground">
+              {title}
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {description}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function StatusPill({
+  children,
+  color = "green",
+}: {
+  children: React.ReactNode;
+  color?: "green" | "purple" | "gold" | "red" | "violet";
+}) {
+  const colors = {
+    green:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+    purple:
+      "border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-300",
+    gold: "border-primary/30 bg-primary/10 text-primary",
+    red: "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300",
+    violet:
+      "border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-300",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${colors[color]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Avatar({ src, fallback }: { src?: string; fallback: string }) {
+  return src ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      className="h-9 w-9 rounded-full border border-border object-cover"
+    />
+  ) : (
+    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-xs font-bold text-foreground">
+      {fallback}
+    </div>
+  );
+}
+
+function TokenChart() {
+  return (
+    <div className="relative h-16 w-full overflow-hidden">
+      <svg
+        viewBox="0 0 320 80"
+        className="absolute inset-0 h-full w-full"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0 67 L18 60 L33 64 L48 50 L63 56 L78 38 L93 45 L108 32 L123 48 L138 43 L153 52 L168 34 L183 40 L198 20 L213 26 L228 35 L243 19 L258 25 L273 8 L288 17 L304 5 L320 12 V80 H0 Z"
+          fill="url(#chartFill)"
+        />
+        <path
+          d="M0 67 L18 60 L33 64 L48 50 L63 56 L78 38 L93 45 L108 32 L123 48 L138 43 L153 52 L168 34 L183 40 L198 20 L213 26 L228 35 L243 19 L258 25 L273 8 L288 17 L304 5 L320 12"
+          fill="none"
+          stroke="#34d399"
+          strokeWidth="2"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function CalendarRow({ item }: { item: CalendarItem }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-3 py-2.5">
+      <div className="flex items-center gap-3">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-[10px] font-bold text-blue-600 dark:text-blue-300">
+          {item.country}
+        </span>
+        <div>
+          <p className="text-xs font-semibold text-foreground">
+            {item.title}
+          </p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {item.time}
+          </p>
+        </div>
+      </div>
+      <span className="text-[10px] text-muted-foreground">{item.impact}</span>
+    </div>
+  );
+}
+
+function NewsRow({ item }: { item: NewsItem }) {
+  const content = (
+    <div className="group flex gap-3 py-3">
+      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.image}
+          alt={item.title}
+          className="h-full w-full object-cover transition-transform group-hover:scale-110"
+        />
+      </div>
+      <div className="min-w-0">
+        <p className="line-clamp-2 text-xs font-semibold leading-snug text-foreground/90 group-hover:text-primary">
+          {item.title}
+        </p>
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          {item.source}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (!item.url) return content;
+
+  return (
+    <Link href={item.url} target="_blank" rel="noopener noreferrer">
+      {content}
+    </Link>
+  );
+}
+
 export default function DashboardPage() {
-  const [hideBalance, setHideBalance] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("Billing");
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState("just now");
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   async function fetchDashboardData(showRefresh = false) {
     try {
@@ -268,7 +367,6 @@ export default function DashboardPage() {
       const userData = await response.json();
 
       if (userData.success) {
-        // Replace this object with the response from your trading API.
         setData({
           totalSpent: 30,
           totalProfit: 15.5,
@@ -343,90 +441,27 @@ export default function DashboardPage() {
               profit: 12.4,
               status: "WIN",
             },
-            {
-              id: "TRD-007",
-              symbol: "XAUUSDm",
-              type: "BUY",
-              entry: 4405.72,
-              lotSize: 0.02,
-              date: "2026-08-12",
-              profit: -8.9,
-              status: "LOSS",
-            },
-            {
-              id: "TRD-008",
-              symbol: "XAUUSDm",
-              type: "BUY",
-              entry: 4405.72,
-              lotSize: 0.02,
-              date: "2026-08-12",
-              profit: 34.6,
-              status: "WIN",
-            },
-            {
-              id: "TRD-009",
-              symbol: "XAUUSDm",
-              type: "BUY",
-              entry: 4405.72,
-              lotSize: 0.02,
-              date: "2026-08-12",
-              profit: 21.3,
-              status: "WIN",
-            },
-            {
-              id: "TRD-010",
-              symbol: "XAUUSDm",
-              type: "BUY",
-              entry: 4405.72,
-              lotSize: 0.02,
-              date: "2026-08-12",
-              profit: 21.3,
-              status: "WIN",
-            },
-            {
-              id: "TRD-011",
-              symbol: "XAUUSDm",
-              type: "BUY",
-              entry: 4405.72,
-              lotSize: 0.02,
-              date: "2026-08-12",
-              profit: 21.3,
-              status: "WIN",
-            },
           ],
-          // Mock data — swap for a real news feed / API response later.
           news: [
             {
               id: "NEWS-001",
               title:
                 "EUR/USD Analysis: Euro Loses Momentum Following the U.S. PCE Release",
-              source: "Forexcom",
+              source: "Forex.com",
               image: MOCK_NEWS_IMAGE,
             },
             {
               id: "NEWS-002",
-              title: "Euro: Rally stalls against US Dollar as spreads drive trade – Scotiabank",
-              source: "FX Street",
+              title:
+                "Euro rally stalls against US Dollar as spreads drive trade",
+              source: "FXStreet",
               image: MOCK_NEWS_IMAGE,
             },
             {
               id: "NEWS-003",
               title:
-                "Pound Sterling Price News and Forecast: GBP/USD retreats as sticky PCE revives Fed hike bets",
-              source: "FX Street",
-              image: MOCK_NEWS_IMAGE,
-            },
-            {
-              id: "NEWS-004",
-              title:
-                "U.S. Dollar Moves Higher As PCE Price Index Exceeds Estimates: Analysis For EUR/USD, GBP/USD, USD/CAD, USD/JPY",
-              source: "FXEmpire",
-              image: MOCK_NEWS_IMAGE,
-            },
-            {
-              id: "NEWS-005",
-              title: "USD/CAD Turns Bullish as GBP/USD, AUD/USD Lose Momentum",
-              source: "FXEmpire",
+                "Pound Sterling Price News and Forecast: GBP/USD retreats",
+              source: "FXStreet",
               image: MOCK_NEWS_IMAGE,
             },
           ],
@@ -452,20 +487,6 @@ export default function DashboardPage() {
               time: "09:00 AM",
               impact: "Medium",
             },
-            {
-              id: "CAL-004",
-              country: "JP",
-              title: "BOJ Monetary Policy",
-              time: "03:00 AM",
-              impact: "High",
-            },
-            {
-              id: "CAL-005",
-              country: "JP",
-              title: "BOJ Monetary Policy",
-              time: "03:00 AM",
-              impact: "High",
-            },
           ],
           accountStatus: "VERIFIED",
           joined: "JUL 2026",
@@ -480,8 +501,6 @@ export default function DashboardPage() {
             status: "APPROVED",
           },
         });
-
-        setLastUpdated("just now");
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -495,10 +514,7 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  const netValue = useMemo(
-    () => (data ? data.totalSpent + data.totalProfit : 0),
-    [data],
-  );
+  useMemo(() => (data ? data.totalSpent + data.totalProfit : 0), [data]);
 
   if (loading) {
     return <LoadingDashboard />;
@@ -506,17 +522,16 @@ export default function DashboardPage() {
 
   if (!data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="flex min-h-screen items-center justify-center px-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="p-8">
-            <XCircle className="mx-auto h-10 w-10 text-red-500" />
-            <h2 className="mt-4 text-lg font-bold">Dashboard unavailable</h2>
+            <h2 className="text-lg font-bold">Dashboard unavailable</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               We could not load your account information.
             </p>
             <Button
               onClick={() => fetchDashboardData(true)}
-              className="mt-6 bg-[#D4AF37] text-black hover:bg-[#c9a227]"
+              className="mt-6 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Try Again
             </Button>
@@ -526,355 +541,508 @@ export default function DashboardPage() {
     );
   }
 
-  const tabs: Tab[] = ["Billing", "Bonus"];
-
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-7xl space-y-5 py-4">
-        {/* Main Balance Banner */}
-        <section className="relative overflow-hidden rounded-2xl text-white shadow-2xl">
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: "url(https://i.postimg.cc/R6qcqkWF/bg.jpg)",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-
-          <div className="relative p-4 sm:p-7 lg:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-2 overflow-x-auto">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`relative whitespace-nowrap px-2 pb-3 text-xs font-bold uppercase tracking-widest transition ${
-                      activeTab === tab
-                        ? "text-white"
-                        : "text-zinc-500 hover:text-zinc-200"
-                    }`}
-                  >
-                    {tab}
-                    {activeTab === tab && (
-                      <span className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-[#D4AF37]" />
-                    )}
-                  </button>
-                ))}
+    <main className="min-h-screen text-foreground">
+      <div className="mx-auto max-w-[1500px] space-y-4 py-3">
+        {/* 75 / 25 layout: left column carries the primary content, right column carries the identity + market rail */}
+        <div className="grid gap-4 lg:grid-cols-12">
+          {/* LEFT — 75% */}
+          <div className="space-y-4 lg:col-span-9">
+            {/* Hero */}
+            <section className="relative min-h-[300px] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+              <div className="absolute inset-0 lg:w-[100%] lg:h-[100%] opacity-100">
+                <CyclingImage images={BANNER_IMAGES} alt="Nexis featured artwork" />
               </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
 
-              <button
-                onClick={() => setHideBalance((previous) => !previous)}
-                className="rounded-full p-2 text-zinc-400 transition hover:bg-white/10 hover:text-white"
-                aria-label={hideBalance ? "Show account amounts" : "Hide account amounts"}
-              >
-                {hideBalance ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-zinc-400">
-                    Estimated total value
+              <div className="relative flex min-h-[310px] items-center px-6 py-8 sm:px-10">
+                <div className="max-w-xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.28em] text-primary">
+                    Welcome to
                   </p>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                    Live
-                  </span>
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-end gap-3">
-                  <h2 className="text-4xl font-bold tracking-tight sm:text-4xl">
-                    {hideBalance ? "******" : (activeTab === "Billing" ? "$0.00" : formatCurrency(netValue))}
-                  </h2>
-                  <span className="mb-2 text-sm font-medium text-zinc-500">
-                    USD
-                  </span>
+                  <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-7xl">
+                    NEXIS
+                  </h1>
+                  <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground sm:text-base">
+                    Digital Identity. Real Utility.
+                    <br />
+                    Built for the Future.
+                  </p>
+                  <div className="mt-6 flex flex-wrap items-center gap-3">
+                    <Link href="/user-dashboard/bots/pricing">
+                      <Button className="rounded-full bg-primary p-5 text-sm font-bold text-primary-foreground hover:bg-primary/90">
+                        Get Bot Subscription
+                      </Button>
+                    </Link>
+                    <Link
+                      href="/user-dashboard/wallet"
+                      className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+                    >
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border">
+                        ▶
+                      </span>
+                      Connect Wallet
+                    </Link>
+                  </div>
                 </div>
               </div>
+            </section>
 
-              {/* stats */}
-              <div className="grid grid-cols-4 gap-2 sm:gap-2">
-                <Link
-                  href="/user-dashboard/plans"
-                  className="group flex flex-col items-center gap-2"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#D4AF37] text-black shadow-lg transition group-hover:scale-105">
-                    <Rocket className="h-5 w-5" />
-                  </span>
-                  <span className="text-center text-[9px] font-bold uppercase tracking-wider text-zinc-300">
-                    Subscribe
-                  </span>
-                </Link>
-
-                <Link
-                  href="/user-dashboard/connect"
-                  className="group flex flex-col items-center gap-2"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-900 transition group-hover:border-[#D4AF37] group-hover:text-[#D4AF37]">
-                    <Unplug className="h-5 w-5" />
-                  </span>
-                  <span className="text-center text-[9px] font-bold uppercase tracking-wider text-zinc-300">
-                    Connect
-                  </span>
-                </Link>
-
-                <Link
-                  href="/user-dashboard/predict"
-                  className="group flex flex-col items-center gap-2"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-900 transition group-hover:border-[#D4AF37] group-hover:text-[#D4AF37]">
-                    <BarChart3 className="h-5 w-5" />
-                  </span>
-                  <span className="text-center text-[9px] font-bold uppercase tracking-wider text-zinc-300">
-                    Predict
-                  </span>
-                </Link>
-
-                <Link
-                  href="/user-dashboard/predict"
-                  className="group flex flex-col items-center gap-2"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-900 transition group-hover:border-[#D4AF37] group-hover:text-[#D4AF37]">
-                    <Brain className="h-5 w-5" />
-                  </span>
-                  <span className="text-center text-[9px] font-bold uppercase tracking-wider text-zinc-300">
-                    AI Insights
-                  </span>
-                </Link>
+            {/* Quick access */}
+            <section>
+              <p className="mb-3 text-[12px] font-black uppercase tracking-widest text-muted-foreground">
+                Quick Access
+              </p>
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
+                <QuickAccess
+                  href="/user-dashboard/bots/pricing"
+                  title="Bot Plans"
+                  description="View subscription plans"
+                  icon={<CheckCircle className="h-5 w-5" />}
+                  tone="violet"
+                />
+                <QuickAccess
+                  href="/user-dashboard/bots/servers"
+                  title="My Servers"
+                  description="Manage Discord servers"
+                  icon={<Building2 className="h-5 w-5" />}
+                  tone="gold"
+                />
+                <QuickAccess
+                  href="/user-dashboard/wallet"
+                  title="Wallet"
+                  description="Connect & verify wallet"
+                  icon={<WalletCards className="h-5 w-5" />}
+                  tone="green"
+                />
+                <QuickAccess
+                  href="/user-dashboard/holdings"
+                  title="NXAE Holdings"
+                  description="View your NFTs"
+                  icon={<Gem className="h-5 w-5" />}
+                  tone="blue"
+                />
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        {/* Sidebar cards: Active plan, Trading Calendar, News */}
-        <section className="flex flex-col gap-6">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-            {/* Plan Overview */}
-            <Card className="w-full border-border/50 shadow-sm lg:w-1/3">
-              <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                <div>
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider">
-                    Active plan
+            {/* Bot Subscription Status + Web3 Status */}
+            <section className="grid gap-4 md:grid-cols-2">
+              <GlassCard>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-[12px] font-black uppercase tracking-widest">
+                      Bot Subscription
+                    </CardTitle>
+                    <StatusPill color="green">
+                      Active
+                    </StatusPill>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">
+                    Standard Plan
+                  </span>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-xl border border-border bg-muted/30 p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          Connected Servers
+                        </p>
+                        <p className="mt-1 text-2xl font-black text-foreground">
+                          3
+                        </p>
+                      </div>
+                      <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center">
+                        <Building2 className="h-6 w-6 text-violet-600 dark:text-violet-300" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      All servers operational
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/user-dashboard/bots/servers"
+                    className="mt-4 flex items-center justify-between rounded-xl border border-border px-3 py-3 text-xs text-muted-foreground hover:bg-accent"
+                  >
+                    Manage Servers
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </CardContent>
+              </GlassCard>
+
+              <GlassCard>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-[12px] font-black uppercase tracking-widest">
+                    Web3 Status
                   </CardTitle>
-                  <CardDescription className="mt-1 text-xs">
-                    Subscription and account allocation.
-                  </CardDescription>
-                </div>
-                <ShieldCheck className="h-5 w-5 text-[#D4AF37]" />
-              </CardHeader>
-
-              <CardContent>
-                <div className="rounded-2xl bg-zinc-950 p-4 text-white dark:bg-zinc-100 dark:text-zinc-950">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                        Current subscription
-                      </p>
-                      <h3 className="mt-1 text-lg font-bold">{data.plan.name}</h3>
-                    </div>
-                    <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                      {data.plan.status}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 flex w-full justify-between">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-zinc-500">
-                        Plan fee
-                      </p>
-                      <p className="mt-1 font-bold">
-                        {formatCurrency(data.plan.amount)}
-                      </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-border bg-muted/30 p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold text-foreground">
+                            Wallet Status
+                          </p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <StatusPill color="green">
+                              Connected
+                            </StatusPill>
+                            <span className="text-xs text-muted-foreground">
+                              0x1234...5678
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                          <Bitcoin className="h-6 w-6 text-emerald-600 dark:text-emerald-300" />
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-[10px] uppercase tracking-wider text-zinc-500">
-                        Account size
-                      </p>
-                      <p className="mt-1 font-bold">
-                        {data.plan.accountSize}
-                      </p>
+                    <div className="rounded-xl border border-border bg-muted/30 p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold text-foreground">
+                            NXAE Holdings
+                          </p>
+                          <p className="mt-1 text-2xl font-black text-foreground">
+                            3
+                          </p>
+                          <p className="mt-1 text-[10px] text-muted-foreground">
+                            Gold Tier
+                          </p>
+                        </div>
+                        <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center">
+                          <Crown className="h-6 w-6 text-violet-600 dark:text-violet-300" />
+                        </div>
+                      </div>
                     </div>
+
+                    <Link
+                      href="/user-dashboard/holdings"
+                      className="flex items-center justify-between rounded-xl border border-border px-3 py-3 text-xs text-muted-foreground hover:bg-accent"
+                    >
+                      View Holdings
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
                   </div>
-                </div>
-
-                <div className="mt-5 space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Duration</span>
-                    <span className="font-bold">{data.plan.duration}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Started</span>
-                    <span className="font-bold">
-                      {formatDate(data.plan.startDate)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Expires</span>
-                    <span className="font-bold">
-                      {formatDate(data.plan.expires)}
-                    </span>
-                  </div>
-                </div>
-
-                <Link href="/user-dashboard/plans">
-                  <Button className="mt-5 w-full gap-2 rounded-full bg-[#D4AF37] p-5 text-xs font-bold uppercase tracking-wider text-black hover:bg-[#c9a227]">
-                    Manage plan <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Trading Calendar */}
-            <Card className="w-full border-border/50 shadow-sm lg:w-1/3">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-lg font-bold">Trading Calendar</CardTitle>
-                <Link href="/user-dashboard/calendar">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-full border-blue-200 bg-blue-50 text-xs font-semibold text-blue-600 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-400"
-                  >
-                    View All
-                  </Button>
-                </Link>
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-                {data.tradingCalendar.map((item) => (
-                  <CalendarRow key={item.id} item={item} />
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* News */}
-            <Card className="w-full border-border/50 shadow-sm lg:w-1/3">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-lg font-bold">News</CardTitle>
-                <Link href="/user-dashboard/news">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-full border-blue-200 bg-blue-50 text-xs font-semibold text-blue-600 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-400"
-                  >
-                    View All
-                  </Button>
-                </Link>
-              </CardHeader>
-
-              <CardContent className="divide-y divide-border/40">
-                {data.news.map((item) => (
-                  <NewsRow key={item.id} item={item} />
-                ))}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </GlassCard>
+            </section>
           </div>
 
-          {/* Recent Trades - full width */}
-          <Card className="w-full border-border/50 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-sm font-bold uppercase tracking-wider">
-                  Recent activity
+          {/* RIGHT — 25% */}
+          <div className="space-y-4 lg:col-span-3">
+            {/* User Profile */}
+            <GlassCard>
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4">
+                  <Avatar fallback="F" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold">FUTUREX</p>
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Gold Tier Holder
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground">
+                    NXAE Holdings
+                  </span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full w-[60%] rounded-full bg-violet-500" />
+                  </div>
+                </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  3 / 5 NFTs
+                </p>
+
+                <div className="mt-5 grid grid-cols-2 gap-2 text-center">
+                  <div className="rounded-lg border border-border bg-muted/30 py-2">
+                    <Building2 className="mx-auto h-4 w-4 text-violet-600 dark:text-violet-300" />
+                    <p className="mt-2 text-[10px] text-muted-foreground">
+                      Servers
+                    </p>
+                    <p className="mt-1 text-xs font-bold">3</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-muted/30 py-2">
+                    <ShieldCheck className="mx-auto h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                    <p className="mt-2 text-[10px] text-muted-foreground">
+                      Status
+                    </p>
+                    <p className="mt-1 text-xs font-bold">Active</p>
+                  </div>
+                </div>
+              </CardContent>
+              <CardContent className="border-t border-border px-5 py-3">
+                <Link
+                  href="/user-dashboard/profile"
+                  className="flex items-center justify-between text-xs text-muted-foreground hover:text-foreground"
+                >
+                  View Full Profile
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </CardContent>
+            </GlassCard>
+
+            {/* Notifications */}
+            <GlassCard>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <CardTitle className="text-[12px] font-black uppercase tracking-widest">
+                  Notifications
                 </CardTitle>
-                <CardDescription className="mt-1 text-xs">
-                  Your latest executed positions.
+                <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold text-violet-600 dark:text-violet-300">
+                  3 New
+                </span>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground">
+                      Bot subscription renewed
+                    </p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      2 hours ago
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-violet-500/10 flex items-center justify-center">
+                    <Building2 className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground">
+                      New server connected
+                    </p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      5 hours ago
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-orange-500/10 flex items-center justify-center">
+                    <ShieldCheck className="h-4 w-4 text-orange-600 dark:text-orange-300" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-foreground">
+                      Moderation action taken
+                    </p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      1 day ago
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </GlassCard>
+
+            {/* Quick Actions */}
+            <GlassCard>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-[12px] font-black uppercase tracking-widest">
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Link
+                  href="/user-dashboard/bots/install-discord"
+                  className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+                >
+                  <Unplug className="h-4 w-4" />
+                  Install Discord Bot
+                </Link>
+                <Link
+                  href="/user-dashboard/wallet"
+                  className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+                >
+                  <Bitcoin className="h-4 w-4" />
+                  Connect Wallet
+                </Link>
+                <Link
+                  href="/user-dashboard/bots/pricing"
+                  className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Upgrade Subscription
+                </Link>
+              </CardContent>
+            </GlassCard>
+          </div>
+        </div>
+
+        {/* Platform Overview */}
+        <section className="grid gap-4 lg:grid-cols-3">
+          <GlassCard>
+            <CardHeader>
+              <CardTitle className="text-[12px] font-black uppercase tracking-widest">
+                Account Overview
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Your platform status and entitlements.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Holder Tier</span>
+                <span className="font-bold text-violet-600 dark:text-violet-300">
+                  Gold
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">NXAE Holdings</span>
+                <span className="font-bold">3 NFTs</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Bot Subscription</span>
+                <StatusPill color="green">
+                  Active
+                </StatusPill>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">
+                  Account Status
+                </span>
+                <StatusPill color="green">
+                  <ShieldCheck className="h-3 w-3" />
+                  {data.accountStatus}
+                </StatusPill>
+              </div>
+            </CardContent>
+          </GlassCard>
+
+          <GlassCard>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-[12px] font-black uppercase tracking-widest">
+                  Bot Activity
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Recent moderation actions.
                 </CardDescription>
               </div>
-
-              <Link href="/user-dashboard/trading">
+              <Link href="/user-dashboard/bots/activity">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1 border-[#D4AF37]/50 text-[10px] font-bold uppercase tracking-wider text-[#B28D16] hover:bg-[#D4AF37]/10"
+                  className="h-8 border-border bg-transparent text-xs text-muted-foreground"
                 >
-                  View all <ArrowRight className="h-3.5 w-3.5" />
+                  View All
                 </Button>
               </Link>
             </CardHeader>
-
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[680px] text-sm">
-                  <thead>
-                    <tr className="border-y border-border/50 bg-muted/20 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      <th className="px-6 py-3 text-left">Symbol</th>
-                      <th className="px-6 py-3 text-center">Position</th>
-                      <th className="px-6 py-3 text-center">Entry</th>
-                      <th className="px-6 py-3 text-center">Lot size</th>
-                      <th className="px-6 py-3 text-center">Result</th>
-                      <th className="px-6 py-3 text-right">Date</th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-border/40">
-                    {data.recentTrades.slice(0, 6).map((trade) => (
-                      <tr
-                        key={trade.id}
-                        className="transition-colors hover:bg-muted/30"
-                      >
-                        <td className="px-6 py-4 text-left">
-                          <div className="font-bold tracking-tight">
-                            {trade.symbol}
-                          </div>
-                          <div className="mt-0.5 text-[10px] text-muted-foreground">
-                            {trade.id}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 text-center">
-                          <span
-                            className={`inline-flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider ${
-                              trade.type === "BUY"
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-red-600 dark:text-red-400"
-                            }`}
-                          >
-                            {trade.type === "BUY" ? (
-                              <ArrowUpRight className="h-3.5 w-3.5" />
-                            ) : (
-                              <ArrowDownRight className="h-3.5 w-3.5" />
-                            )}
-                            {trade.type}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-4 text-center font-medium tabular-nums">
-                          {trade.entry.toFixed(2)}
-                        </td>
-
-                        <td className="px-6 py-4 text-center font-medium tabular-nums">
-                          {trade.lotSize.toFixed(2)}
-                        </td>
-
-                        <td className="px-6 py-4 text-center">
-                          <div
-                            className={`font-bold tabular-nums ${
-                              trade.profit >= 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-red-600 dark:text-red-400"
-                            }`}
-                          >
-                            {trade.profit >= 0 ? "+" : "-"}
-                            {formatCurrency(trade.profit)}
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 text-right text-xs text-muted-foreground">
-                          {formatDate(trade.date)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <CardContent className="space-y-2">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
+                <div className="h-8 w-8 shrink-0 rounded-full bg-orange-500/10 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4 text-orange-600 dark:text-orange-300" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground">
+                    Spam blocked
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Server #1 • 2 min ago
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
+                <div className="h-8 w-8 shrink-0 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4 text-red-600 dark:text-red-300" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground">
+                    User timeout
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Server #2 • 15 min ago
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
+                <div className="h-8 w-8 shrink-0 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground">
+                    Warning issued
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Server #3 • 1 hour ago
+                  </p>
+                </div>
               </div>
             </CardContent>
-          </Card>
+          </GlassCard>
+
+          <GlassCard>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-[12px] font-black uppercase tracking-widest">
+                Market Snapshot
+              </CardTitle>
+              <Link href="/user-dashboard/market">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-border bg-transparent text-xs text-muted-foreground"
+                >
+                  View All
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent className="divide-y divide-border/60">
+              {data.news.map((item) => (
+                <NewsRow key={item.id} item={item} />
+              ))}
+            </CardContent>
+          </GlassCard>
+        </section>
+
+        {/* Bottom utility bar */}
+        <section className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-6 w-6 text-primary" />
+            <div>
+              <p className="text-xs font-bold">Secure & Verified</p>
+              <p className="text-[10px] text-muted-foreground">
+                Built on trusted systems
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <WalletCards className="h-6 w-6 text-primary" />
+            <div>
+              <p className="text-xs font-bold">NFT Utility</p>
+              <p className="text-[10px] text-muted-foreground">
+                Real use beyond art
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Users className="h-6 w-6 text-primary" />
+            <div>
+              <p className="text-xs font-bold">Community Driven</p>
+              <p className="text-[10px] text-muted-foreground">
+                Powered by you
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <div>
+              <p className="text-xs font-bold">Rewards & XP</p>
+              <p className="text-[10px] text-muted-foreground">
+                Earn while you engage
+              </p>
+            </div>
+          </div>
         </section>
       </div>
     </main>

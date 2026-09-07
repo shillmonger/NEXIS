@@ -15,8 +15,6 @@ export interface IUser extends Document {
   avatar?: string;
   lastLoginAt?: Date;
   agreedToTerms: boolean;
-  // Track which Deriv account type is currently active
-  activeDerivAccountType?: 'demo' | 'real';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,12 +76,6 @@ const UserSchema: Schema<IUser> = new Schema(
     agreedToTerms: {
       type: Boolean,
       default: false,
-    },
-    // Track which Deriv account type is currently active
-    activeDerivAccountType: {
-      type: String,
-      enum: ['demo', 'real'],
-      default: 'demo',
     },
   },
   {

@@ -1,298 +1,230 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowUpRight, Check, MoreVertical } from "lucide-react";
-import { Montserrat, IBM_Plex_Mono } from "next/font/google";
+import { AnimatePresence, motion } from "framer-motion";
+import { Play } from "lucide-react";
+import { Sora } from "next/font/google";
 
-const montserrat = Montserrat({
+const sora = Sora({
   subsets: ["latin"],
-  weight: ["700", "800", "900"],
+  weight: ["700", "800"],
 });
 
-const plexMono = IBM_Plex_Mono({
-  weight: ["400", "500"],
-  subsets: ["latin"],
-  display: "swap",
-});
+const ROTATE_MS = 5000;
+
+const CARDS = [
+  { id: "moderation", name: "Auto-Moderation Bot", image: "/nft1.jpeg", bid: "24/7 Active", time: "99.9% Uptime" },
+  { id: "verification", name: "Wallet Verification", image: "/nft2.jpeg", bid: "Secure", time: "NXAE Holders" },
+  { id: "arena", name: "Arena Predictions", image: "/nft3.jpeg", bid: "XP Rewards", time: "Live Leaderboards" },
+  { id: "analytics", name: "Real-time Analytics", image: "/nft4.jpeg", bid: "Dashboard", time: "Bot Health" },
+  // { id: "fort", name: "Fort Protection", image: "/nexis.jpeg", bid: "Secure Vault", time: "24/7 Guard" },
+];
 
 export default function HeroSection() {
-  const navPills = [
-    { label: "Automated", active: true },
-    { label: "Deriv", active: false },
-    { label: "MT5", active: false },
-  ];
+  const [index, setIndex] = useState(0);
 
-  const bullets = [
-    "Connect your MetaTrader 5 account to our automated trading system.",
-    "Our bot executes trades when valid market conditions are detected.",
-  ];
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % CARDS.length);
+    }, ROTATE_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  const front = CARDS[index];
+  const peekLeft = CARDS[(index + 1) % CARDS.length];
+  const peekRight = CARDS[(index + 2) % CARDS.length];
+  const peekTopRight = CARDS[(index + 3) % CARDS.length];
 
   return (
-    <section className="relative w-full pt-10 lg:pt-10 py-0 lg:py-20 overflow-hidden transition-colors">
-      <div className="mx-auto max-w-[1500px] px-4">
-        {/* Top Nav Pills (Outside the card) */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className={`${plexMono.className} mb-3 flex items-center gap-2 overflow-x-auto`}
-        >
-          {navPills.map((pill) => (
-            <button
-              key={pill.label}
-              className={`shrink-0 cursor-pointer rounded-full px-6 py-2 text-xs font-medium tracking-wide transition-colors ${
-                pill.active
-                  ? "bg-[#D4AF37] text-black"
-                  : "bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-300 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-600"
-              }`}
-            >
-              {pill.label}
-            </button>
-          ))}
-        </motion.div>
-
-        {/* Main Hero Card Container — REMOVED overflow-hidden so children can break out */}
-        <div className="relative rounded-[2rem] bg-gradient-to-br from-[#14123B] via-[#1D1B4B] to-[#2A2678] px-4 py-6 md:p-12 lg:p-10 lg:min-h-[550px] flex items-center">
-
-          {/* Background Elements Container — keeps SVG and glows clipped to the card bounds */}
-          <div className="pointer-events-none absolute inset-0 rounded-[2rem] overflow-hidden">
-            {/* Signature background: faint candlestick chart line */}
-            <svg
-              className="absolute inset-0 h-full w-full opacity-[0.14]"
-              viewBox="0 0 1200 550"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <polyline
-                points="0,420 60,400 120,430 180,360 240,380 300,300 360,330 420,260 480,290 540,220 600,250 660,180 720,210 780,150 840,190 900,120 960,160 1020,100 1080,140 1140,80 1200,110"
-                fill="none"
-                stroke="#D4AF37"
-                strokeWidth="2"
-              />
-              {[60, 180, 300, 420, 540, 660, 780, 900, 1020, 1140].map((x, i) => (
-                <rect
-                  key={x}
-                  x={x - 6}
-                  y={i % 2 === 0 ? 400 - i * 28 : 380 - i * 28}
-                  width="12"
-                  height="34"
-                  fill={i % 3 === 0 ? "#EF4444" : "#22C55E"}
-                  opacity="0.6"
-                />
-              ))}
-            </svg>
-
-            {/* Subtle glow effects */}
-            <div className="absolute left-1/3 top-1/2 -translate-y-1/2 h-[350px] w-[350px] rounded-full bg-[#D4AF37]/10 blur-[110px]" />
-            <div className="absolute right-0 top-0 h-[300px] w-[300px] rounded-full bg-indigo-400/10 blur-[100px]" />
-          </div>
-
-          {/* Grid Layout */}
-          <div className="relative grid w-full lg:w-4xl grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-
-            {/* Left Content Column */}
-            <div className="lg:col-span-7 z-10 max-w-xl">
-              {/* Bullet Points */}
-              <ul className="mb-8 lg:mb-10 space-y-1">
-                {bullets.map((line) => (
-                  <li key={line} className="flex items-start gap-2 text-xs md:text-sm text-white/70 font-medium leading-relaxed">
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#D4AF37]" />
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Main Headline */}
-              <h1 className={`${montserrat.className} font-black text-5xl md:text-6xl uppercase tracking-tight text-white leading-[1.05] mb-8 lg:mb-10`}>
-                The Smarter Way to Trade XAUUSD -{" "}
-                <span className="bg-gradient-to-r from-[#F5C451] via-[#D4AF37] to-[#F5C451] bg-clip-text text-transparent">
-                  GOLD
-                </span>
-              </h1>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center gap-4 lg:gap-6">
-
-                <Link
-                  href="/auth-page/login"
-                  className="w-full sm:w-auto text-center rounded-full cursor-pointer bg-white px-7 py-4 font-bold uppercase tracking-widest text-sm text-black transition-transform hover:scale-105 active:scale-95"
-                >
-                  Sign in Account
-                </Link>
-                <Link href="/auth-page/register" className="flex text-center justify-center w-full sm:w-auto rounded-full cursor-pointer bg-[#D4AF37] px-7 py-4 font-bold uppercase tracking-widest text-sm text-black ring-1 ring-white/10 transition-all hover:scale-105 hover:ring-[#D4AF37]/50 active:scale-95">
-                    Start free trial
-                                <ArrowUpRight className="w-5 h-5" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Column: Mobile Phone image & desktop spacer */}
-            <div className="lg:col-span-5 relative">
-              {/* Mobile / tablet inline image */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="relative mx-auto h-[500px] w-full overflow-hidden rounded-0xl lg:hidden"
-              >
-                <Image
-                  src="/phone-half.png"
-                  alt="Phone Screen App Interface"
-                  fill
-                  priority
-                  className="object-cover object-top"
-                />
-              </motion.div>
-
-              {/* Mobile stat pills under the image */}
-              <div className={`${plexMono.className} mt-5 flex flex-wrap justify-center gap-3 lg:hidden`}>
-                <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[11px] font-medium text-neutral-800">
-                  <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
-                  +45 pips • $320
-                </div>
-                <div className="flex items-center gap-2 rounded-full bg-[#D4AF37] px-4 py-2 text-[11px] font-semibold text-black">
-                  Profit +$1,245.00
-                </div>
-              </div>
-
-              {/* Desktop-only reserved space */}
-              <div className="hidden lg:block h-[500px]" />
-            </div>
-
-          </div>
-
-          {/* ------------------------------------------------------------- */}
-          {/* OVERLAY ELEMENTS (Breakout Phone Mockup & Floating Cards) */}
-          {/* ------------------------------------------------------------- */}
-
-          {/* 1. Trading Activity Floating Box (Left of Phone) */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="hidden xl:block absolute left-[46%] top-1/2 -translate-y-1/2 z-60 w-[240px] rounded-2xl bg-white p-4 text-neutral-800 text-xs"
-          >
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-2.5 mb-3 font-semibold">
-              <span className="rounded-full bg-[#D4AF37] px-3 py-1 text-[10px] text-black">
-                Trading Activity
-              </span>
-              <span className={`${plexMono.className} text-[10px] text-neutral-400`}>Today</span>
-            </div>
-
-            <div className={`${plexMono.className} space-y-2.5 text-[11px]`}>
-              <div>
-                <div className="flex items-center justify-between font-medium">
-                  <span>XAUUSD Buy Order</span>
-                  <span className="rounded-full bg-[#22C55E]/15 px-2 py-0.5 text-[9px] text-[#16A34A] font-semibold">Profit</span>
-                </div>
-                <p className="text-[10px] text-neutral-400">+45 pips • $320</p>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between font-medium">
-                  <span>XAUUSD Sell Order</span>
-                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] text-indigo-600 font-semibold">Active</span>
-                </div>
-                <p className="text-[10px] text-neutral-400">Entry: 2345.50</p>
-              </div>
-
-              <div className="pl-3 space-y-2 border-l-2 border-neutral-100">
-                <div className="flex items-center justify-between">
-                  <span>Trade #3: Gold Scalp</span>
-                  <span className="h-3.5 w-3.5 rounded-full bg-[#22C55E] flex items-center justify-center">
-                    <Check className="h-2.5 w-2.5 text-white" />
-                  </span>
-                </div>
-
-                <div className="rounded-full bg-black text-white p-2 font-medium">
-                  Trade #4: Breakout
-                </div>
-
-                <div className="text-neutral-500">
-                  Trade #5: Pending
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* 2. Phone Mockup Frame (Now cleanly extends outside top & bottom via z-50) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+    <section className="relative w-full overflow-hidden py-16 transition-colors duration-500 lg:py-10">
+      <div className="mx-auto grid max-w-[1500px] grid-cols-1 items-center gap-5 lg:gap-15 px-6 lg:grid-cols-12 lg:gap-8 lg:px-12">
+        {/* ================= LEFT: COPY ================= */}
+        <div className="lg:col-span-6">
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="hidden lg:block lg:absolute lg:right-[17%] lg:-top-15 lg:-bottom-15 z-50 w-full max-w-[350px] mx-auto lg:mx-0 rounded-[2rem] overflow-hidden ring-white/10"
+            transition={{ duration: 0.5 }}
+            className={`${sora.className} text-[2.75rem] leading-[1.12] font-extrabold text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.5rem]`}
           >
-            <div className="relative w-full h-full min-h-[580px]">
-              <Image
-                src="/Trade.png"
-                alt="Phone Screen App Interface"
-                fill
-                priority
-                className="object-cover rounded-[2rem]"
-              />
-            </div>
+            Automate Your Discord Community with{" "}
+            <span className="bg-violet-600 bg-clip-text text-transparent">
+              NEXIS.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mt-6 max-w-md text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400"
+          >
+            Deploy automated moderation bots, verify NXAE holders, and engage your community with prediction markets. The complete Web3 Discord operating system.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-9 flex flex-wrap items-center gap-8"
+          >
+            <Link href="/auth-page/register">
+              <button className="rounded-full bg-violet-700 px-7 py-3.5 text-sm font-bold text-white transition-transform hover:scale-[1.03] active:scale-95">
+                Get Started Free
+              </button>
+            </Link>
+
+            <Link
+              href="/LandingPage/subscribtion"
+              className="group flex items-center gap-3 text-sm font-semibold text-zinc-900 dark:text-white"
+            >
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-300 transition-colors hover:border-violet-500 hover:text-violet-500 dark:border-white/30">
+                <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
+              </span>
+              View Subscription Plans
+            </Link>
           </motion.div>
 
-          {/* 3. Right Floating Overlay Stack */}
-          <div className="hidden lg:flex flex-col gap-4 absolute right-4 xl:right-20 top-12 z-60">
+          {/* progress dots for the rotating stack */}
+          <div className="mt-12 flex items-center gap-2">
+            {CARDS.map((c, i) => (
+              <span
+                key={c.id}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  i === index
+                    ? "w-6 bg-violet-500"
+                    : "w-1.5 bg-zinc-300 dark:bg-white/20"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+
+        {/* ================= RIGHT: ROTATING CARD STACK ================= */}
+        <div className="relative flex min-h-[450px] items-center justify-center lg:col-span-6 lg:min-h-[500px]">
+          {/* ambient glow, violet to tie in with the rest of the app */}
+          <div className="pointer-events-none absolute h-72 w-72 rounded-full bg-violet-500/10 blur-[100px] dark:bg-violet-600/25" />
+
+          {/* orbit ring */}
+          <svg
+            className="pointer-events-none absolute w-[110%] max-w-[560px]"
+            viewBox="0 0 500 260"
+            fill="none"
+          >
+            <ellipse
+              cx="250"
+              cy="130"
+              rx="235"
+              ry="78"
+              stroke="url(#ring-gradient)"
+              strokeWidth="1.5"
+              transform="rotate(-8 250 130)"
+            />
+            <defs>
+              <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0" />
+                <stop offset="50%" stopColor="#DFFF3D" stopOpacity="0.55" />
+                <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          <div className="relative h-[380px] w-[300px] sm:h-[420px] sm:w-[340px]">
+            {/* BACK-LEFT peek — next up */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="w-[210px] rounded-full bg-white p-1.5 flex items-center gap-3 text-xs"
+              key={`left-${peekLeft.id}`}
+              initial={{ opacity: 0, x: -10, rotate: -22 }}
+              animate={{ opacity: 1, x: 0, rotate: -16 }}
+              transition={{ duration: 0.6 }}
+              className="absolute left-[-38px] top-6 z-10 w-[150px] rounded-2xl border border-zinc-200 bg-white p-2.5 shadow-2xl dark:border-white/10 dark:bg-[#141414]"
             >
-              <div className="h-10 w-10 relative rounded-full overflow-hidden shrink-0 ring-2 ring-[#D4AF37]/40">
-                <Image
-                  src="/pfp.png"
-                  alt="Avatar"
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative aspect-square overflow-hidden rounded-xl">
+                <Image src={peekLeft.image} alt={peekLeft.name} fill className="object-cover" />
               </div>
-              <div className={`${plexMono.className} min-w-0`}>
-                <p className="text-[10px] text-neutral-400 font-sans">Trade Executed</p>
-                <p className="font-semibold text-neutral-800 text-[11px] truncate">
-                  XAUUSD Buy at 2342.15
-                </p>
-                <span className="text-[9px] text-neutral-400">9:45 AM</span>
+              <p className="mt-2 truncate text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
+                {peekLeft.name}
+              </p>
+              <p className="mt-1 text-[9px] text-zinc-500 dark:text-zinc-400">{peekLeft.bid}</p>
+            </motion.div>
+
+            {/* BACK-RIGHT peek — up after that */}
+            <motion.div
+              key={`right-${peekRight.id}`}
+              initial={{ opacity: 0, x: 10, y: 5, rotate: 20 }}
+              animate={{ opacity: 1, x: 0, y: 0, rotate: 12 }}
+              transition={{ duration: 0.6 }}
+              className="absolute bottom-[-28px] right-[-30px] z-10 w-[190px] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-white/10 dark:bg-[#141414]"
+            >
+              <div className="relative aspect-square overflow-hidden rounded-xl">
+                <Image src={peekRight.image} alt={peekRight.name} fill className="object-cover" />
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wide text-zinc-500">Status</p>
+                  <p className="text-xs font-bold text-zinc-900 dark:text-white">{peekRight.bid}</p>
+                </div>
+                <button className="rounded-lg bg-[#DFFF3D] px-3 py-1.5 text-[10px] font-bold text-black">
+                  Learn More
+                </button>
               </div>
             </motion.div>
+
+            {/* BACK-TOP-RIGHT peek — FORT */}
+            <motion.div
+              key={`topright-${peekTopRight.id}`}
+              initial={{ opacity: 0, x: 10, y: -10, rotate: -15 }}
+              animate={{ opacity: 1, x: 0, y: 0, rotate: -8 }}
+              transition={{ duration: 0.6 }}
+              className="absolute top-[-20px] right-[-25px] z-10 w-[140px] rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-white/10 dark:bg-[#141414]"
+            >
+              <div className="relative aspect-square overflow-hidden rounded-xl">
+                <Image src={peekTopRight.image} alt={peekTopRight.name} fill className="object-cover" />
+              </div>
+              <p className="mt-2 truncate text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
+                {peekTopRight.name}
+              </p>
+              <p className="mt-1 text-[9px] text-zinc-500 dark:text-zinc-400">{peekTopRight.bid}</p>
+            </motion.div>
+
+            {/* FRONT/FEATURED card — swaps every 5s */}
+            <div className="absolute inset-x-6 top-0 z-20">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={front.id}
+                  initial={{ opacity: 0, y: 28, scale: 0.94, rotate: -4 }}
+                  animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.96, rotate: 3 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-white/10 dark:bg-[#141414]"
+                >
+                  <div className="relative aspect-square overflow-hidden rounded-xl">
+                    <Image src={front.image} alt={front.name} fill className="object-cover" />
+                    <span className="absolute right-2 top-2 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-medium text-[#DFFF3D] backdrop-blur-sm">
+                      {front.time}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-zinc-900 dark:text-white">
+                    {front.name}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                        Feature
+                      </p>
+                      <p className="text-sm font-bold text-zinc-900 dark:text-white">
+                        {front.bid}
+                      </p>
+                    </div>
+                    <button className="rounded-lg bg-[#DFFF3D] px-4 py-2 text-xs font-bold text-black transition-transform hover:scale-105 active:scale-95">
+                      Deploy Now
+                    </button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
-
-          {/* 4. Bottom Trading Stats Card */}
-          {/* <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="hidden lg:block absolute right-[6%] bottom-0 z-60 w-[210px] rounded-2xl bg-white p-3 text-xs space-y-2"
-          >
-            <div className="flex items-center justify-between text-neutral-800 font-semibold">
-              <span>Today's Stats</span>
-              <button className="flex items-center gap-0.5 text-[9px] border border-neutral-200 rounded-full px-2 py-0.5 text-neutral-500 hover:border-neutral-300 transition-colors">
-                <Plus className="h-2.5 w-2.5" /> View
-              </button>
-            </div>
-
-            <div className="rounded-xl border border-neutral-100 p-2 flex justify-between items-center">
-              <div>
-                <p className="font-semibold text-neutral-800 text-[11px]">Total Trades</p>
-                <p className={`${plexMono.className} text-[9px] text-neutral-400`}>12 executed</p>
-              </div>
-              <MoreVertical className="h-3 w-3 text-neutral-400" />
-            </div>
-
-            <div className="rounded-xl bg-[#D4AF37] p-2 flex justify-between items-center text-black">
-              <div>
-                <p className="font-semibold text-[11px]">Profit</p>
-                <p className={`${plexMono.className} text-[9px] text-black/70`}>+$1,245.00</p>
-              </div>
-              <MoreVertical className="h-3 w-3 text-black/70" />
-            </div>
-          </motion.div> */}
-
         </div>
       </div>
     </section>

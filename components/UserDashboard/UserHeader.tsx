@@ -7,6 +7,7 @@ import {
   Sun,
   Moon,
   Bell,
+  Wallet,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
@@ -105,6 +106,23 @@ export default function UserHeader({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-2">
+        {/* Connect Wallet Button */}
+        <Link
+          href="/UserDashboard/wallet"
+          className="hidden sm:flex items-center gap-1 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-full font-bold text-xs tracking-widest transition-colors shadow-lg cursor-pointer"
+        >
+          <Wallet className="w-4 h-4" />
+          <span>Connect Wallet</span>
+        </Link>
+
+        {/* Mobile Wallet Icon Only */}
+        <Link
+          href="/UserDashboard/wallet"
+          className="sm:hidden p-2 bg-violet-600 hover:bg-violet-700 text-white rounded-full cursor-pointer transition-colors shadow-lg shadow-violet-600/30"
+        >
+          <Wallet className="w-5 h-5" />
+        </Link>
+
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -148,7 +166,7 @@ export default function UserHeader({
               </>
             )}
           </div>
-          <Avatar className="h-10 w-10 border-2 border-border">
+          <Avatar className="h-10 w-10 border-2 border-violet-500">
             <AvatarImage 
               src={user.avatar || defaultProfileImage} 
               alt={user.userName} 

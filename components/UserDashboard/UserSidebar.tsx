@@ -6,49 +6,32 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
-  BarChart3,
   BadgeCheck,
-  Package,
-  Layers,
-  MessagesSquare,
-  ChartColumnBig,
-  Landmark,
-  ArrowRightLeft,
-  Trophy,
-  TrendingUpDown,
-  BanknoteArrowUp,
-  DatabasePlus,
   Unplug,
-  UsersRound,
+  Landmark,
   BadgeQuestionMark,
-  Swords,
-  TrendingUp,
-  ChartSpline,
-  Smile,
-  CalendarDays,
-  ChartNoAxesCombined,
-  Award,
-  CandlestickChart,
+  ChartColumnBig,
   Bitcoin,
+  WalletCards,
   Wallet,
-  Info,
-  Lightbulb,
-  Gift,
-  History,
-  Crown,
-  ArrowUpRight,
-  PieChart,
   Gem,
-  Users,
-  Lock,
-  HeadphonesIcon,
+  Crown,
+  LineChart,
   Bell,
+  Swords,
+  Target,
+  Trophy,
+  Flame,
+  Award,
+  Sparkles,
+  Users,
+  UsersRound,
+  ArrowUpRight,
   Settings,
+  Info,
+  Lock,
   LogOut,
-  BadgeDollarSign,
   ChevronDown,
-  PartyPopper,
-  MessageSquare,
   X,
 } from "lucide-react";
 
@@ -77,11 +60,11 @@ export default function UserSidebar({
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    "Bind Account": true,
-    "Earn Free USDT": true,
-    Account: true,
-    Withdrawals: true,
-    Community: true,
+    "Bot Hub": true,
+    "Web3": true,
+    "Arena": true,
+    "Community": true,
+    "Settings": true,
   });
 
   const basePath = "/UserDashboard";
@@ -135,65 +118,76 @@ export default function UserSidebar({
 
   const navItems: NavItem[] = [
   { name: "Dashboard", icon: LayoutDashboard, href: `${basePath}/dashboard` },
-        { name: "Subscription", icon: Wallet, href: `${basePath}/subscription` },
-   {
-      name: "Bind Account",
-      icon: Unplug,
-      children: [
-        {
-          name: "Connect Deriv",
-          icon: DatabasePlus,
-          href: `${basePath}/connect-deriv`,
-        },
-        {
-          name: "How to Connect",
-          icon: BadgeQuestionMark,
-          href: `${basePath}/setup`,
-        },
-      ],
-    },
 
-    { name: "Trade History", icon: Layers, href: `${basePath}/live-trading` },
-    { name: "Transactions", icon: History, href: `${basePath}/transactions` },
-
-
+  // Bot Hub - Phase 1 Core
   {
-    name: "Earn Free USDT",
-    icon: BarChart3,
+    name: "Bot Hub",
+    icon: Unplug,
     children: [
-      { name: "Achievements", icon: Gem, href: `${basePath}/achievements` },
-      {
-        name: "Predict Market",
-        icon: ChartColumnBig,
-        href: `${basePath}/predict`,
-      },
+      { name: "Bot Plans", icon: BadgeCheck, href: `${basePath}/bots/pricing` },
+      { name: "My Subscriptions", icon: Wallet, href: `${basePath}/bots/subscriptions` },
+      { name: "My Servers", icon: Landmark, href: `${basePath}/bots/servers` },
+      { name: "Install Discord", icon: BadgeQuestionMark, href: `${basePath}/bots/install-discord` },
+      { name: "Bot Activity", icon: ChartColumnBig, href: `${basePath}/bots/activity` },
     ],
   },
+
+  // Web3 - Phase 1 Core
+  {
+    name: "Web3",
+    icon: Bitcoin,
+    children: [
+      { name: "Wallet", icon: WalletCards, href: `${basePath}/wallet` },
+      { name: "Holdings", icon: Gem, href: `${basePath}/holdings` },
+      { name: "Holder Tier", icon: Crown, href: `${basePath}/tier` },
+      { name: "Market", icon: LineChart, href: `${basePath}/market` },
+      { name: "Alerts", icon: Bell, href: `${basePath}/alerts` },
+    ],
+  },
+
+  // Arena & Predictions - Phase 2
+  {
+    name: "Arena",
+    icon: Swords,
+    children: [
+      { name: "Predictions", icon: Target, href: `${basePath}/predict` },
+      { name: "Leaderboard", icon: Trophy, href: `${basePath}/leaderboard` },
+      { name: "Streaks", icon: Flame, href: `${basePath}/streaks` },
+      { name: "Achievements", icon: Award, href: `${basePath}/achievements` },
+      { name: "XP & Rewards", icon: Sparkles, href: `${basePath}/xp` },
+    ],
+  },
+
+  // Community
   {
     name: "Community",
     icon: Users,
     children: [
       { name: "TG Channel", icon: UsersRound, href: `#` },
-      { name: "Top Leaderboard", icon: Trophy, href: `${basePath}/leaderboard` },
+      { name: "Referrals", icon: ArrowUpRight, href: `${basePath}/referrals` },
     ],
   },
 
-  { name: "Trade Analytics", icon: PieChart, href: `${basePath}/analytics` },
+  // Settings
+  {
+    name: "Settings",
+    icon: Settings,
+    children: [
+      { name: "Profile", icon: Info, href: `${basePath}/profile` },
+      { name: "Notifications", icon: Bell, href: `${basePath}/notifications` },
+      { name: "User Settings", icon: Lock, href: `${basePath}/settings` },
+    ],
+  },
 
-      {
-        name: "Profile Settings",
-        icon: Settings,
-        href: `${basePath}/user-settings`,
-      },
-      ...(userRole.includes("admin")
-        ? [
-            {
-              name: "Switch to Admin",
-              icon: Lock,
-              href: `/admin-dashboard/dashboard`,
-            },
-          ]
-        : []),
+  ...(userRole.includes("admin")
+    ? [
+        {
+          name: "Switch to Admin",
+          icon: Lock,
+          href: `/admin-dashboard/dashboard`,
+        },
+      ]
+    : []),
 
 ];
 
@@ -225,10 +219,10 @@ export default function UserSidebar({
         <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-border">
           <div className="flex flex-col">
             <h1 className="text-xl font-black uppercase tracking-tighter text-foreground">
-              SHILL <span className="text-[#D4AF37]">MONGER</span>
+              NEX<span className="text-violet-500">IS</span>
             </h1>
             <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-              Your Income, Our Trading Bot
+              Web3 Community Operating System
             </p>
           </div>
         </div>
@@ -244,7 +238,7 @@ export default function UserSidebar({
                   href={item.href}
                   className={`group flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${
                     active
-                      ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/30"
+                      ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}
                 >
@@ -271,7 +265,7 @@ export default function UserSidebar({
                   onClick={() => toggleGroup(item.name)}
                   className={`group w-full flex items-center px-4 py-2.5 rounded-sm transition-all duration-200 cursor-pointer ${
                     hasActiveChild
-                      ? "text-[#D4AF37]"
+                      ? "text-violet-600"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}
                 >
@@ -303,7 +297,7 @@ export default function UserSidebar({
                           href={child.href}
                           className={`group flex items-center gap-3 px-3 py-2 rounded-sm transition-all duration-200 ${
                             childActive
-                              ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/30"
+                              ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
                               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                           }`}
                         >
@@ -360,10 +354,10 @@ export default function UserSidebar({
             <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-border">
               <div className="flex flex-col">
                 <h1 className="text-xl font-black uppercase tracking-tighter text-foreground">
-                  SHILL<span className="text-[#D4AF37]">MONGER</span>
+                  NEX<span className="text-violet-500">IS</span>
                 </h1>
                 <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-                  Your Investments, Our Traders
+                  Web3 Community Operating System
                 </p>
               </div>
               <button
@@ -385,7 +379,7 @@ export default function UserSidebar({
                       href={item.href}
                       className={`group flex items-center px-4 py-2.5 rounded-sm transition-all duration-200 ${
                         active
-                          ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/30"
+                          ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                       }`}
                       onClick={() => setSidebarOpen(false)}
@@ -413,7 +407,7 @@ export default function UserSidebar({
                       onClick={() => toggleGroup(item.name)}
                       className={`group w-full flex items-center px-4 py-2.5 rounded-sm transition-all duration-200 cursor-pointer ${
                         hasActiveChild
-                          ? "text-[#D4AF37]"
+                          ? "text-violet-600"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                       }`}
                     >
@@ -445,7 +439,7 @@ export default function UserSidebar({
                               href={child.href}
                               className={`group flex items-center gap-3 px-3 py-2 rounded-sm transition-all duration-200 ${
                                 childActive
-                                  ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/30"
+                                  ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
                                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                               }`}
                               onClick={() => setSidebarOpen(false)}
@@ -516,11 +510,11 @@ export default function UserSidebar({
             <div className="mb-6">
               <div className="flex justify-between text-xs text-muted-foreground mb-2">
                 <span>Auto-closing in...</span>
-                <span>{countdown}s</span>
+                <span className="text-violet-600 font-bold">{countdown}s</span>
               </div>
               <div className="w-full bg-secondary rounded-full h-2">
                 <div
-                  className="bg-foreground h-2 rounded-full transition-all duration-1000 ease-linear"
+                  className="bg-violet-600 h-2 rounded-full transition-all duration-1000 ease-linear shadow-lg shadow-violet-600/30"
                   style={{ width: `${(countdown / 10) * 100}%` }}
                 />
               </div>
@@ -532,7 +526,7 @@ export default function UserSidebar({
                   setShowLogoutConfirm(false);
                   setCountdown(10);
                 }}
-                className="flex-1 px-6 py-3 rounded-lg bg-secondary cursor-pointer text-foreground font-bold text-xs uppercase tracking-widest"
+                className="flex-1 px-6 py-3 rounded-lg bg-violet-600 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:bg-violet-700 transition-colors shadow-lg shadow-violet-600/30"
               >
                 Stay
               </button>

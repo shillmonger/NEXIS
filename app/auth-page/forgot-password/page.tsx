@@ -60,40 +60,14 @@ export default function ForgotPasswordPage() {
           <div className="pointer-events-none absolute -top-16 -left-16 h-64 w-64 rounded-full bg-[#D4AF37]/30 blur-3xl" />
           <div className="pointer-events-none absolute bottom-0 right-0 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
 
-          {/* Candlestick motif from Hero - green and red */}
-          <svg
-            className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.14]"
-            viewBox="0 0 1200 550"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <polyline
-              points="0,420 60,400 120,430 180,360 240,380 300,300 360,330 420,260 480,290 540,220 600,250 660,180 720,210 780,150 840,190 900,120 960,160 1020,100 1080,140 1140,80 1200,110"
-              fill="none"
-              stroke="#D4AF37"
-              strokeWidth="2"
-            />
-            {[60, 180, 300, 420, 540, 660, 780, 900, 1020, 1140].map((x, i) => (
-              <rect
-                key={x}
-                x={x - 6}
-                y={i % 2 === 0 ? 400 - i * 28 : 380 - i * 28}
-                width="12"
-                height="34"
-                fill={i % 3 === 0 ? "#EF4444" : "#22C55E"}
-                opacity="0.6"
-              />
-            ))}
-          </svg>
-
           <Link href="/">
             <div className="relative z-10">
-              <h1 className="text-3xl font-black text-white tracking-tight">SHILLMONGER</h1>
+              <h1 className="text-3xl font-black text-white tracking-tight">NEX<span className="text-violet-400">IS</span></h1>
             </div>
           </Link>
 
           <div className="relative z-10 text-white">
-            <p className="text-sm font-medium text-[#D4AF37] mb-2">
+            <p className="text-sm font-medium text-violet-400 mb-2">
               You can easily
             </p>
             <h2 className="text-2xl font-bold leading-snug">
@@ -138,14 +112,14 @@ export default function ForgotPasswordPage() {
                       placeholder="you@example.com"
                       required
                       disabled={isLoading}
-                      className="h-12 text-sm px-4 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-background text-foreground focus-visible:ring-0 focus-visible:border-[#D4AF37] placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                      className="h-12 text-sm px-4 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-background text-foreground focus-visible:ring-0 focus-visible:border-violet-500 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                     />
                   </div>
 
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 mt-1 rounded-xl text-sm font-semibold cursor-pointer bg-[#D4AF37] hover:bg-[#C9A22E] text-black shadow-lg shadow-[#D4AF37]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-12 mt-1 rounded-xl text-sm font-semibold cursor-pointer bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>
@@ -170,7 +144,7 @@ export default function ForgotPasswordPage() {
                   <Button
                     type="button"
                     onClick={() => router.push("/auth-page/login")}
-                    className="w-full h-12 mt-4 rounded-xl text-sm font-semibold cursor-pointer bg-[#D4AF37] hover:bg-[#C9A22E] text-black shadow-lg shadow-[#D4AF37]/30 transition-all"
+                    className="w-full h-12 mt-4 rounded-xl text-sm font-semibold cursor-pointer bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-600/30 transition-all"
                   >
                     Back to Login
                   </Button>
@@ -182,7 +156,7 @@ export default function ForgotPasswordPage() {
                 Don&apos;t have an account?{" "}
                 <Link
                   href="/auth-page/login"
-                  className="font-semibold text-[#B8912A] hover:text-[#D4AF37] transition-colors"
+                  className="font-semibold text-violet-600 hover:text-violet-500 transition-colors"
                 >
                   Sign in
                 </Link>

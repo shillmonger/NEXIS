@@ -1,13 +1,14 @@
 "use client";
+
 // components/landing-page/why-platform-section.tsx
 import React from "react";
 import {
-  UserPlus,
+  Bot,
   CreditCard,
-  Link as LinkIcon,
-  TestTubeDiagonal,
-  ArrowUpFromLine,
-  RefreshCw,
+  Crown,
+  ShieldCheck,
+  Swords,
+  Wallet,
 } from "lucide-react";
 import {
   Carousel,
@@ -21,57 +22,62 @@ export default function WhyPlatformSection() {
   const steps = [
     {
       step: "01",
-      title: "Create Account",
-      desc: "Join SHILLMONGER in seconds. Our registration is fast, encrypted, and built to protect your identity from day one.",
-      icon: <UserPlus className="w-[18px] h-[18px] text-blue-500" />,
+      title: "Join & Link Discord",
+      desc: "Create your Nexis identity and connect your Discord account to get started in our Web3 ecosystem.",
+      icon: <Bot className="w-[18px] h-[18px] text-violet-500" />,
+      accentColor: "border-violet-500/20 bg-violet-500/10 text-violet-500",
     },
     {
       step: "02",
-      title: "Connect & Test Demo",
-      desc: "Connect and test on a demo account first to ensure everything works perfectly before using real funds.",
-      icon: <TestTubeDiagonal className="w-[18px] h-[18px] text-emerald-500" />,
+      title: "Verify Crypto Wallet",
+      desc: "Connect your wallet and sign a verification challenge to prove ownership without risking assets.",
+      icon: <Wallet className="w-[18px] h-[18px] text-violet-600" />,
+      accentColor: "border-violet-600/20 bg-violet-600/10 text-violet-600",
     },
     {
       step: "03",
-      title: "Buy Bot Subscription",
-      desc: "Purchase a bot subscription plan that suits your trading goals and budget.",
-      icon: <CreditCard className="w-[18px] h-[18px] text-purple-500" />,
+      title: "Unlock Holder Tiers",
+      desc: "Backend automatically verifies your NXAE holdings to assign your holder tier and sync Discord roles.",
+      icon: <Crown className="w-[18px] h-[18px] text-violet-500" />,
+      accentColor: "border-violet-500/20 bg-violet-500/10 text-violet-500",
     },
     {
       step: "04",
-      title: "Fund & Connect MT5",
-      desc: "Fund real money on your broker, connect to MT5 and link it to your account for automated trading.",
-      icon: <LinkIcon className="w-[18px] h-[18px] text-orange-500" />,
+      title: "Subscribe to Bot Plan",
+      desc: "Choose a subscription plan to unlock full access to our automated moderation bot infrastructure.",
+      icon: <CreditCard className="w-[18px] h-[18px] text-violet-700" />,
+      accentColor: "border-violet-700/20 bg-violet-700/10 text-violet-700",
     },
     {
       step: "05",
-      title: "Withdraw Profits",
-      desc: "Withdraw your profits at the end of your subscription period to your preferred payment method.",
-      icon: <ArrowUpFromLine className="w-[18px] h-[18px] text-amber-500" />,
+      title: "Install & Configure Bot",
+      desc: "Authorize the Nexis bot into your Discord server and set up automated rules, thresholds, and logs.",
+      icon: <ShieldCheck className="w-[18px] h-[18px] text-violet-800" />,
+      accentColor: "border-violet-800/20 bg-violet-800/10 text-violet-800",
     },
     {
       step: "06",
-      title: "Renew or Upgrade",
-      desc: "At the end of each subscription, buy a new one or upgrade to continue using our bot and maximize your trading potential.",
-      icon: <RefreshCw className="w-[18px] h-[18px] text-rose-500" />,
+      title: "Enter Arena & Compete",
+      desc: "Participate in prediction markets, earn XP, climb the leaderboards, and claim ecosystem rewards.",
+      icon: <Swords className="w-[18px] h-[18px] text-violet-900" />,
+      accentColor: "border-violet-900/20 bg-violet-900/10 text-violet-900",
     },
   ];
 
   return (
     <section
       id="why-this-platform"
-      className="mx-auto max-w-[1500px] px-4 lg:px-8 py-20 lg:py-0 w-full"
+      className="mx-auto max-w-[1500px] px-4 lg:px-8 pb-10 lg:py-0 w-full"
     >
       {/* Header */}
       <div className="mb-5">
-
-        <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
+        <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2 text-foreground">
           How It Works
         </h2>
 
         <p className="text-muted-foreground max-w-lg text-base md:text-lg font-light leading-relaxed">
-          A streamlined 6-step journey — from sign-up to subscription renewal
-          with institutional-grade efficiency.
+          A streamlined 6-step journey — from Discord integration and wallet
+          verification to community moderation and Arena predictions.
         </p>
       </div>
 
@@ -93,19 +99,19 @@ export default function WhyPlatformSection() {
             ))}
           </CarouselContent>
           <div className="mt-8 flex items-center justify-center gap-6">
-            <CarouselPrevious className="static translate-y-0 w-11 h-11 bg-primary/8 hover:bg-primary/15 border border-primary/20 rounded-xl" />
-            <CarouselNext className="static translate-y-0 w-11 h-11 bg-primary/8 hover:bg-primary/15 border border-primary/20 rounded-xl" />
+            <CarouselPrevious className="static translate-y-0 w-11 h-11 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 rounded-xl text-violet-500" />
+            <CarouselNext className="static translate-y-0 w-11 h-11 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 rounded-xl text-violet-500" />
           </div>
         </Carousel>
       </div>
 
       {/* Footer rule */}
       <div className="mt-5 flex items-center gap-4">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
         <span className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium whitespace-nowrap">
-          Start your journey today
+          Enter the Nexis Ecosystem
         </span>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
       </div>
     </section>
   );
@@ -118,27 +124,23 @@ type Step = {
   title: string;
   desc: string;
   icon: React.ReactNode;
+  accentColor: string;
 };
 
 function StepCard({ step }: { step: Step }) {
   return (
-    <div className="group relative rounded-2xl cursor-pointer border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.15)] cursor-default overflow-hidden">
-      {/* Top accent line — visible on hover */}
-      <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-primary to-primary/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+    <div className="group relative rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-[0_8px_32px_-8px_rgba(139,92,246,0.25)] cursor-default overflow-hidden">
+      {/* Top accent line — visible on hover using violet-500 */}
+      <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-violet-500 to-violet-800 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
       {/* Step label + Icon */}
-      <div className="flex items-start justify-between mb-4">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-primary">
+      <div className="flex items-start justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-violet-500">
           Step {step.step}
         </span>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-[10px] border transition-colors duration-200 group-hover:opacity-80 ${
-          step.step === "01" ? "border-blue-500/20 bg-blue-500/10 text-blue-500" :
-          step.step === "02" ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500" :
-          step.step === "03" ? "border-purple-500/20 bg-purple-500/10 text-purple-500" :
-          step.step === "04" ? "border-orange-500/20 bg-orange-500/10 text-orange-500" :
-          step.step === "05" ? "border-amber-500/20 bg-amber-500/10 text-amber-500" :
-          "border-rose-500/20 bg-rose-500/10 text-rose-500"
-        }`}>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-[10px] border transition-colors duration-200 group-hover:opacity-80 ${step.accentColor}`}
+        >
           {step.icon}
         </div>
       </div>

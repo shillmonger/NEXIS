@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUp, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ThemeAndScrollProps {
   children?: React.ReactNode;
@@ -35,38 +36,57 @@ export default function ThemeAndScroll({ children }: ThemeAndScrollProps) {
     <>
       {children}
 
-      {/* Floating Scroll to Top Button (Sleek Minimalist Dark/White Toggle) */}
-      {showScrollTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="
-            fixed bottom-20 right-2 sm:bottom-22 sm:right-2 z-[50]          
-            bg-white/90 dark:bg-neutral-800/90 backdrop-blur-md text-neutral-800 dark:text-white border border-neutral-200/80 dark:border-neutral-700/80
-            w-12 h-12 rounded-full
-            flex items-center justify-center
-            shadow-lg shadow-neutral-900/5 dark:shadow-black/20
-            hover:bg-neutral-900 dark:hover:bg-neutral-700 hover:text-white dark:hover:text-white hover:border-neutral-900 dark:hover:border-neutral-600 hover:scale-110
-            active:scale-95
-            transition-all duration-300 cursor-pointer
-          "
-          aria-label="Scroll to top"
-        >
-          <ArrowUp className="w-5 h-5" />
-        </button>
-      )}
+      {/* Floating Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="
+              fixed bottom-20 right-4 sm:bottom-22 sm:right-6 z-50          
+              bg-background/80 dark:bg-card/80 backdrop-blur-md text-foreground border border-border
+              w-12 h-12 rounded-full
+              flex items-center justify-center
+              shadow-lg shadow-violet-950/10 dark:shadow-black/40
+              hover:bg-violet-600 hover:text-white dark:hover:bg-violet-600 hover:border-violet-500 hover:scale-110
+              active:scale-95
+              transition-all duration-300 cursor-pointer
+            "
+            aria-label="Scroll to top"
+          >
+            <ArrowUp className="w-5 h-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Floating Theme Toggle Button */}
       {mounted && (
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="fixed bottom-6 right-2 sm:bottom-8 sm:right-2 z-50 flex items-center justify-center w-12 h-12 rounded-xl
-          bg-gradient-to-tr from-indigo-900 via-indigo-800 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 
-          hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none ring-1 ring-white/20"
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="fixed bottom-6 right-4 sm:bottom-8 sm:right-6 z-50 flex items-center justify-center w-12 h-12 rounded-2xl
+          bg-gradient-to-tr from-violet-900 via-violet-700 to-violet-500 text-white shadow-lg shadow-violet-500/25 transition-all duration-300 
+          hover:shadow-xl hover:shadow-violet-500/40 cursor-pointer focus:outline-none ring-1 ring-white/20"
           aria-label="Toggle theme"
           title="Toggle theme"
         >
-          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+          <motion.div
+            key={theme}
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            transition={{ duration: 0.25 }}
+          >
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5 text-white" />
+            ) : (
+              <Moon className="w-5 h-5 text-white" />
+            )}
+          </motion.div>
+        </motion.button>
       )}
     </>
   );

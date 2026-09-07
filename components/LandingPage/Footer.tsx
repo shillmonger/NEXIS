@@ -1,247 +1,185 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
+import { Montserrat } from "next/font/google";
+import ScrollToTop from "@/components/LandingPage/ScrollToTop";
+
 import {
-  Send,
+  LineChart,
   ShieldCheck,
-  Zap,
-  Coins,
+  Wallet,
+  Activity,
+  Cpu,
+  Bot,
+  Trophy,
+  Dices
 } from "lucide-react";
 import { FaTelegram, FaDiscord, FaTwitter, FaGithub, FaWhatsapp } from "react-icons/fa";
-import { IBM_Plex_Mono } from "next/font/google";
-import ScrollToTop from "./ScrollToTop";
 
-const plexMono = IBM_Plex_Mono({
-  weight: ["400", "500"],
+const montserrat = Montserrat({
   subsets: ["latin"],
-  display: "swap",
+  weight: ["700", "800", "900"],
 });
-
-const footerLinks = {
-  Company: [
-    { name: "Deriv Platform", href: "https://www.deriv.com/" },
-    { name: "TradingView", href: "https://www.tradingview.com/" },
-    { name: "MetaTrader 5", href: "https://www.metatrader5.com/" },
-    { name: "Forex Factory", href: "https://www.forexfactory.com/" },
-  ],
-  Resources: [
-    { name: "Customer Support", href: "/support" },
-    { name: "Community Hub", href: "/community" },
-    { name: "Developers Portal", href: "/developers" },
-    { name: "Guides & Tutorials", href: "/guides" },
-  ],
-  Legal: [
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Cookies Policy", href: "/cookies" },
-    { name: "Refund Policy", href: "/refund" },
-    { name: "Terms & Conditions", href: "/terms" },
-  ],
-};
 
 export default function Footer() {
   const socialLinks = [
-    { name: "Telegram", icon: <FaTelegram size={18} />, href: "#" },
-    { name: "Discord", icon: <FaDiscord size={18} />, href: "#" },
-    { name: "X (Twitter)", icon: <FaTwitter size={18} />, href: "#" },
-    { name: "WhatsApp", icon: <FaWhatsapp size={18} />, href: "#" },
-    { name: "GitHub", icon: <FaGithub size={18} />, href: "#" },
+    { name: "Discord", icon: <FaDiscord size={20} />, href: "#" },
+    { name: "X (Twitter)", icon: <FaTwitter size={20} />, href: "#" },
+    { name: "Telegram", icon: <FaTelegram size={20} />, href: "#" },
+    { name: "GitHub", icon: <FaGithub size={20} />, href: "#" },
+    { name: "Community", icon: <FaWhatsapp size={20} />, href: "#" },
   ];
 
   return (
-    <section className="relative mt-0 lg:mt-10 w-full text-neutral-50 font-sans lg:pb-4">
-      {/* Footer Outer Container — matches Hero's navy-to-indigo gradient theme */}
-      <footer className="m-0 lg:mx-[30px] relative bg-gradient-to-br from-[#14123B] via-[#1D1B4B] to-[#2A2678] border border-[#D4AF37]/10 lg:rounded-[2rem] overflow-hidden shadow-2xl shadow-black/40">
-
-        {/* Background Elements — same signature candlestick motif as Hero, kept faint */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <svg
-            className="absolute inset-0 h-full w-full opacity-[0.07]"
-            viewBox="0 0 1200 550"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <polyline
-              points="0,420 60,400 120,430 180,360 240,380 300,300 360,330 420,260 480,290 540,220 600,250 660,180 720,210 780,150 840,190 900,120 960,160 1020,100 1080,140 1140,80 1200,110"
-              fill="none"
-              stroke="#D4AF37"
-              strokeWidth="2"
-            />
-            {[60, 180, 300, 420, 540, 660, 780, 900, 1020, 1140].map((x, i) => (
-              <rect
-                key={x}
-                x={x - 6}
-                y={i % 2 === 0 ? 400 - i * 28 : 380 - i * 28}
-                width="12"
-                height="34"
-                fill={i % 3 === 0 ? "#EF4444" : "#22C55E"}
-                opacity="0.6"
-              />
-            ))}
-          </svg>
-
-          {/* Subtle Ambient Gold + Indigo Glow, mirroring Hero card lighting */}
-          <div className="absolute left-1/4 top-0 h-[300px] w-[300px] rounded-full bg-[#D4AF37]/10 blur-[110px]" />
-          <div className="absolute right-0 top-0 h-40 bg-gradient-to-b from-indigo-400/10 via-transparent to-transparent w-full pointer-events-none" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-20 max-w-[1500px] mx-auto px-5 lg:px-12 pt-10 md:pt-24 lg:pt-16 pb-5">
-
-          {/* Top Row */}
-          <div className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-16">
-
-            {/* Brand details */}
-            <div className="max-w-sm">
-              <Link href="/" className="inline-flex items-center gap-2.5">
-                <div>
-                  <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
-                    SHILL<span className="text-[#D4AF37]">MONGER</span>
-                  </h2>
-                  <p className={`${plexMono.className} text-[10px] uppercase tracking-[0.2em] font-semibold text-[#D4AF37]`}>
-                    Trading Intelligence
-                  </p>
-                </div>
-              </Link>
-
-              <p className="mt-4 text-sm leading-relaxed text-white/70 font-normal">
-                Automate your trading with confidence. Choose a subscription plan that matches your account size and let our intelligent trading system execute trades whenever valid market opportunities arise.
-              </p>
-
-              {/* Social Icons */}
-              <div className="flex gap-2.5 mt-6">
-                {socialLinks.map((social) => (
-                  <Link
-                    key={social.name}
-                    href={social.href}
-                    aria-label={social.name}
-                    className="w-11 h-11 rounded-xl border border-[#D4AF37]/20 bg-white/5 hover:bg-[#D4AF37]/15 hover:border-[#D4AF37]/50 hover:text-[#D4AF37] transition-all duration-300 flex items-center justify-center text-white"
-                  >
-                    {social.icon}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Navigation links */}
-            <div className="flex flex-col lg:flex-row justify-between lg:justify-end flex-1 lg:flex-initial lg:ml-auto gap-10 lg:gap-16">
-              {Object.entries(footerLinks).map(([title, items]) => (
-                <div key={title} className="min-w-[140px]">
-                  <h3 className={`${plexMono.className} text-xs uppercase tracking-[0.15em] font-bold text-[#D4AF37] mb-5`}>
-                    {title}
-                  </h3>
-                  <ul className="space-y-3">
-                    {items.map((item) => (
-                      <li key={item.name}>
-                        <Link
-                          href={item.href}
-                          className="text-sm text-white/70 hover:text-white transition-colors duration-200 font-medium"
-                        >
-                          {item.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-
-
-          {/* Trust Badges */}
-          <div className="max-w-[1500px] mx-auto mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-[#D4AF37]/15 pt-12">
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/25 flex items-center justify-center shrink-0">
-                <ShieldCheck className="text-[#D4AF37]" size={22} />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm text-white uppercase tracking-wide">Secure Trading</h4>
-                <p className="text-xs text-white/60 mt-1">Your account credentials are encrypted and never shared.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/25 flex items-center justify-center shrink-0">
-                <Zap className="text-[#D4AF37]" size={22} />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm text-white uppercase tracking-wide">Real-Time Execution</h4>
-                <p className="text-xs text-white/60 mt-1">Lightning-fast trade execution on valid market conditions.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/25 flex items-center justify-center shrink-0">
-                <Coins className="text-[#D4AF37]" size={22} />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm text-white uppercase tracking-wide">MT4/MT5 Compatible</h4>
-                <p className="text-xs text-white/60 mt-1">Seamlessly integrates with MetaTrader 4 and 5 platforms.</p>
-              </div>
-            </div>
-          </div>
-
-
-          {/* Financial Disclaimer */}
-          <div className="max-w-[1500px] mx-auto mt-6 space-y-5 text-xs leading-relaxed text-white/60 pt-2">
-
-            {/* Risk Disclosure */}
-            <div className="space-y-2 border-t border-[#D4AF37]/15 pt-6">
-              <p className="text-xs font-normal">
-                <span className={`${plexMono.className} font-bold text-[#D4AF37]`}>RISK DISCLOSURE:</span>{" "}
-                Trading Forex and other financial markets involves substantial risk and may not be suitable for every investor. Our automated trading bot executes trades based on predefined trading strategies and valid market conditions. While our system is designed to identify quality trading opportunities, profits are never guaranteed, and losses can occur. Users should only trade with funds they can afford to lose.
-              </p>
-            </div>
-
-            {/* Service Disclaimer */}
-            <div className="space-y-2 border-t border-[#D4AF37]/15 pt-6">
-              <p className={`${plexMono.className} font-bold text-[#D4AF37] uppercase tracking-wider text-xs`}>
-                SERVICE DISCLAIMER
-              </p>
-
-              <p className="text-xs font-normal">
-                SHILLMONGER provides subscription-based access to an automated trading bot that places trades on connected MetaTrader 5 accounts according to each user's selected plan. The bot only executes trades when valid market conditions are detected and does not force trades during unfavorable market conditions. Performance targets described in each subscription plan are objectives rather than guarantees and may vary depending on market volatility and available trading opportunities.
-              </p>
-            </div>
-
-            {/* User Responsibility */}
-            <div className="space-y-2 border-t border-[#D4AF37]/15 pt-6">
-              <p className={`${plexMono.className} font-bold text-[#D4AF37] uppercase tracking-wider text-xs`}>
-                USER RESPONSIBILITY
-              </p>
-
-              <p className="text-xs font-normal">
-                By subscribing, users acknowledge the risks associated with financial market trading and remain fully responsible for their trading accounts, broker selection, and deposited funds. It is the user's responsibility to ensure their account meets the minimum requirements for their selected subscription plan.
-              </p>
-            </div>
-
-          </div>
-
-          {/* Final Copyright & Details */}
-          <div className="max-w-[1500px] mx-auto border-t border-[#D4AF37]/15 mt-10 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-white/60">
-            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
-              <p className="font-semibold text-white">© {new Date().getFullYear()} SHILLMONGER. All rights reserved.</p>
-              <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-x-4 gap-y-2">
-                <Link href="/landing-page/privacy" className="hover:text-[#D4AF37] transition-colors">
-                  Privacy Policy
-                </Link>
-                <Link href="/landing-page/terms" className="hover:text-[#D4AF37] transition-colors">
-                  Investor Agreement
-                </Link>
-                <Link href="/landing-page/refund" className="hover:text-[#D4AF37] transition-colors">
-                  Refunds Policy
-                </Link>
-                <Link href="/landing-page/security" className="hover:text-[#D4AF37] transition-colors">
-                  Security Policy
-                </Link>
-              </div>
-            </div>
-            <p className="text-center md:text-right max-w-md text-white/50 text-[11px] leading-relaxed">
-              Trading involves risk and profits are never guaranteed. SHILLMONGER provides subscription-based access to an automated trading bot for MetaTrader 5. By using this platform, you acknowledge and accept our Risk Disclosure and Terms of Service.
+    <footer className="bg-background border-t border-border text-foreground pb-10 pt-7 px-4 md:px-10 relative">
+      <div className="max-w-[1500px] mx-auto grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-12 md:gap-8 lg:gap-24">
+        
+        {/* Logo + Platform Description */}
+        <div className="flex flex-col space-y-6 md:col-span-4 lg:col-span-2">
+          <div>
+            <Link href="/" className="flex items-center gap-3 group">
+              {/* Text Logo */}
+              <span
+                className={`${montserrat.className} 
+                text-2xl md:text-3xl font-black italic tracking-tight 
+                bg-gradient-to-b from-foreground to-foreground/40 
+                bg-clip-text text-transparent uppercase`}
+              >
+                NEX<span className="text-violet-500">IS</span>
+              </span>
+            </Link>
+            <p className="mt-5 leading-relaxed text-muted-foreground max-w-sm">
+              Nexis is a Web3 Community Operating System connecting Discord management, NFT holder verification, predictions, XP leaderboards, and subscription moderation bots[cite: 1].
             </p>
           </div>
 
+          {/* Social Media Links */}
+          <div>
+            <h3 className="text-violet-500 font-bold uppercase tracking-wider text-sm mb-4">
+              Join Our Community
+            </h3>
+            <div className="flex flex-wrap gap-4">
+              {socialLinks.map((social) => (
+                <Link
+                  key={social.name}
+                  href={social.href}
+                  className="p-3 bg-secondary/50 rounded-xl hover:bg-violet-600 hover:text-white transition-all duration-300 shadow-sm border border-border text-violet-500"
+                  title={social.name}
+                >
+                  {social.icon}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
-      </footer>
+
+        {/* Platform Modules Section */}
+        <div className="flex flex-col space-y-4">
+          <h3 className="text-[18px] font-bold uppercase tracking-tight flex items-center gap-2 bg-gradient-to-b from-foreground to-foreground/40 bg-clip-text text-transparent">
+            Platform Modules
+          </h3>
+          <ul className="space-y-2 text-muted-foreground">
+            <li><Link href="#" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">NXAE Arena</Link></li>
+            <li><Link href="/LandingPage/api" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Developers API</Link></li>
+            <li><Link href="#" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Prediction Markets</Link></li>
+            <li><Link href="#" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">NFT Marketplace</Link></li>
+            <li><Link href="#" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Market Intelligence</Link></li>
+          </ul>
+        </div>
+
+        {/* Quick Links */}
+        <div className="flex flex-col space-y-4">
+          <h3 className="text-[18px] font-bold uppercase tracking-tight bg-gradient-to-b from-foreground to-foreground/40 bg-clip-text text-transparent">Ecosystem Area</h3>
+          <ul className="space-y-2 text-muted-foreground">
+            <li><Link href="/LandingPage/about" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">About Nexis</Link></li>
+            <li><Link href="/LandingPage/privacy" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Privacy Policy</Link></li>
+            <li><Link href="/LandingPage/terms" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Terms of Service</Link></li>
+            <li><Link href="/LandingPage/docs" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Dev Documentation</Link></li>
+            <li><Link href="/LandingPage/subscribtion" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Bot Pricing Plans</Link></li>
+          </ul>
+        </div>
+
+        {/* Navigation Pages Section */}
+        <div className="flex flex-col space-y-4">
+          <h3 className="text-[18px] font-bold uppercase tracking-tight bg-gradient-to-b from-foreground to-foreground/40 bg-clip-text text-transparent">
+            Our Pages
+          </h3>
+          <ul className="space-y-2 text-muted-foreground">
+            <li><Link href="/auth/login" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Account Login</Link></li>
+            <li><Link href="/auth/register" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Create Account</Link></li>
+            <li><Link href="/LandingPage/learn-more" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Learn More</Link></li>
+            <li><Link href="/LandingPage/contact" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">Contact Support</Link></li>
+            <li><Link href="/dashboard/tier" className="text-[15px] hover:text-violet-500 transition-colors text-muted-foreground">NXAE Holder Tiers</Link></li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Trust Badges */}
+      <div className="max-w-[1300px] mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-10 border-t border-border pt-10">
+        <div className="flex items-center gap-4 text-muted-foreground">
+          <ShieldCheck className="text-violet-500" size={32} />
+          <div>
+            <h4 className="font-bold text-foreground text-sm uppercase">Wallet Verification</h4>
+            <p className="text-xs">Signature verification ensures true NXAE ownership.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 text-muted-foreground">
+          <Bot className="text-violet-600" size={32} />
+          <div>
+            <h4 className="font-bold text-foreground text-sm uppercase">Automated Moderation</h4>
+            <p className="text-xs">Subscription bots protect servers with customizable rule engines.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 text-muted-foreground">
+          <Trophy className="text-violet-700" size={32} />
+          <div>
+            <h4 className="font-bold text-foreground text-sm uppercase">Gamified Ecosystem</h4>
+            <p className="text-xs">Climb leaderboards, achieve streaks, and claim rewards in Arena.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Financial & Web3 Disclaimer */}
+      <div className="max-w-[1500px] mx-auto mt-10 space-y-8 text-[12px] leading-relaxed text-muted-foreground/70 border-t border-border pt-10">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-bold text-foreground">RISK & DISCLAIMER:</span> Participating in Web3, NFT collection holding, and prediction markets involves inherent risk[cite: 1]. Prediction outcomes are settled based on verifiable third-party sources[cite: 1]. Nexis does not custody user private keys or digital assets[cite: 1]. Nexis operates as a Web3 community infrastructure and Discord automation suite[cite: 1]. Past marketplace performance and prediction streaks do not guarantee future reward allocations[cite: 1].
+          </p>
+        </div>
+
+        <div className="space-y-2 border-t border-border/20">
+          <p className="font-bold text-foreground uppercase tracking-widest text-[10px]">
+            Security & Compliance
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Nexis strictly enforces server-side authorization and non-custodial wallet signatures[cite: 1]. Platform data and credentials are kept secure in accordance with production Web3 security standards[cite: 1].
+          </p>
+        </div>
+      </div>
+
+      {/* Final Copyright */}
+      <div className="max-w-[1500px] mx-auto border-t border-border mt-10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
+          <p>© {new Date().getFullYear()} NEXIS — Web3 Community Operating System[cite: 1].</p>
+          <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-start gap-x-4 gap-y-2 text-[12px]">
+            <Link href="/privacy" className="underline hover:text-violet-500 whitespace-nowrap">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="underline hover:text-violet-500 whitespace-nowrap">
+              Terms of Service
+            </Link>
+            <Link href="/docs" className="underline hover:text-violet-500 whitespace-nowrap">
+              Documentation
+            </Link>
+          </div>
+        </div>
+        <p className="italic text-xs text-center md:text-right max-w-md opacity-80">
+          Nexis is a community OS connecting Discord, NFTs, Arena competitions, and moderation bots[cite: 1].
+        </p>
+      </div>
+
       <ScrollToTop />
-    </section>
+    </footer>
   );
 }
