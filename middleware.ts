@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   const { pathname } = request.nextUrl;
 
@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
   ];
 
   // Check if the route is public
-  const isPublicRoute = publicRoutes.some(route => 
+  const isPublicRoute = publicRoutes.some(route =>
     pathname === route || pathname.startsWith(route)
   );
 
@@ -26,8 +26,11 @@ export function middleware(request: NextRequest) {
     // If user is already authenticated and tries to access auth pages, redirect to dashboard
     if (token && (pathname.startsWith('/auth-page') && !pathname.includes('/verify'))) {
       try {
-        const decoded = verifyToken(token);
-        if (decoded) {
+        const secret = new TextEncoder().encode(
+          process.env.NEXTAUTH_SECRET || 'fallback-secret'
+        );
+        const { payload } = await jwtVerify(token, secret);
+        if (payload) {
           return NextResponse.redirect(new URL('/UserDashboard/dashboard', request.url));
         }
       } catch (error) {
@@ -44,8 +47,11 @@ export function middleware(request: NextRequest) {
 
   // Verify token
   try {
-    const decoded = verifyToken(token);
-    if (!decoded) {
+    const secret = new TextEncoder().encode(
+      process.env.NEXTAUTH_SECRET || 'fallback-secret'
+    );
+    const { payload } = await jwtVerify(token, secret);
+    if (!payload) {
       return NextResponse.redirect(new URL('/auth-page/login', request.url));
     }
   } catch (error) {
