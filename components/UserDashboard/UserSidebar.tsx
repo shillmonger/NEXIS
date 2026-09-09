@@ -551,11 +551,19 @@ export default function UserSidebar({
                 Stay
               </button>
               <button
-                onClick={() => {
-                  router.push("/auth-page/login");
-                  toast.success("Successfully signed out");
-                  setShowLogoutConfirm(false);
-                  setCountdown(10);
+                onClick={async () => {
+                  try {
+                    // Call the logout API to clear the auth token
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    toast.success("Successfully signed out");
+                    setShowLogoutConfirm(false);
+                    setCountdown(10);
+                    // Redirect to login page
+                    router.push("/auth-page/login");
+                  } catch (error) {
+                    console.error("Logout error:", error);
+                    toast.error("Failed to sign out");
+                  }
                 }}
                 className="flex-1 px-6 py-3 rounded-lg bg-red-500 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:bg-red-600 transition-colors"
               >

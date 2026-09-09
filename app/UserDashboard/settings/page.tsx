@@ -245,28 +245,22 @@ export default function UserSettingsPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200 py-5">
+      <div className="max-w-5xl mx-auto space-y-8 md:p-10">
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="mb-10">
+          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter  text-foreground">
+            Profile & Settings
+          </h1>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-muted-foreground font-medium uppercase text-xs tracking-widest">
+              Manage your identity and preferences
+            </p>
+            <div className="h-[1px] flex-1 bg-gradient-to-r from-violet-600/50 via-violet-500/50 to-transparent" />
+          </div>
+        </div>
 
-        <main className="flex-1 overflow-y-auto md:p-10 space-y-8">
-          <div className="max-w-5xl mx-auto">
-
-            <div className="max-w-5xl mx-auto">
-            <div className="mb-10">
-              <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter  text-foreground">
-                Profile & Settings
-              </h1>
-              <div className="flex items-center gap-4 mt-2">
-                <p className="text-muted-foreground font-medium uppercase text-xs tracking-widest">
-                  Manage your identity and preferences
-                </p>
-                <div className="h-[1px] flex-1 bg-gradient-to-r from-violet-600/50 via-violet-500/50 to-transparent" />
-              </div>
-            </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left Column */}
               <div className="space-y-6 lg:sticky lg:top-4 lg:self-start">
                 {/* Identity */}
@@ -803,8 +797,15 @@ export default function UserSettingsPage() {
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row gap-3">
                       <button
-                        onClick={() => {
-                          toast.success("Logged out successfully from all devices");
+                        onClick={async () => {
+                          try {
+                            await fetch('/api/auth/logout', { method: 'POST' });
+                            toast.success("Logged out successfully from all devices");
+                            router.push("/auth-page/login");
+                          } catch (error) {
+                            console.error("Logout error:", error);
+                            toast.error("Failed to sign out");
+                          }
                         }}
                         className="flex-1 text-xs font-black uppercase tracking-widest py-3 px-4 rounded-xl border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
                       >
@@ -837,9 +838,6 @@ export default function UserSettingsPage() {
               </div>
             </div>
           </div>
-        </main>
-
-      </div>
 
       {/* Image Crop Modal - UI Only */}
       {showCropModal && (

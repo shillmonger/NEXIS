@@ -23,20 +23,6 @@ export async function middleware(request: NextRequest) {
 
   // If it's a public route, allow access
   if (isPublicRoute) {
-    // If user is already authenticated and tries to access auth pages, redirect to dashboard
-    if (token && (pathname.startsWith('/auth-page') && !pathname.includes('/verify'))) {
-      try {
-        const secret = new TextEncoder().encode(
-          process.env.NEXTAUTH_SECRET || 'fallback-secret'
-        );
-        const { payload } = await jwtVerify(token, secret);
-        if (payload) {
-          return NextResponse.redirect(new URL('/UserDashboard/dashboard', request.url));
-        }
-      } catch (error) {
-        // Invalid token, continue to public route
-      }
-    }
     return NextResponse.next();
   }
 

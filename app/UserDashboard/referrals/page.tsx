@@ -288,7 +288,7 @@ export default function ReferralsPage() {
         </div>
 
         {/* METRICS / STATS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-card rounded-2xl border border-border/80 p-5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
