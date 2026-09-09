@@ -21,11 +21,11 @@ export default function UserNav() {
   const basePath = "/UserDashboard";
 
   const navItems = [
-    { name: "Billing", icon: Wallet, href: `${basePath}/subscription` },
+    { name: "Billing", icon: Wallet, href: `${basePath}/Discord/pricing` },
     { name: "Predict", icon: BarChart3, href: `#` },
     { name: "Home", icon: LayoutDashboard, href: `${basePath}/dashboard` },
     { name: "Analytics", icon: PieChart, href: `${basePath}/my-investments` },
-    { name: "Settings", icon: Settings, href: `${basePath}/user-settings` },
+    { name: "Settings", icon: Settings, href: `${basePath}/settings` },
   ];
 
   const isActive = (href: string) =>
