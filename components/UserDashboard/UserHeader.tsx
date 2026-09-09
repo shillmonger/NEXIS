@@ -109,7 +109,7 @@ export default function UserHeader({
         {/* Connect Wallet Button */}
         <Link
           href="/UserDashboard/wallet"
-          className="hidden sm:flex items-center gap-1 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-full font-bold text-xs tracking-widest transition-colors shadow-lg cursor-pointer"
+          className="hidden sm:flex items-center gap-1 px-3 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-full font-bold text-xs tracking-widest transition-colors shadow-lg cursor-pointer"
         >
           <Wallet className="w-4 h-4" />
           <span>Connect Wallet</span>

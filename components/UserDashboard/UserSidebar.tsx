@@ -7,9 +7,15 @@ import { toast } from "sonner";
 import {
   LayoutDashboard,
   BadgeCheck,
+  DatabaseArrowDown,
   Unplug,
-  Landmark,
+  Activity,
+  UserRoundCog,
+  ChartLine,
+  ChartColumn,
+  ServerPlus,
   BadgeQuestionMark,
+  Medal,
   ChartColumnBig,
   Bitcoin,
   WalletCards,
@@ -28,12 +34,18 @@ import {
   UsersRound,
   ArrowUpRight,
   Settings,
-  Info,
+  WalletMinimal,
+  ChartNoAxesCombined,
+  Cog,
+  ChartSpline,
   Lock,
   LogOut,
   ChevronDown,
   X,
+  ShieldCheck,
 } from "lucide-react";
+import { FaTelegram, FaDiscord, FaTwitter, FaGithub, FaWhatsapp } from "react-icons/fa";
+
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -60,9 +72,9 @@ export default function UserSidebar({
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    "Bot Hub": true,
-    "Web3": true,
-    "Arena": true,
+    "Discord Bot": true,
+    // "Web3": true,
+    // "Arena": true,
     "Community": true,
     "Settings": true,
   });
@@ -121,14 +133,15 @@ export default function UserSidebar({
 
   // Bot Hub - Phase 1 Core
   {
-    name: "Bot Hub",
-    icon: Unplug,
+    name: "Discord Bot",
+    icon: FaDiscord,
     children: [
-      { name: "Bot Plans", icon: BadgeCheck, href: `${basePath}/bots/pricing` },
-      { name: "My Subscriptions", icon: Wallet, href: `${basePath}/bots/subscriptions` },
-      { name: "My Servers", icon: Landmark, href: `${basePath}/bots/servers` },
-      { name: "Install Discord", icon: BadgeQuestionMark, href: `${basePath}/bots/install-discord` },
-      { name: "Bot Activity", icon: ChartColumnBig, href: `${basePath}/bots/activity` },
+      { name: "Bot Pricing", icon: Wallet, href: `${basePath}/Discord/pricing` },
+      { name: "Subscriptions", icon: Gem, href: `${basePath}/Discord/subscriptions` },
+      { name: "Bot Servers", icon: ServerPlus, href: `${basePath}/Discord/servers` },
+      { name: "Bot Activity", icon: Activity, href: `${basePath}/Discord/activity` },
+      { name: "Bot Moderation", icon: Cog, href: `${basePath}/Discord/moderation` },
+      { name: "Install Discord", icon: DatabaseArrowDown, href: `${basePath}/Discord/install` },
     ],
   },
 
@@ -137,23 +150,22 @@ export default function UserSidebar({
     name: "Web3",
     icon: Bitcoin,
     children: [
-      { name: "Wallet", icon: WalletCards, href: `${basePath}/wallet` },
+      { name: "Wallet", icon: WalletMinimal, href: `${basePath}/wallet` },
       { name: "Holdings", icon: Gem, href: `${basePath}/holdings` },
       { name: "Holder Tier", icon: Crown, href: `${basePath}/tier` },
-      { name: "Market", icon: LineChart, href: `${basePath}/market` },
-      { name: "Alerts", icon: Bell, href: `${basePath}/alerts` },
+      { name: "Market", icon: ChartColumn, href: `${basePath}/market` },
     ],
   },
 
   // Arena & Predictions - Phase 2
   {
     name: "Arena",
-    icon: Swords,
+    icon: Trophy,
     children: [
-      { name: "Predictions", icon: Target, href: `${basePath}/predict` },
+      { name: "Predictions", icon: ChartLine, href: `${basePath}/predict` },
       { name: "Leaderboard", icon: Trophy, href: `${basePath}/leaderboard` },
       { name: "Streaks", icon: Flame, href: `${basePath}/streaks` },
-      { name: "Achievements", icon: Award, href: `${basePath}/achievements` },
+      { name: "Achievements", icon: Medal, href: `${basePath}/achievements` },
       { name: "XP & Rewards", icon: Sparkles, href: `${basePath}/xp` },
     ],
   },
@@ -163,8 +175,8 @@ export default function UserSidebar({
     name: "Community",
     icon: Users,
     children: [
-      { name: "TG Channel", icon: UsersRound, href: `#` },
       { name: "Referrals", icon: ArrowUpRight, href: `${basePath}/referrals` },
+      { name: "Nexis Channel", icon: UsersRound, href: `${basePath}/channel` },
     ],
   },
 
@@ -173,9 +185,8 @@ export default function UserSidebar({
     name: "Settings",
     icon: Settings,
     children: [
-      { name: "Profile", icon: Info, href: `${basePath}/profile` },
       { name: "Notifications", icon: Bell, href: `${basePath}/notifications` },
-      { name: "User Settings", icon: Lock, href: `${basePath}/settings` },
+      { name: "User Settings", icon: UserRoundCog, href: `${basePath}/settings` },
     ],
   },
 
@@ -198,7 +209,7 @@ export default function UserSidebar({
     navItems.forEach((item) => {
       if ("children" in item) {
         const hasActive = item.children.some(
-          (child) => pathname === child.href,
+          (child) => isActive(pathname, child.href),
         );
         if (hasActive) {
           setOpenGroups((prev) => ({ ...prev, [item.name]: true }));
@@ -209,6 +220,15 @@ export default function UserSidebar({
 
   const toggleGroup = (name: string) => {
     setOpenGroups((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const isActive = (pathname: string, href: string): boolean => {
+    // For Bot Servers, check if pathname starts with the base path
+    if (href === `${basePath}/Discord/servers`) {
+      return pathname.startsWith(href);
+    }
+    // For other routes, use exact match
+    return pathname === href;
   };
 
   return (
@@ -228,7 +248,7 @@ export default function UserSidebar({
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
           {navItems.map((item) => {
             if ("href" in item) {
               const active = pathname === item.href;
@@ -256,7 +276,7 @@ export default function UserSidebar({
 
             const isOpen = !!openGroups[item.name];
             const hasActiveChild = item.children.some(
-              (c) => pathname === c.href,
+              (c) => isActive(pathname, c.href),
             );
 
             return (
@@ -289,7 +309,7 @@ export default function UserSidebar({
                 >
                   <div className="ml-4 mt-1 mb-1 pl-4 border-l border-border space-y-0.5">
                     {item.children.map((child) => {
-                      const childActive = pathname === child.href;
+                      const childActive = isActive(pathname, child.href);
                       const isChatWithAgent = child.name === "Chat with Agent";
                       return (
                         <Link
@@ -398,7 +418,7 @@ export default function UserSidebar({
 
                 const isOpen = !!openGroups[item.name];
                 const hasActiveChild = item.children.some(
-                  (c) => pathname === c.href,
+                  (c) => isActive(pathname, c.href),
                 );
 
                 return (
@@ -431,7 +451,7 @@ export default function UserSidebar({
                     >
                       <div className="ml-4 mt-1 mb-1 pl-4 border-l border-border space-y-0.5">
                         {item.children.map((child) => {
-                          const childActive = pathname === child.href;
+                          const childActive = isActive(pathname, child.href);
                           const isChatWithAgent = child.name === "Chat with Agent";
                           return (
                             <Link
