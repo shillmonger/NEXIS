@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const dashboardUrl = `${appUrl}/UserDashboard/dashboard`;
     await sendEmail(
       user.email,
-      'Your Account Has Been Verified — Welcome to SHILLMONGER',
+      'Your Account Has Been Verified — Welcome to NEXIS',
       getWelcomeEmail(user.userName, dashboardUrl)
     );
 

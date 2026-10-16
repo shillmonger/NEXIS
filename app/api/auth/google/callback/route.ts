@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { generateToken } from '@/lib/auth';
+import { sendEmail, getWelcomeEmail } from '@/lib/email';
+import { getAppUrl } from '@/lib/config';
 
 export async function GET(request: NextRequest) {
   try {
@@ -106,6 +108,19 @@ export async function GET(request: NextRequest) {
           agreedToTerms: true,
           lastLoginAt: new Date(),
         });
+
+        // Send welcome email for new Google users
+        const appUrl = getAppUrl();
+        const dashboardUrl = `${appUrl}/UserDashboard/dashboard`;
+        const emailSent = await sendEmail(
+          googleUser.email,
+          'Welcome to NEXIS! Your Account is Ready',
+          getWelcomeEmail(finalUsername, dashboardUrl)
+        );
+
+        if (!emailSent) {
+          console.error('Failed to send welcome email to:', googleUser.email);
+        }
       }
     } else {
       // Update last login
