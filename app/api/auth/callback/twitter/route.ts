@@ -142,6 +142,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // If no avatar from API, construct it from screenName
+    if (!avatar && screenName) {
+      avatar = `https://unavatar.io/twitter/${screenName}`;
+    }
+
     // Connect to database
     await connectDB();
 
@@ -180,7 +185,7 @@ export async function GET(request: NextRequest) {
 
         user = await User.create({
           userName: finalUsername,
-          email: email || `${finalUsername}@no-email.twitter`,
+          email: email || `${finalUsername}@twitter`,
           twitterId: userId,
           provider: 'twitter',
           emailVerified: !!email,

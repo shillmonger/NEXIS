@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.twimg.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'unavatar.io',
+      },
     ],
     domains: ['lh3.googleusercontent.com'],
   },
