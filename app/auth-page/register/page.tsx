@@ -267,7 +267,6 @@ export default function SignupPage() {
               <div className="grid grid-cols-3 gap-3">
                 <Button
                   type="button"
-                  onClick={() => window.location.href = '/api/auth/twitter'}
                   className="h-11 rounded-xl cursor-pointer bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-foreground border border-neutral-200 dark:border-neutral-700 transition-all"
                 >
                   <svg

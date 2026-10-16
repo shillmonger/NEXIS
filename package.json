@@ -29,7 +29,6 @@
     "next-auth": "^4.24.15",
     "next-themes": "^0.4.6",
     "nodemailer": "^9.0.5",
-    "oauth-1.0a": "^2.2.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.87.0",

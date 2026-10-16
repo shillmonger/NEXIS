@@ -17,9 +17,8 @@ export interface IUser extends Document {
   agreedToTerms: boolean;
   createdAt: Date;
   updatedAt: Date;
-  provider?: 'local' | 'google' | 'twitter';
+  provider?: 'local' | 'google';
   googleId?: string;
-  twitterId?: string;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -45,15 +44,10 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     provider: {
       type: String,
-      enum: ['local', 'google', 'twitter'],
+      enum: ['local', 'google'],
       default: 'local',
     },
     googleId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    twitterId: {
       type: String,
       unique: true,
       sparse: true,
