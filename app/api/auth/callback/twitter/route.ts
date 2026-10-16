@@ -92,13 +92,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user info from Twitter
+    // Get user info from Twitter using API v2
     const verifyRequest = {
-      url: 'https://api.twitter.com/1.1/account/verify_credentials.json',
+      url: 'https://api.twitter.com/2/users/me?user.fields=profile_image_url,username',
       method: 'GET',
-      data: {
-        include_email: 'true',
-      },
     };
 
     const verifyHeaders = oauth.toHeader(oauth.authorize(verifyRequest, oauthTokenObj));
@@ -108,19 +105,18 @@ export async function GET(request: NextRequest) {
       headers: verifyHeaders as unknown as HeadersInit,
     });
 
-    if (!verifyResponse.ok) {
-      console.error('Twitter verify credentials error');
-      // Continue without email verification
-    }
-
     let twitterUser = null;
     let email = '';
     let avatar = '';
 
     if (verifyResponse.ok) {
-      twitterUser = await verifyResponse.json();
-      email = twitterUser.email || '';
-      avatar = twitterUser.profile_image_url_https?.replace('_normal', '_bigger') || '';
+      const data = await verifyResponse.json();
+      twitterUser = data.data;
+      avatar = twitterUser?.profile_image_url?.replace('_normal', '_400x400') || '';
+      console.log('Twitter user data:', data);
+    } else {
+      const errorText = await verifyResponse.text();
+      console.error('Twitter verify credentials error:', errorText);
     }
 
     // Connect to database
@@ -161,7 +157,7 @@ export async function GET(request: NextRequest) {
 
         user = await User.create({
           userName: finalUsername,
-          email: email || `${finalUsername}@twitter.placeholder`,
+          email: email || `${finalUsername}@twitter`,
           twitterId: userId,
           provider: 'twitter',
           emailVerified: !!email,
