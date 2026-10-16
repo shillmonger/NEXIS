@@ -2,16 +2,8 @@
 
 import React, { useState } from "react";
 import {
-  Settings2,
-  Server,
+  ShieldCheck,
   Activity,
-  Hash,
-  Bell,
-  Shield,
-  User,
-  Sliders,
-  Globe,
-  Clock,
   Save,
   RotateCcw,
   CheckCircle2,
@@ -19,9 +11,6 @@ import {
   AlertTriangle,
   Plus,
   X,
-  Info,
-  ChevronRight,
-  ShieldAlert,
 } from "lucide-react";
 
 import {
@@ -33,72 +22,96 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-// ─── TYPES & INTERFACES ──────────────────────────────────────────────────────
+// ─── TYPES ───────────────────────────────────────────────────────────────────
 
-interface NotificationPreferences {
-  emailAlerts: boolean;
-  discordDmAlerts: boolean;
-  webhookAlerts: boolean;
-  weeklyDigest: boolean;
-}
+interface ServerSettingsState {
+  // Channels
+  logChannel: string;
+  auditChannel: string;
 
-interface ModerationPreferences {
-  strictnessLevel: "Low" | "Medium" | "High" | "Extreme";
-  autoDeleteSpam: boolean;
-  autoQuarantineRaids: boolean;
-  requireVerification: boolean;
-}
-
-interface FeatureToggles {
+  // Bot modules
   autoMod: boolean;
   welcomeMessages: boolean;
   analyticsTracking: boolean;
   customCommands: boolean;
   reactionRoles: boolean;
-}
 
-interface ServerSettingsState {
-  logChannel: string;
-  auditChannel: string;
-  notificationPrefs: NotificationPreferences;
-  moderationPrefs: ModerationPreferences;
+  // Protection
+  spamProtection: boolean;
+  floodProtection: boolean;
+  suspiciousActivityDetection: boolean;
+  autoQuarantineRaids: boolean;
+  requireVerification: boolean;
+
+  // Enforcement
+  autoWarnEnabled: boolean;
+  autoDeleteMessages: boolean;
+  autoTimeoutEnabled: boolean;
+  autoKickEnabled: boolean;
+  autoBanEnabled: boolean;
+  warnThreshold: number;
+  timeoutDurationMinutes: number;
+  kickThreshold: number;
+  banThreshold: number;
+
+  // Notifications
+  emailAlerts: boolean;
+  discordDmAlerts: boolean;
+  webhookAlerts: boolean;
+  weeklyDigest: boolean;
+
+  // Exemptions
   exemptRoles: string[];
   exemptUsers: string[];
   exemptChannels: string[];
-  features: FeatureToggles;
-  timezone: string;
-  language: string;
 }
 
-// ─── INITIAL MOCK CONFIGURATION ─────────────────────────────────────────────
+type BooleanKey = {
+  [K in keyof ServerSettingsState]: ServerSettingsState[K] extends boolean ? K : never;
+}[keyof ServerSettingsState];
+
+type NumberKey = {
+  [K in keyof ServerSettingsState]: ServerSettingsState[K] extends number ? K : never;
+}[keyof ServerSettingsState];
+
+type ExemptionType = "role" | "user" | "channel";
+
+// ─── INITIAL DATA ────────────────────────────────────────────────────────────
 
 const INITIAL_SETTINGS: ServerSettingsState = {
   logChannel: "#mod-logs",
   auditChannel: "#security-audit",
-  notificationPrefs: {
-    emailAlerts: true,
-    discordDmAlerts: true,
-    webhookAlerts: false,
-    weeklyDigest: true,
-  },
-  moderationPrefs: {
-    strictnessLevel: "High",
-    autoDeleteSpam: true,
-    autoQuarantineRaids: true,
-    requireVerification: false,
-  },
-  exemptRoles: ["Administrator", "Server Moderator", "VIP Member"],
+
+  autoMod: true,
+  welcomeMessages: true,
+  analyticsTracking: true,
+  customCommands: true,
+  reactionRoles: false,
+
+  spamProtection: true,
+  floodProtection: true,
+  suspiciousActivityDetection: true,
+  autoQuarantineRaids: true,
+  requireVerification: false,
+
+  autoWarnEnabled: true,
+  autoDeleteMessages: true,
+  autoTimeoutEnabled: true,
+  autoKickEnabled: false,
+  autoBanEnabled: true,
+  warnThreshold: 3,
+  timeoutDurationMinutes: 60,
+  kickThreshold: 5,
+  banThreshold: 7,
+
+  emailAlerts: true,
+  discordDmAlerts: true,
+  webhookAlerts: false,
+  weeklyDigest: true,
+
+  exemptRoles: ["Administrator", "Moderator", "VIP Member"],
   exemptUsers: ["ServerOwner#0001", "LeadDev#1337"],
-  exemptChannels: ["#testing-bot", "#staff-chat"],
-  features: {
-    autoMod: true,
-    welcomeMessages: true,
-    analyticsTracking: true,
-    customCommands: true,
-    reactionRoles: false,
-  },
-  timezone: "America/New_York (UTC-05:00)",
-  language: "en-US (English - United States)",
+  exemptChannels: ["#bot-testing", "#staff-chat"],
 };
 
 const MOCK_SERVER_INFO = {
@@ -112,95 +125,237 @@ const MOCK_SERVER_INFO = {
   botLatency: "24 ms",
 };
 
-// ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
+const CHANNEL_OPTIONS = [
+  "#mod-logs",
+  "#bot-actions",
+  "#mod-private",
+  "#security-audit",
+  "#admin-alerts",
+  "#raid-watch",
+];
 
-export default function ServerSettingsPage({
-  params,
+const TIMEOUT_OPTIONS = [
+  { value: 15, label: "15 minutes" },
+  { value: 30, label: "30 minutes" },
+  { value: 60, label: "1 hour" },
+  { value: 720, label: "12 hours" },
+  { value: 1440, label: "24 hours" },
+];
+
+// ─── SMALL UI PIECES ─────────────────────────────────────────────────────────
+
+function Toggle({
+  checked,
+  onChange,
+  label,
 }: {
-  params?: { id?: string };
+  checked: boolean;
+  onChange: () => void;
+  label: string;
 }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 ${
+        checked ? "bg-indigo-600" : "bg-muted-foreground/25"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
+
+function Card({
+  title,
+  description,
+  children,
+  className = "",
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={`bg-card rounded-2xl border border-border/80 shadow-sm p-6 ${className}`}
+    >
+      <div className="pb-4 border-b border-border/60">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+        )}
+      </div>
+      <div className="[&>*:last-child]:border-b-0 [&>*:last-child]:pb-0">{children}</div>
+    </section>
+  );
+}
+
+function Row({
+  label,
+  description,
+  children,
+  indent = false,
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+  indent?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-4 py-3.5 border-b border-border/60 ${
+        indent ? "pl-5" : ""
+      }`}
+    >
+      <div className="min-w-0">
+        <div className={`text-sm ${indent ? "text-muted-foreground" : "text-foreground/90"}`}>
+          {label}
+        </div>
+        {description && (
+          <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
+        )}
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}
+
+function SelectBox({
+  value,
+  onChange,
+  children,
+}: {
+  value: string | number;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="bg-muted/40 border border-border rounded-lg px-3 py-1.5 text-xs font-medium outline-none focus:ring-2 ring-indigo-500/30 cursor-pointer max-w-[190px]"
+    >
+      {children}
+    </select>
+  );
+}
+
+function ExemptList({
+  title,
+  items,
+  addLabel,
+  onAdd,
+  onRemove,
+}: {
+  title: string;
+  items: string[];
+  addLabel: string;
+  onAdd: () => void;
+  onRemove: (item: string) => void;
+}) {
+  return (
+    <div className="py-3.5 border-b border-border/60 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-foreground/90">{title}</span>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="cursor-pointer text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1"
+        >
+          <Plus className="w-3.5 h-3.5" /> {addLabel}
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {items.length === 0 && <span className="text-xs text-muted-foreground">None added</span>}
+        {items.map((item) => (
+          <span
+            key={item}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-muted border border-border"
+          >
+            {item}
+            <button
+              type="button"
+              onClick={() => onRemove(item)}
+              aria-label={`Remove ${item}`}
+              className="cursor-pointer hover:text-rose-500 transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+
+export default function ServerSettingsPage({ params }: { params?: { id?: string } }) {
   const serverId = params?.id || MOCK_SERVER_INFO.id;
 
   const [settings, setSettings] = useState<ServerSettingsState>(INITIAL_SETTINGS);
-  const [initialState] = useState<ServerSettingsState>(INITIAL_SETTINGS);
+  const [savedState, setSavedState] = useState<ServerSettingsState>(INITIAL_SETTINGS);
 
-  // Modal & Feedback States
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
-  // Exemption Tag In-Flight Inputs
   const [isExemptionModalOpen, setIsExemptionModalOpen] = useState(false);
-  const [exemptionType, setExemptionType] = useState<"role" | "user" | "channel">("role");
+  const [exemptionType, setExemptionType] = useState<ExemptionType>("role");
   const [newExemptionInput, setNewExemptionInput] = useState("");
 
-  const isDirty = JSON.stringify(settings) !== JSON.stringify(initialState);
+  const isDirty = JSON.stringify(settings) !== JSON.stringify(savedState);
 
-  const handleToggleFeature = (key: keyof FeatureToggles) => {
-    setSettings((prev) => ({
-      ...prev,
-      features: { ...prev.features, [key]: !prev.features[key] },
-    }));
-  };
+  const toggle = (key: BooleanKey) =>
+    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleToggleNotification = (key: keyof NotificationPreferences) => {
-    setSettings((prev) => ({
-      ...prev,
-      notificationPrefs: {
-        ...prev.notificationPrefs,
-        [key]: !prev.notificationPrefs[key],
-      },
-    }));
-  };
+  const setNumber = (key: NumberKey, value: string) =>
+    setSettings((prev) => ({ ...prev, [key]: Math.max(1, parseInt(value, 10) || 1) }));
 
-  const handleToggleModPref = (key: keyof ModerationPreferences) => {
-    if (typeof settings.moderationPrefs[key] === "boolean") {
-      setSettings((prev) => ({
-        ...prev,
-        moderationPrefs: {
-          ...prev.moderationPrefs,
-          [key]: !prev.moderationPrefs[key],
-        },
-      }));
-    }
-  };
+  const setChannel = (key: "logChannel" | "auditChannel", value: string) =>
+    setSettings((prev) => ({ ...prev, [key]: value }));
 
-  const handleSaveChanges = () => {
+  const handleSave = () => {
+    setSavedState(settings);
     setShowSavedFeedback(true);
-    setTimeout(() => setShowSavedFeedback(false), 4000);
+    setTimeout(() => setShowSavedFeedback(false), 3500);
   };
 
-  const handleResetChanges = () => {
-    setSettings(initialState);
+  const handleReset = () => setSettings(savedState);
+
+  const listKey = (type: ExemptionType) =>
+    type === "role" ? "exemptRoles" : type === "user" ? "exemptUsers" : "exemptChannels";
+
+  const openExemptionModal = (type: ExemptionType) => {
+    setExemptionType(type);
+    setNewExemptionInput("");
+    setIsExemptionModalOpen(true);
   };
 
   const handleAddExemption = () => {
-    if (!newExemptionInput.trim()) return;
-    const formatted =
-      exemptionType === "channel" && !newExemptionInput.startsWith("#")
-        ? `#${newExemptionInput.trim()}`
-        : newExemptionInput.trim();
-
-    if (exemptionType === "role") {
-      setSettings((prev) => ({ ...prev, exemptRoles: [...prev.exemptRoles, formatted] }));
-    } else if (exemptionType === "user") {
-      setSettings((prev) => ({ ...prev, exemptUsers: [...prev.exemptUsers, formatted] }));
-    } else {
-      setSettings((prev) => ({ ...prev, exemptChannels: [...prev.exemptChannels, formatted] }));
-    }
-
+    const raw = newExemptionInput.trim();
+    if (!raw) return;
+    const value = exemptionType === "channel" && !raw.startsWith("#") ? `#${raw}` : raw;
+    const key = listKey(exemptionType);
+    setSettings((prev) =>
+      prev[key].includes(value) ? prev : { ...prev, [key]: [...prev[key], value] }
+    );
     setNewExemptionInput("");
     setIsExemptionModalOpen(false);
   };
 
-  const handleRemoveExemption = (type: "role" | "user" | "channel", item: string) => {
-    if (type === "role") {
-      setSettings((prev) => ({ ...prev, exemptRoles: prev.exemptRoles.filter((r) => r !== item) }));
-    } else if (type === "user") {
-      setSettings((prev) => ({ ...prev, exemptUsers: prev.exemptUsers.filter((u) => u !== item) }));
-    } else {
-      setSettings((prev) => ({ ...prev, exemptChannels: prev.exemptChannels.filter((c) => c !== item) }));
-    }
+  const handleRemoveExemption = (type: ExemptionType, item: string) => {
+    const key = listKey(type);
+    setSettings((prev) => ({ ...prev, [key]: prev[key].filter((i) => i !== item) }));
   };
 
   const handleRemoveBot = () => {
@@ -213,44 +368,43 @@ export default function ServerSettingsPage({
   };
 
   return (
-       <div className="min-h-screen bg-background text-foreground transition-colors duration-200 py-5">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200 py-5">
       <div className="max-w-[1500px] mx-auto space-y-8">
-
-        {/* Top Notification Feedback */}
+        {/* Saved toast */}
         {showSavedFeedback && (
-          <div className="fixed top-6 right-6 z-50 bg-emerald-500 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 border border-emerald-400">
-            <CheckCircle2 className="w-5 h-5" />
-            <div className="text-xs font-bold uppercase tracking-wider">
-              Server Settings Updated Successfully
-            </div>
+          <div className="fixed top-6 right-6 z-50 bg-emerald-500 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-4 duration-300">
+            <CheckCircle2 className="w-4 h-4" />
+            <span className="text-xs font-semibold">Settings saved</span>
           </div>
         )}
 
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/60 pb-8">
-          <div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter">
-              Server Settings
-            </h1>
-            <p className="text-muted-foreground text-sm font-medium mt-1 max-w-2xl">
-              Manage bot operational parameters, channel logging, feature toggles, and safety exemptions for target server.
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-black uppercase tracking-tighter">
+                Server Settings
+              </h1>
+              <p className="text-muted-foreground text-sm font-medium mt-0.5 max-w-2xl">
+                Manage logging, bot modules, moderation and safety exemptions for this server.
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 self-start md:self-auto">
             <button
               type="button"
               disabled={!isDirty}
-              onClick={handleResetChanges}
-              className="cursor-pointer bg-muted hover:bg-muted/80 disabled:opacity-40 text-foreground border border-border px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
+              onClick={handleReset}
+              className="cursor-pointer bg-muted hover:bg-muted/80 disabled:opacity-40 disabled:cursor-not-allowed text-foreground border border-border px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
             >
               <RotateCcw className="w-4 h-4" /> Reset
             </button>
             <button
               type="button"
               disabled={!isDirty}
-              onClick={handleSaveChanges}
-              className="cursor-pointer bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white shadow-lg shadow-violet-600/20 px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
+              onClick={handleSave}
+              className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white shadow-lg shadow-indigo-600/20 px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4" /> Save Changes
             </button>
@@ -306,493 +460,261 @@ export default function ServerSettingsPage({
           </div>
         </div>
 
-        {/* MAIN 2-COLUMN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* LEFT / MAIN COLUMN (2 Cols) */}
-          <div className="lg:col-span-2 space-y-8">
-
-            {/* LOG CHANNEL SELECTION */}
-            <div className="bg-card rounded-2xl border border-border/80 shadow-sm p-6 space-y-6">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-4">
-                <Hash className="w-5 h-5 text-violet-600" />
-                <div>
-                  <h3 className="text-lg font-black uppercase tracking-tight">Channel Logging</h3>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Configure target Discord text channels for moderation events and system audits.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block">
-                    Primary Moderation Channel
-                  </label>
-                  <select
-                    value={settings.logChannel}
-                    onChange={(e) => setSettings({ ...settings, logChannel: e.target.value })}
-                    className="w-full bg-muted/30 border border-border/80 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:ring-2 ring-[#ED1C24]/30 outline-none cursor-pointer"
-                  >
-                    <option value="#mod-logs">#mod-logs</option>
-                    <option value="#bot-actions">#bot-actions</option>
-                    <option value="#mod-private">#mod-private</option>
-                  </select>
-                  <p className="text-[10px] text-muted-foreground">
-                    Receives warnings, timeouts, kicks, bans, and message deletion logs.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block">
-                    Security Audit Channel
-                  </label>
-                  <select
-                    value={settings.auditChannel}
-                    onChange={(e) => setSettings({ ...settings, auditChannel: e.target.value })}
-                    className="w-full bg-muted/30 border border-border/80 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:ring-2 ring-[#ED1C24]/30 outline-none cursor-pointer"
-                  >
-                    <option value="#security-audit">#security-audit</option>
-                    <option value="#admin-alerts">#admin-alerts</option>
-                    <option value="#raid-watch">#raid-watch</option>
-                  </select>
-                  <p className="text-[10px] text-muted-foreground">
-                    Receives high-priority raid warnings, API failures, and mass join flags.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* FEATURE TOGGLES */}
-            <div className="bg-card rounded-2xl border border-border/80 shadow-sm p-6 space-y-6">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-4">
-                <Sliders className="w-5 h-5 text-violet-600" />
-                <div>
-                  <h3 className="text-lg font-black uppercase tracking-tight">Active Bot Modules</h3>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Enable or disable specific bot systems operating on this guild.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                <div className="p-4 rounded-xl border border-border/60 bg-muted/20 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold text-xs">Automated AutoMod</h4>
-                    <p className="text-[11px] text-muted-foreground">Filters phishing links & profanity.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.features.autoMod}
-                    onChange={() => handleToggleFeature("autoMod")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-
-                <div className="p-4 rounded-xl border border-border/60 bg-muted/20 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold text-xs">Welcome Messages</h4>
-                    <p className="text-[11px] text-muted-foreground">Greets new members on join.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.features.welcomeMessages}
-                    onChange={() => handleToggleFeature("welcomeMessages")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-
-                <div className="p-4 rounded-xl border border-border/60 bg-muted/20 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold text-xs">Analytics Tracking</h4>
-                    <p className="text-[11px] text-muted-foreground">Logs activity & message metrics.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.features.analyticsTracking}
-                    onChange={() => handleToggleFeature("analyticsTracking")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-
-                <div className="p-4 rounded-xl border border-border/60 bg-muted/20 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold text-xs">Custom Commands</h4>
-                    <p className="text-[11px] text-muted-foreground">Enables prefix and slash triggers.</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.features.customCommands}
-                    onChange={() => handleToggleFeature("customCommands")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-
-              </div>
-            </div>
-
-            {/* EXEMPTIONS (ROLES, USERS, CHANNELS) */}
-            <div className="bg-card rounded-2xl border border-border/80 shadow-sm p-6 space-y-6">
-              <div className="flex items-center justify-between border-b border-border/60 pb-4">
-                <div>
-                  <h3 className="text-lg font-black uppercase tracking-tight">Exempt Lists</h3>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    Entities excluded from security scans, automated muting, or rate limits.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                
-                {/* Exempt Roles */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                      <Shield className="w-3.5 h-3.5 text-violet-600" /> Exempt Roles
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExemptionType("role");
-                        setIsExemptionModalOpen(true);
-                      }}
-                      className="text-xs font-bold text-violet-600 hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Role
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {settings.exemptRoles.map((role) => (
-                      <span
-                        key={role}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-muted border border-border"
-                      >
-                        {role}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExemption("role", role)}
-                          className="hover:text-rose-500 transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Exempt Users */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-blue-400" /> Exempt Users
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExemptionType("user");
-                        setIsExemptionModalOpen(true);
-                      }}
-                      className="text-xs font-bold text-violet-600 hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add User
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {settings.exemptUsers.map((user) => (
-                      <span
-                        key={user}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-muted border border-border"
-                      >
-                        {user}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExemption("user", user)}
-                          className="hover:text-rose-500 transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Exempt Channels */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                      <Hash className="w-3.5 h-3.5 text-emerald-400" /> Exempt Channels
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExemptionType("channel");
-                        setIsExemptionModalOpen(true);
-                      }}
-                      className="text-xs font-bold text-violet-600 hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Channel
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {settings.exemptChannels.map((chan) => (
-                      <span
-                        key={chan}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-muted border border-border"
-                      >
-                        {chan}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExemption("channel", chan)}
-                          className="hover:text-rose-500 transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* DANGER ZONE: REMOVE BOT SECTION */}
-            <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center gap-2 text-rose-500 font-black uppercase text-sm">
-                <AlertTriangle className="w-5 h-5" /> Danger Zone
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Disconnecting or removing the bot will revoke all active security scanning, stop AutoMod rules, and purge guild-level cache.
-              </p>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowRemoveModal(true)}
-                  className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" /> Remove Bot From Server
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          {/* RIGHT COLUMN (1 Col): PREFERENCES & LOCALIZATION */}
+        {/* MAIN 2-COLUMN GRID (stacks on mobile, left/right on large screens) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* ───────── LEFT COLUMN ───────── */}
           <div className="space-y-8">
+            <Card title="Channels" description="Where the bot posts moderation and security events.">
+              <Row label="Moderation log" description="Warnings, timeouts, kicks, bans, deletions">
+                <SelectBox value={settings.logChannel} onChange={(v) => setChannel("logChannel", v)}>
+                  {CHANNEL_OPTIONS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </SelectBox>
+              </Row>
+              <Row label="Security audit" description="Raid warnings, API failures, mass-join flags">
+                <SelectBox value={settings.auditChannel} onChange={(v) => setChannel("auditChannel", v)}>
+                  {CHANNEL_OPTIONS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </SelectBox>
+              </Row>
+            </Card>
 
-            {/* MODERATION PREFERENCES */}
-            <div className="bg-card rounded-2xl border border-border/80 shadow-sm p-6 space-y-5">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <ShieldAlert className="w-5 h-5 text-violet-600" />
-                <h3 className="font-black uppercase tracking-tight text-base">Safety Level</h3>
-              </div>
+            <Card title="Bot Modules" description="Turn bot systems on or off for this server.">
+              <Row label="AutoMod" description="Filters phishing links and profanity">
+                <Toggle checked={settings.autoMod} onChange={() => toggle("autoMod")} label="AutoMod" />
+              </Row>
+              <Row label="Welcome messages" description="Greets new members when they join">
+                <Toggle checked={settings.welcomeMessages} onChange={() => toggle("welcomeMessages")} label="Welcome messages" />
+              </Row>
+              <Row label="Analytics tracking" description="Logs activity and message metrics">
+                <Toggle checked={settings.analyticsTracking} onChange={() => toggle("analyticsTracking")} label="Analytics tracking" />
+              </Row>
+              <Row label="Custom commands" description="Enables prefix and slash triggers">
+                <Toggle checked={settings.customCommands} onChange={() => toggle("customCommands")} label="Custom commands" />
+              </Row>
+              <Row label="Reaction roles">
+                <Toggle checked={settings.reactionRoles} onChange={() => toggle("reactionRoles")} label="Reaction roles" />
+              </Row>
+            </Card>
 
-              <div className="space-y-3">
-                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block">
-                  Enforcement Strictness
-                </label>
-                <select
-                  value={settings.moderationPrefs.strictnessLevel}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      moderationPrefs: {
-                        ...settings.moderationPrefs,
-                        strictnessLevel: e.target.value as any,
-                      },
-                    })
-                  }
-                  className="w-full bg-muted/30 border border-border/80 rounded-xl px-3.5 py-2.5 text-xs font-bold uppercase focus:ring-2 ring-[#ED1C24]/30 outline-none cursor-pointer"
-                >
-                  <option value="Low">Low - Warnings Only</option>
-                  <option value="Medium">Medium - Auto-Delete Spam</option>
-                  <option value="High">High - Auto-Mute & Purge</option>
-                  <option value="Extreme">Extreme - Auto-Ban Suspicious</option>
-                </select>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span>Auto-Quarantine Raids</span>
-                  <input
-                    type="checkbox"
-                    checked={settings.moderationPrefs.autoQuarantineRaids}
-                    onChange={() => handleToggleModPref("autoQuarantineRaids")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span>Require Captcha Verification</span>
-                  <input
-                    type="checkbox"
-                    checked={settings.moderationPrefs.requireVerification}
-                    onChange={() => handleToggleModPref("requireVerification")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* NOTIFICATION PREFERENCES */}
-            <div className="bg-card rounded-2xl border border-border/80 shadow-sm p-6 space-y-5">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <Bell className="w-5 h-5 text-violet-600" />
-                <h3 className="font-black uppercase tracking-tight text-base">Notifications</h3>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span>Owner Email Alerts</span>
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationPrefs.emailAlerts}
-                    onChange={() => handleToggleNotification("emailAlerts")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span>Discord Owner DM Alerts</span>
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationPrefs.discordDmAlerts}
-                    onChange={() => handleToggleNotification("discordDmAlerts")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span>Weekly Summary Digest</span>
-                  <input
-                    type="checkbox"
-                    checked={settings.notificationPrefs.weeklyDigest}
-                    onChange={() => handleToggleNotification("weeklyDigest")}
-                    className="w-4 h-4 rounded border-border text-violet-600 focus:ring-[#ED1C24] cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* TIMEZONE & LOCALIZATION */}
-            <div className="bg-card rounded-2xl border border-border/80 shadow-sm p-6 space-y-5">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <Globe className="w-5 h-5 text-violet-600" />
-                <h3 className="font-black uppercase tracking-tight text-base">Localization</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> Timezone
-                  </label>
-                  <select
-                    value={settings.timezone}
-                    onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
-                    className="w-full bg-muted/30 border border-border/80 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:ring-2 ring-[#ED1C24]/30 outline-none cursor-pointer"
-                  >
-                    <option value="America/New_York (UTC-05:00)">America/New_York (UTC-05:00)</option>
-                    <option value="Europe/London (UTC+00:00)">Europe/London (UTC+00:00)</option>
-                    <option value="Asia/Tokyo (UTC+09:00)">Asia/Tokyo (UTC+09:00)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block">
-                    Bot Response Language
-                  </label>
-                  <select
-                    value={settings.language}
-                    onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-                    className="w-full bg-muted/30 border border-border/80 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:ring-2 ring-[#ED1C24]/30 outline-none cursor-pointer"
-                  >
-                    <option value="en-US (English - United States)">en-US (English - United States)</option>
-                    <option value="es-ES (Spanish - Espanol)">es-ES (Spanish - Espanol)</option>
-                    <option value="de-DE (German - Deutsch)">de-DE (German - Deutsch)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
+            <Card title="Protection" description="Real-time threat monitoring.">
+              <Row label="Spam protection" description="Duplicate messages and rapid link blasts">
+                <Toggle checked={settings.spamProtection} onChange={() => toggle("spamProtection")} label="Spam protection" />
+              </Row>
+              <Row label="Flood protection" description="More than 5 messages in 3 seconds">
+                <Toggle checked={settings.floodProtection} onChange={() => toggle("floodProtection")} label="Flood protection" />
+              </Row>
+              <Row label="Suspicious activity detection" description="Rapid joins and brand-new account flags">
+                <Toggle
+                  checked={settings.suspiciousActivityDetection}
+                  onChange={() => toggle("suspiciousActivityDetection")}
+                  label="Suspicious activity detection"
+                />
+              </Row>
+              <Row label="Auto-quarantine raids">
+                <Toggle checked={settings.autoQuarantineRaids} onChange={() => toggle("autoQuarantineRaids")} label="Auto-quarantine raids" />
+              </Row>
+              <Row label="Require captcha verification">
+                <Toggle checked={settings.requireVerification} onChange={() => toggle("requireVerification")} label="Require captcha verification" />
+              </Row>
+            </Card>
           </div>
 
+          {/* ───────── RIGHT COLUMN ───────── */}
+          <div className="space-y-8">
+            <Card title="Automated Enforcement" description="What the bot does automatically when rules are broken.">
+              <Row label="Auto warn">
+                <Toggle checked={settings.autoWarnEnabled} onChange={() => toggle("autoWarnEnabled")} label="Auto warn" />
+              </Row>
+              <Row label="Auto delete flagged messages">
+                <Toggle checked={settings.autoDeleteMessages} onChange={() => toggle("autoDeleteMessages")} label="Auto delete flagged messages" />
+              </Row>
+
+              <Row label="Auto mute (timeout)">
+                <Toggle checked={settings.autoTimeoutEnabled} onChange={() => toggle("autoTimeoutEnabled")} label="Auto mute" />
+              </Row>
+              {settings.autoTimeoutEnabled && (
+                <>
+                  <Row label="Warnings before timeout" indent>
+                    <SelectBox value={settings.warnThreshold} onChange={(v) => setNumber("warnThreshold", v)}>
+                      {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </SelectBox>
+                  </Row>
+                  <Row label="Timeout duration" indent>
+                    <SelectBox
+                      value={settings.timeoutDurationMinutes}
+                      onChange={(v) => setNumber("timeoutDurationMinutes", v)}
+                    >
+                      {TIMEOUT_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </SelectBox>
+                  </Row>
+                </>
+              )}
+
+              <Row label="Auto kick">
+                <Toggle checked={settings.autoKickEnabled} onChange={() => toggle("autoKickEnabled")} label="Auto kick" />
+              </Row>
+              {settings.autoKickEnabled && (
+                <Row label="Warnings before kick" indent>
+                  <SelectBox value={settings.kickThreshold} onChange={(v) => setNumber("kickThreshold", v)}>
+                    {Array.from({ length: 14 }, (_, i) => i + 2).map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </SelectBox>
+                </Row>
+              )}
+
+              <Row label="Auto ban">
+                <Toggle checked={settings.autoBanEnabled} onChange={() => toggle("autoBanEnabled")} label="Auto ban" />
+              </Row>
+              {settings.autoBanEnabled && (
+                <Row label="Warnings before permanent ban" indent>
+                  <SelectBox value={settings.banThreshold} onChange={(v) => setNumber("banThreshold", v)}>
+                    {Array.from({ length: 18 }, (_, i) => i + 3).map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </SelectBox>
+                </Row>
+              )}
+            </Card>
+
+            <Card title="Exemptions" description="Excluded from automated moderation and rate limits.">
+              <ExemptList
+                title="Roles"
+                items={settings.exemptRoles}
+                addLabel="Add role"
+                onAdd={() => openExemptionModal("role")}
+                onRemove={(i) => handleRemoveExemption("role", i)}
+              />
+              <ExemptList
+                title="Users"
+                items={settings.exemptUsers}
+                addLabel="Add user"
+                onAdd={() => openExemptionModal("user")}
+                onRemove={(i) => handleRemoveExemption("user", i)}
+              />
+              <ExemptList
+                title="Channels"
+                items={settings.exemptChannels}
+                addLabel="Add channel"
+                onAdd={() => openExemptionModal("channel")}
+                onRemove={(i) => handleRemoveExemption("channel", i)}
+              />
+            </Card>
+
+            <Card title="Notifications" description="How you get alerted about important events.">
+              <Row label="Owner email alerts">
+                <Toggle checked={settings.emailAlerts} onChange={() => toggle("emailAlerts")} label="Owner email alerts" />
+              </Row>
+              <Row label="Owner Discord DM alerts">
+                <Toggle checked={settings.discordDmAlerts} onChange={() => toggle("discordDmAlerts")} label="Owner Discord DM alerts" />
+              </Row>
+              <Row label="Webhook alerts">
+                <Toggle checked={settings.webhookAlerts} onChange={() => toggle("webhookAlerts")} label="Webhook alerts" />
+              </Row>
+              <Row label="Weekly summary digest">
+                <Toggle checked={settings.weeklyDigest} onChange={() => toggle("weeklyDigest")} label="Weekly summary digest" />
+              </Row>
+            </Card>
+          </div>
+        </div>
+
+        {/* DANGER ZONE (full width) */}
+        <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-rose-500 font-black uppercase text-sm">
+              <AlertTriangle className="w-5 h-5" /> Danger Zone
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Removing the bot stops all security scanning and AutoMod rules, and clears the guild cache.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowRemoveModal(true)}
+            className="cursor-pointer shrink-0 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 self-start md:self-auto"
+          >
+            <Trash2 className="w-4 h-4" /> Remove Bot From Server
+          </button>
         </div>
 
         {/* ADD EXEMPTION MODAL */}
         <Dialog open={isExemptionModalOpen} onOpenChange={setIsExemptionModalOpen}>
           <DialogContent className="sm:max-w-md bg-card border-border">
             <DialogHeader>
-              <DialogTitle className="font-black uppercase text-lg flex items-center gap-2">
-                <Plus className="w-5 h-5 text-violet-600" /> Add {exemptionType.toUpperCase()} Exemption
+              <DialogTitle className="text-base font-bold capitalize">
+                Add exempt {exemptionType}
               </DialogTitle>
+              <DialogDescription className="text-xs">
+                Enter the name or ID to exclude from automated moderation.
+              </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-2">
-              <p className="text-xs text-muted-foreground">
-                Enter the name or ID of the {exemptionType} you want to add to the exemption list.
-              </p>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block">
-                  {exemptionType} Identifier
-                </label>
-                <input
-                  type="text"
-                  placeholder={
-                    exemptionType === "role"
-                      ? "e.g. VIP Member"
-                      : exemptionType === "user"
-                      ? "e.g. Username#0000"
-                      : "e.g. #lounge"
-                  }
-                  value={newExemptionInput}
-                  onChange={(e) => setNewExemptionInput(e.target.value)}
-                  className="w-full bg-muted/30 border border-border/80 rounded-xl px-4 py-2.5 text-xs font-medium focus:ring-2 ring-[#ED1C24]/30 outline-none"
-                />
-              </div>
-            </div>
+            <input
+              type="text"
+              autoFocus
+              placeholder={
+                exemptionType === "role"
+                  ? "e.g. VIP Member"
+                  : exemptionType === "user"
+                  ? "e.g. Username#0000"
+                  : "e.g. #lounge"
+              }
+              value={newExemptionInput}
+              onChange={(e) => setNewExemptionInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddExemption()}
+              className="w-full bg-muted/40 border border-border rounded-lg px-3.5 py-2.5 text-sm outline-none focus:ring-2 ring-indigo-500/30"
+            />
 
             <DialogFooter className="gap-2">
               <button
                 type="button"
                 onClick={() => setIsExemptionModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-muted hover:bg-muted/80 border border-border transition-colors cursor-pointer"
+                className="cursor-pointer px-4 py-2 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 border border-border transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleAddExemption}
-                className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+                className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-xs font-semibold transition-colors"
               >
-                Add Exemption
+                Add
               </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* REMOVE BOT CONFIRMATION MODAL */}
+        {/* REMOVE BOT MODAL */}
         <Dialog open={showRemoveModal} onOpenChange={setShowRemoveModal}>
           <DialogContent className="sm:max-w-md bg-card border-border">
             <DialogHeader>
-              <DialogTitle className="font-black uppercase text-lg text-rose-500 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" /> Remove Bot Confirmation
+              <DialogTitle className="text-base font-bold text-rose-500 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" /> Remove bot?
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground pt-2">
-                Are you sure you want to remove the bot from <span className="font-bold text-foreground">{MOCK_SERVER_INFO.name}</span>? This action will disconnect real-time security monitoring immediately.
+                This removes the bot from{" "}
+                <span className="font-semibold text-foreground">{MOCK_SERVER_INFO.name}</span> and
+                disconnects real-time security monitoring immediately.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl text-rose-400 font-mono text-[11px] my-2">
-              Warning: All active warning counts and custom moderation rules linked to this server ID ({serverId}) will be unlinked.
+            <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg text-rose-400 text-xs">
+              Warning counts and custom moderation rules linked to server {serverId} will be
+              unlinked.
             </div>
 
             <DialogFooter className="gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowRemoveModal(false)}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-muted hover:bg-muted/80 border border-border transition-colors cursor-pointer"
+                className="cursor-pointer px-4 py-2 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 border border-border transition-colors"
               >
                 Cancel
               </button>
@@ -800,14 +722,13 @@ export default function ServerSettingsPage({
                 type="button"
                 disabled={isRemoving}
                 onClick={handleRemoveBot}
-                className="bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-rose-600/20"
+                className="cursor-pointer bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-xs font-semibold transition-colors"
               >
-                {isRemoving ? "Removing..." : "Yes, Remove Bot"}
+                {isRemoving ? "Removing..." : "Yes, remove bot"}
               </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
       </div>
     </div>
   );

@@ -7,7 +7,16 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'i.postimg.cc',
       },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.twimg.com',
+      },
     ],
+    domains: ['lh3.googleusercontent.com'],
   },
 };
 

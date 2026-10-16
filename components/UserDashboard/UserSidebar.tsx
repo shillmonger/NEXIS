@@ -14,7 +14,7 @@ import {
   ChartLine,
   ChartColumn,
   ServerPlus,
-  BadgeQuestionMark,
+  Globe,
   Medal,
   ChartColumnBig,
   Bitcoin,
@@ -46,7 +46,6 @@ import {
 } from "lucide-react";
 import { FaTelegram, FaDiscord, FaTwitter, FaGithub, FaWhatsapp } from "react-icons/fa";
 
-
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -67,7 +66,7 @@ export default function UserSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [userRole, setUserRole] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string>("");
   const [countdown, setCountdown] = useState(10);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -75,8 +74,8 @@ export default function UserSidebar({
     "Discord Bot": true,
     // "Web3": true,
     // "Arena": true,
-    "Community": true,
-    "Settings": true,
+    Community: true,
+    Settings: true,
   });
 
   const basePath = "/UserDashboard";
@@ -86,8 +85,14 @@ export default function UserSidebar({
       try {
         const response = await fetch("/api/user/info");
         const data = await response.json();
+        console.log("User data response:", data);
         if (data.success && data.user.role) {
-          setUserRole(data.user.role);
+          const role = Array.isArray(data.user.role) ? data.user.role[0] : data.user.role;
+          setUserRole(role);
+          console.log("User role set to:", role);
+        } else if (response.status === 401 || data.error === "Unauthorized") {
+          // Redirect to login if unauthorized
+          window.location.href = "/auth-page/login";
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -126,90 +131,83 @@ export default function UserSidebar({
     return () => clearTimeout(timer);
   }, [showLogoutConfirm, countdown]);
 
-
-
   const navItems: NavItem[] = [
-  { name: "Dashboard", icon: LayoutDashboard, href: `${basePath}/dashboard` },
+    { name: "Dashboard", icon: LayoutDashboard, href: `${basePath}/dashboard` },
 
-  // Bot Hub - Phase 1 Core
-  {
-    name: "Discord Bot",
-    icon: FaDiscord,
-    children: [
-      { name: "Bot Pricing", icon: Wallet, href: `${basePath}/Discord/pricing` },
-      { name: "Subscriptions", icon: Gem, href: `${basePath}/Discord/subscriptions` },
-      { name: "Bot Servers", icon: ServerPlus, href: `${basePath}/Discord/servers` },
-      { name: "Bot Activity", icon: Activity, href: `${basePath}/Discord/activity` },
-      { name: "Bot Moderation", icon: Cog, href: `${basePath}/Discord/moderation` },
-      { name: "Install Discord", icon: DatabaseArrowDown, href: `${basePath}/Discord/install` },
-    ],
-  },
+    // Bot Hub - Phase 1 Core
+    {
+      name: "Discord Bot",
+      icon: FaDiscord,
+      children: [
+        { name: "Bot Pricing", icon: Wallet, href: `${basePath}/Discord/pricing` },
+        { name: "My Subscriptions", icon: Gem, href: `${basePath}/Discord/subscriptions` }, 
+        { name: "MY Bot Servers", icon: ServerPlus, href: `${basePath}/Discord/servers` },
+        { name: "Install Nexis bot", icon: DatabaseArrowDown, href: `${basePath}/Discord/install` },
+      ],
+    },
 
-  // Web3 - Phase 1 Core
-  {
-    name: "Web3",
-    icon: Bitcoin,
-    children: [
-      { name: "Wallet", icon: WalletMinimal, href: `${basePath}/wallet` },
-      { name: "Holdings", icon: Gem, href: `${basePath}/holdings` },
-      { name: "Holder Tier", icon: Crown, href: `${basePath}/tier` },
-      { name: "Market", icon: ChartColumn, href: `${basePath}/market` },
-    ],
-  },
+    // Web3 - Phase 1 Core
+    {
+      name: "Web3",
+      icon: Globe,
+      children: [
+        { name: "Wallet", icon: WalletMinimal, href: `${basePath}/wallet` },
+        { name: "Holdings", icon: Gem, href: `${basePath}/holdings` },
+        { name: "Holder Tier", icon: Crown, href: `${basePath}/tier` },
+        { name: "Market", icon: ChartColumn, href: `${basePath}/market` },
+      ],
+    },
 
-  // Arena & Predictions - Phase 2
-  {
-    name: "Arena",
-    icon: Trophy,
-    children: [
-      { name: "Predictions", icon: ChartLine, href: `${basePath}/predict` },
-      { name: "Leaderboard", icon: Trophy, href: `${basePath}/leaderboard` },
-      { name: "Streaks", icon: Flame, href: `${basePath}/streaks` },
-      { name: "Achievements", icon: Medal, href: `${basePath}/achievements` },
-      { name: "XP & Rewards", icon: Sparkles, href: `${basePath}/xp` },
-    ],
-  },
+    // Arena & Predictions - Phase 2
+    {
+      name: "Arena",
+      icon: Trophy,
+      children: [
+        { name: "Predictions", icon: ChartLine, href: `${basePath}/predict` },
+        { name: "Leaderboard", icon: Trophy, href: `${basePath}/leaderboard` },
+        { name: "Streaks", icon: Flame, href: `${basePath}/streaks` },
+        { name: "Achievements", icon: Medal, href: `${basePath}/achievements` },
+        { name: "XP & Rewards", icon: Sparkles, href: `${basePath}/xp` },
+      ],
+    },
 
-  // Community
-  {
-    name: "Community",
-    icon: Users,
-    children: [
-      { name: "Referrals", icon: ArrowUpRight, href: `${basePath}/referrals` },
-      { name: "Nexis Channel", icon: UsersRound, href: `${basePath}/channel` },
-    ],
-  },
+    // Community
+    {
+      name: "Community",
+      icon: Users,
+      children: [
+        { name: "Referrals", icon: ArrowUpRight, href: `${basePath}/referrals` },
+        { name: "Nexis Channel", icon: UsersRound, href: `${basePath}/channel` },
+      ],
+    },
 
-  // Settings
-  {
-    name: "Settings",
-    icon: Settings,
-    children: [
-      { name: "Notifications", icon: Bell, href: `${basePath}/notifications` },
-      { name: "User Settings", icon: UserRoundCog, href: `${basePath}/settings` },
-    ],
-  },
+    // Settings
+    {
+      name: "Settings",
+      icon: Settings,
+      children: [
+        { name: "Notifications", icon: Bell, href: `${basePath}/notifications` },
+        { name: "User Settings", icon: UserRoundCog, href: `${basePath}/settings` },
+      ],
+    },
 
-  ...(userRole.includes("admin")
-    ? [
-        {
-          name: "Switch to Admin",
-          icon: Lock,
-          href: `/admin-dashboard/dashboard`,
-        },
-      ]
-    : []),
-
-];
-
-
-
+    // Only for users with role admin
+    ...(userRole === "admin"
+      ? [
+          {
+            name: "Switch to Admin",
+            icon: Lock,
+            href: `/AdminDashboard/overview`,
+          },
+        ]
+      : []),
+  ];
 
   useEffect(() => {
     navItems.forEach((item) => {
       if ("children" in item) {
-        const hasActive = item.children.some(
-          (child) => isActive(pathname, child.href),
+        const hasActive = item.children.some((child) =>
+          isActive(pathname, child.href)
         );
         if (hasActive) {
           setOpenGroups((prev) => ({ ...prev, [item.name]: true }));
@@ -227,6 +225,10 @@ export default function UserSidebar({
     if (href === `${basePath}/Discord/servers`) {
       return pathname.startsWith(href);
     }
+    // For Bot Pricing, check if pathname starts with the base path
+    if (href === `${basePath}/Discord/pricing`) {
+      return pathname.startsWith(href);
+    }
     // For other routes, use exact match
     return pathname === href;
   };
@@ -234,21 +236,21 @@ export default function UserSidebar({
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-65 border-r h-screen bg-background flex-col shadow-xl">
+      <aside className="hidden md:flex w-65 border-r border-violet-500/20 h-screen bg-background/95 backdrop-blur-xl flex-col">
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-border">
+        <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-violet-500/20 ">
           <div className="flex flex-col">
             <h1 className="text-xl font-black uppercase tracking-tighter text-foreground">
-              NEX<span className="text-violet-500">IS</span>
+              NEXIS HUB
             </h1>
-            <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+            <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground/80 uppercase">
               Web3 Community Operating System
             </p>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-1 scrollbar-thin scrollbar-thumb-violet-500/30 scrollbar-track-transparent">
           {navItems.map((item) => {
             if ("href" in item) {
               const active = pathname === item.href;
@@ -258,13 +260,13 @@ export default function UserSidebar({
                   href={item.href}
                   className={`group flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${
                     active
-                      ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-600/40 ring-1 ring-violet-400/30"
+                      : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground hover:ring-1 hover:ring-violet-500/20"
                   }`}
                 >
                   <item.icon
-                    className={`w-5 h-5 mr-5 transition-transform ${
-                      active ? "scale-110" : "group-hover:scale-110"
+                    className={`w-5 h-5 mr-4 transition-transform ${
+                      active ? "scale-110 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" : "group-hover:scale-110"
                     }`}
                   />
                   <span className="text-[12px] font-black uppercase tracking-widest">
@@ -275,30 +277,30 @@ export default function UserSidebar({
             }
 
             const isOpen = !!openGroups[item.name];
-            const hasActiveChild = item.children.some(
-              (c) => isActive(pathname, c.href),
+            const hasActiveChild = item.children.some((c) =>
+              isActive(pathname, c.href)
             );
 
             return (
               <div key={item.name} className="flex flex-col">
                 <button
                   onClick={() => toggleGroup(item.name)}
-                  className={`group w-full flex items-center px-4 py-2.5 rounded-sm transition-all duration-200 cursor-pointer ${
+                  className={`group w-full flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
                     hasActiveChild
-                      ? "text-violet-600"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      ? "text-violet-400 bg-violet-500/10"
+                      : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                   }`}
                 >
                   <item.icon
-                    className={`w-5 h-5 mr-5 transition-transform ${
-                      hasActiveChild ? "scale-110" : "group-hover:scale-110"
+                    className={`w-5 h-5 mr-4 transition-transform ${
+                      hasActiveChild ? "scale-110 text-violet-400" : "group-hover:scale-110"
                     }`}
                   />
                   <span className="flex-1 text-left text-[12px] font-black uppercase tracking-widest">
                     {item.name}
                   </span>
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-300 ${
+                    className={`w-4 h-4 transition-transform duration-300 opacity-70 ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
@@ -307,7 +309,7 @@ export default function UserSidebar({
                 <div
                   className={`${isOpen ? "block" : "hidden"} transition-all duration-300 ease-in-out`}
                 >
-                  <div className="ml-4 mt-1 mb-1 pl-4 border-l border-border space-y-0.5">
+                  <div className="ml-3 mt-1 mb-1 pl-3 border-l border-violet-500/20 space-y-0.5">
                     {item.children.map((child) => {
                       const childActive = isActive(pathname, child.href);
                       const isChatWithAgent = child.name === "Chat with Agent";
@@ -315,16 +317,16 @@ export default function UserSidebar({
                         <Link
                           key={child.name}
                           href={child.href}
-                          className={`group flex items-center gap-3 px-3 py-2 rounded-sm transition-all duration-200 ${
+                          className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ${
                             childActive
-                              ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
-                              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-md shadow-violet-600/40"
+                              : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                           }`}
                         >
                           <child.icon
                             className={`w-4 h-4 flex-shrink-0 transition-transform ${
                               childActive
-                                ? "scale-110"
+                                ? "scale-110 drop-shadow-[0_0_4px_rgba(167,139,250,0.7)]"
                                 : "group-hover:scale-110"
                             }`}
                           />
@@ -332,7 +334,7 @@ export default function UserSidebar({
                             {child.name}
                           </span>
                           {isChatWithAgent && unreadCount > 0 && (
-                            <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-black flex items-center justify-center">
+                            <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-cyan-500 text-black text-[9px] font-black flex items-center justify-center">
                               {unreadCount}
                             </span>
                           )}
@@ -347,10 +349,10 @@ export default function UserSidebar({
         </nav>
 
         {/* Logout */}
-        <div className="flex-shrink-0 border-t border-border px-4 py-2">
+        <div className="flex-shrink-0 border-t border-violet-500/20 px-3 py-3 bg-gradient-to-t from-violet-600/5 to-transparent">
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="flex items-center cursor-pointer w-full px-4 py-3 text-red-500 hover:bg-red-500/10 transition-all rounded-sm group"
+            className="flex items-center cursor-pointer w-full px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all rounded-lg group"
           >
             <LogOut className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
             <span className="text-xs font-black uppercase tracking-widest">
@@ -364,24 +366,22 @@ export default function UserSidebar({
       {sidebarOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity"
+            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-md lg:hidden transition-opacity"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside
-            className="fixed top-0 left-0 w-full h-full bg-background z-[100] flex flex-col shadow-2xl lg:hidden"
-          >
+          <aside className="fixed top-0 left-0 w-full h-full bg-background/95 backdrop-blur-xl z-[100] flex flex-col shadow-2xl lg:hidden border-r border-violet-500/20">
             {/* Mobile Header */}
-            <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-border">
+            <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-violet-500/20 bg-gradient-to-r from-violet-600/5 via-transparent to-cyan-500/5">
               <div className="flex flex-col">
                 <h1 className="text-xl font-black uppercase tracking-tighter text-foreground">
-                  NEX<span className="text-violet-500">IS</span>
+                  NEX<span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">IS</span>
                 </h1>
-                <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+                <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground/80 uppercase">
                   Web3 Community Operating System
                 </p>
               </div>
               <button
-                className="rounded-lg text-foreground"
+                className="rounded-lg text-foreground p-1.5 hover:bg-violet-500/10"
                 onClick={() => setSidebarOpen(false)}
               >
                 <X className="w-5 h-5" />
@@ -389,7 +389,7 @@ export default function UserSidebar({
             </div>
 
             {/* Mobile Nav */}
-            <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1 scrollbar-thin scrollbar-thumb-violet-500/30 scrollbar-track-transparent">
               {navItems.map((item) => {
                 if ("href" in item) {
                   const active = pathname === item.href;
@@ -397,15 +397,15 @@ export default function UserSidebar({
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`group flex items-center px-4 py-2.5 rounded-sm transition-all duration-200 ${
+                      className={`group flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${
                         active
-                          ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-600/40"
+                          : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                       }`}
                       onClick={() => setSidebarOpen(false)}
                     >
                       <item.icon
-                        className={`w-5 h-5 mr-5 transition-transform ${
+                        className={`w-5 h-5 mr-4 transition-transform ${
                           active ? "scale-110" : "group-hover:scale-110"
                         }`}
                       />
@@ -417,30 +417,30 @@ export default function UserSidebar({
                 }
 
                 const isOpen = !!openGroups[item.name];
-                const hasActiveChild = item.children.some(
-                  (c) => isActive(pathname, c.href),
+                const hasActiveChild = item.children.some((c) =>
+                  isActive(pathname, c.href)
                 );
 
                 return (
                   <div key={item.name} className="flex flex-col">
                     <button
                       onClick={() => toggleGroup(item.name)}
-                      className={`group w-full flex items-center px-4 py-2.5 rounded-sm transition-all duration-200 cursor-pointer ${
+                      className={`group w-full flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
                         hasActiveChild
-                          ? "text-violet-600"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          ? "text-violet-400 bg-violet-500/10"
+                          : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                       }`}
                     >
                       <item.icon
-                        className={`w-5 h-5 mr-5 transition-transform ${
-                          hasActiveChild ? "scale-110" : "group-hover:scale-110"
+                        className={`w-5 h-5 mr-4 transition-transform ${
+                          hasActiveChild ? "scale-110 text-violet-400" : "group-hover:scale-110"
                         }`}
                       />
                       <span className="flex-1 text-left text-[12px] font-black uppercase tracking-widest">
                         {item.name}
                       </span>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform duration-300 ${
+                        className={`w-4 h-4 transition-transform duration-300 opacity-70 ${
                           isOpen ? "rotate-180" : ""
                         }`}
                       />
@@ -449,7 +449,7 @@ export default function UserSidebar({
                     <div
                       className={`${isOpen ? "block" : "hidden"} transition-all duration-300 ease-in-out`}
                     >
-                      <div className="ml-4 mt-1 mb-1 pl-4 border-l border-border space-y-0.5">
+                      <div className="ml-3 mt-1 mb-1 pl-3 border-l border-violet-500/20 space-y-0.5">
                         {item.children.map((child) => {
                           const childActive = isActive(pathname, child.href);
                           const isChatWithAgent = child.name === "Chat with Agent";
@@ -457,25 +457,23 @@ export default function UserSidebar({
                             <Link
                               key={child.name}
                               href={child.href}
-                              className={`group flex items-center gap-3 px-3 py-2 rounded-sm transition-all duration-200 ${
+                              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ${
                                 childActive
-                                  ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
-                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                  ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-md shadow-violet-600/40"
+                                  : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                               }`}
                               onClick={() => setSidebarOpen(false)}
                             >
                               <child.icon
                                 className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                                  childActive
-                                    ? "scale-110"
-                                    : "group-hover:scale-110"
+                                  childActive ? "scale-110" : "group-hover:scale-110"
                                 }`}
                               />
                               <span className="text-[11px] font-black uppercase tracking-widest">
                                 {child.name}
                               </span>
                               {isChatWithAgent && unreadCount > 0 && (
-                                <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-black flex items-center justify-center">
+                                <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-cyan-500 text-black text-[9px] font-black flex items-center justify-center">
                                   {unreadCount}
                                 </span>
                               )}
@@ -490,13 +488,13 @@ export default function UserSidebar({
             </nav>
 
             {/* Mobile Logout */}
-            <div className="flex-shrink-0 border-t border-border px-4 py-2">
+            <div className="flex-shrink-0 border-t border-violet-500/20 px-3 py-3">
               <button
                 onClick={() => {
                   setSidebarOpen(false);
                   setShowLogoutConfirm(true);
                 }}
-                className="flex items-center cursor-pointer w-full px-4 py-3 text-red-500 hover:bg-red-500/10 transition-all rounded-sm group"
+                className="flex items-center cursor-pointer w-full px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all rounded-lg group"
               >
                 <LogOut className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-black uppercase tracking-widest">
@@ -511,18 +509,18 @@ export default function UserSidebar({
       {/* Logout Modal */}
       {showLogoutConfirm && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-4"
           onClick={() => setShowLogoutConfirm(false)}
         >
           <div
-            className="bg-background/95 border border-border rounded-[1.5rem] shadow-2xl w-full max-w-sm p-8 text-center"
+            className="bg-background/95 border border-violet-500/30 rounded-2xl shadow-2xl shadow-violet-900/20 w-full max-w-sm p-8 text-center backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-black uppercase tracking-tighter text-foreground mb-2">
               Logout?
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Are you sure you want to sign out? You'll need to log in again to
+              Are you sure you want to sign out? You&apos;ll need to log in again to
               access your account.
             </p>
 
@@ -530,11 +528,11 @@ export default function UserSidebar({
             <div className="mb-6">
               <div className="flex justify-between text-xs text-muted-foreground mb-2">
                 <span>Auto-closing in...</span>
-                <span className="text-violet-600 font-bold">{countdown}s</span>
+                <span className="text-violet-400 font-bold">{countdown}s</span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-2">
+              <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-violet-600 h-2 rounded-full transition-all duration-1000 ease-linear shadow-lg shadow-violet-600/30"
+                  className="bg-gradient-to-r from-violet-600 to-cyan-500 h-2 rounded-full transition-all duration-1000 ease-linear shadow-[0_0_12px_rgba(139,92,246,0.5)]"
                   style={{ width: `${(countdown / 10) * 100}%` }}
                 />
               </div>
@@ -546,7 +544,7 @@ export default function UserSidebar({
                   setShowLogoutConfirm(false);
                   setCountdown(10);
                 }}
-                className="flex-1 px-6 py-3 rounded-lg bg-violet-600 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:bg-violet-700 transition-colors shadow-lg shadow-violet-600/30"
+                className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:from-violet-500 hover:to-violet-400 transition-all shadow-lg shadow-violet-600/30"
               >
                 Stay
               </button>
@@ -554,7 +552,7 @@ export default function UserSidebar({
                 onClick={async () => {
                   try {
                     // Call the logout API to clear the auth token
-                    await fetch('/api/auth/logout', { method: 'POST' });
+                    await fetch("/api/auth/logout", { method: "POST" });
                     toast.success("Successfully signed out");
                     setShowLogoutConfirm(false);
                     setCountdown(10);
@@ -565,7 +563,7 @@ export default function UserSidebar({
                     toast.error("Failed to sign out");
                   }
                 }}
-                className="flex-1 px-6 py-3 rounded-lg bg-red-500 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:bg-red-600 transition-colors"
+                className="flex-1 px-6 py-3 rounded-lg bg-red-500/90 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:bg-red-500 transition-colors"
               >
                 Exit
               </button>

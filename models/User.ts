@@ -4,7 +4,7 @@ export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   userName: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   emailVerified: boolean;
   emailVerifiedAt?: Date;
   verificationToken?: string;
@@ -17,6 +17,9 @@ export interface IUser extends Document {
   agreedToTerms: boolean;
   createdAt: Date;
   updatedAt: Date;
+  provider?: 'local' | 'google' | 'twitter';
+  googleId?: string;
+  twitterId?: string;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -38,8 +41,22 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     passwordHash: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+      required: false,
+    },
+    provider: {
+      type: String,
+      enum: ['local', 'google', 'twitter'],
+      default: 'local',
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    twitterId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     emailVerified: {
       type: Boolean,
@@ -83,6 +100,11 @@ const UserSchema: Schema<IUser> = new Schema(
   }
 );
 
-const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+// Delete existing model to force schema reload
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
 
 export default User;

@@ -15,124 +15,123 @@ export default function SubscriptionPage() {
 
   const accessPlans = [
     {
-      amount: 0,
-      type: "Free",
-      period: "No expiry",
-      description: "Test bot deployment and custom commands on a staging server, risk-free.",
-      accountSize: "1 Server",
-      duration: "Unlimited",
-      lotSize: "50 MB",
-      maxTrades: 3,
-      targetLabel: "Testing",
-      popular: false,
-      isFree: true,
-      planFeatures: [
-        "Full dashboard access",
-        "Basic moderation & commands",
-        "Max RAM: 50 MB",
-        "Up to 3 Custom Commands",
-      ],
-      note:
-        "The Free plan is designed for testing bot features and staging your Discord integration with zero downtime or hosting costs for as long as you like.",
-    },
-    {
-      amount: 10,
-      type: "Starter",
-      period: "per 5 days",
-      description: "Short-term automated bot hosting for small growing communities.",
-      accountSize: "Up to 3 Servers",
-      duration: "5 Days",
-      lotSize: "256 MB",
-      maxTrades: 15,
-      targetLabel: "99.9% Uptime",
+      amount: 30,
+      type: "Basic",
+      period: "per month",
+      description: "Essential features for getting started with community management and market insights.",
+      accountSize: "Basic Access",
+      duration: "1 Month",
+      lotSize: "Standard",
+      maxTrades: "Basic",
+      targetLabel: "Starter",
       popular: false,
       isFree: false,
       planFeatures: [
-        "Maximum 15 Active Integrations",
-        "24/7 Automated Bot Hosting",
-        "RAM Allocation: 256 MB",
-        "Duration: 5 Days",
+        "Basic moderation",
+        "Basic analytics",
+        "Market tracking",
       ],
       note:
-        "The bot manager executes scheduled tasks and event listeners continuously. System capacity prioritizes uptime and reaction times over heavy background jobs.",
+        "The Basic plan provides essential tools for community management and market tracking, perfect for getting started.",
     },
     {
-      amount: 20,
-      type: "Pro",
-      period: "per 14 days",
-      description: "Our most popular plan for active communities needing automated moderation.",
-      accountSize: "Up to 10 Servers",
-      duration: "14 Days",
-      lotSize: "512 MB",
-      maxTrades: 50,
-      targetLabel: "Priority Host",
+      amount: 70,
+      type: "Growth",
+      period: "per month",
+      description: "Advanced features for growing communities with enhanced engagement tools.",
+      accountSize: "Enhanced Access",
+      duration: "1 Month",
+      lotSize: "Advanced",
+      maxTrades: "Growth",
+      targetLabel: "Scalable",
       popular: true,
       isFree: false,
       planFeatures: [
-        "Maximum 50 Active Integrations",
-        "Automated Auto-Role & Embeds",
-        "RAM Allocation: 512 MB",
-        "Duration: 14 Days",
+        "Moderation",
+        "Wallet / NFT verification",
+        "XP, leaderboards",
+        "Campaigns, referrals",
+        "Market tracking",
       ],
       note:
-        "High-frequency events like auto-moderation and welcoming users are processed in real-time. Execution rate limits are managed automatically to avoid Discord API blocks.",
+        "The Growth plan includes engagement features like XP systems, leaderboards, and campaign management to boost community participation.",
     },
     {
-      amount: 50,
-      type: "Enterprise",
+      amount: 100,
+      type: "Pro",
       period: "per month",
-      description: "Full-scale bot management for massive Discord networks with no limits.",
-      accountSize: "Unlimited Servers",
+      description: "Professional-grade features with prediction engines and advanced analytics.",
+      accountSize: "Full Access",
       duration: "1 Month",
-      lotSize: "2 GB",
-      maxTrades: 200,
-      targetLabel: "Uncapped",
+      lotSize: "Pro",
+      maxTrades: "Professional",
+      targetLabel: "Premium",
       popular: false,
       isFree: false,
       planFeatures: [
-        "Maximum 200 Active Integrations",
-        "Custom Webhooks & API Access",
-        "RAM Allocation: 2 GB",
-        "Duration: 1 Month",
+        "Everything in Growth",
+        "Prediction engine",
+        "Advanced analytics",
+        "Custom competitions",
+        "Advanced market features",
       ],
       note:
-        "Unlike short-term plans, Enterprise grants unrestricted bandwidth, priority thread handling, custom white-label bot instances, and full database persistence.",
+        "The Pro plan includes powerful prediction engines and advanced analytics for data-driven decision making and competitive features.",
+    },
+    {
+      amount: 500,
+      type: "Enterprise",
+      period: "per month",
+      description: "Full-scale solution with custom integrations, dedicated infrastructure, and API access.",
+      accountSize: "Unlimited Access",
+      duration: "1 Month",
+      lotSize: "Enterprise",
+      maxTrades: "Unlimited",
+      targetLabel: "Enterprise",
+      popular: false,
+      isFree: false,
+      planFeatures: [
+        "Custom integrations",
+        "Custom branding",
+        "Dedicated infrastructure",
+        "API access",
+        "Full dashboard access",
+        "Advanced support & development",
+      ],
+      note:
+        "The Enterprise plan provides custom solutions with dedicated infrastructure, full API access, and priority development support for large-scale operations.",
     },
   ];
 
   const comparisonData = [
     {
-      metric: "Command Execution",
-      manual: "Slow, manual staff responses",
-      automated: "Instant, sub-millisecond bot response",
+      metric: "Market Insights",
+      manual: "Manual research, delayed updates",
+      automated: "Real-time tracking with advanced analytics",
     },
     {
-      metric: "Moderation",
-      manual: "Subjective, prone to fatigue/bias",
-      automated: "Strict, continuous rule enforcement",
+      metric: "Community Engagement",
+      manual: "Manual campaigns, limited reach",
+      automated: "Automated referrals, XP systems, leaderboards",
     },
     {
-      metric: "Consistency",
-      manual: "Varies depending on online moderators",
-      automated: "Always active with automated triggers",
+      metric: "Security & Verification",
+      manual: "Manual checks, prone to errors",
+      automated: "Automated NFT/wallet verification systems",
     },
     {
-      metric: "Availability",
-      manual: "Active only when staff members are online",
-      automated: "Runs 24/7/365 without interruption",
+      metric: "Predictive Analytics",
+      manual: "No prediction capabilities",
+      automated: "AI-powered prediction engine for market trends",
     },
     {
-      metric: "Setup & Maintenance",
-      manual: "Complex setup & custom script debugging",
-      automated: "1-Click deployment with ready-made modules",
+      metric: "Support & Integration",
+      manual: "Limited support hours",
+      automated: "24/7 support with custom API integrations",
     },
   ];
 
   const handleSelectPlan = (plan: string, amount: number) => {
-    if (plan === "Free") {
-      router.push("/auth-page/register");
-      return;
-    }
     router.push("/auth-page/login");
   };
 
@@ -142,17 +141,16 @@ export default function SubscriptionPage() {
       <section className="max-w-[1200px] mx-auto px-4 lg:px-10 pt-15 pb-10 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-[10px] font-bold uppercase tracking-widest mb-2 text-violet-600 dark:text-violet-400">
           {/* <Sparkles className="w-3.5 h-3.5" /> */}
-          <span>Discord Bot Management Plans</span>
+          <span>Community Management Plans</span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-foreground">
-          Choose Your <span className="text-violet-600 dark:text-violet-400">Automation Scale</span>
+          Choose Your <span className="text-violet-600 dark:text-violet-400">Growth Plan</span>
         </h1>
 
         <p className="text-muted-foreground max-w-2xl text-sm md:text-base leading-relaxed mx-auto font-normal">
-          Start free on a testing server, then scale into Starter, Pro, or Enterprise access as your
-          community grows. Every paid plan includes automated 24/7 uptime, ticket management,
-          auto-moderation, and full Discord API integration.
+          Scale from Basic to Enterprise with powerful features including moderation, analytics, market tracking,
+          NFT verification, prediction engines, and custom integrations. Every plan includes 24/7 customer support.
         </p>
       </section>
 
@@ -166,8 +164,6 @@ export default function SubscriptionPage() {
                 ${
                   plan.popular
                     ? "lg:scale-[1.04] z-10 border-violet-500/60 shadow-2xl shadow-violet-500/10 ring-1 ring-violet-500/40"
-                    : plan.isFree
-                    ? "border-dashed border-border shadow-sm opacity-95 hover:opacity-100"
                     : "border-border shadow-sm opacity-95 hover:opacity-100"
                 }
                 hover:border-violet-500/40 group
@@ -183,11 +179,6 @@ export default function SubscriptionPage() {
                   {plan.popular && (
                     <div className="bg-violet-600 text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm">
                       Popular
-                    </div>
-                  )}
-                  {plan.isFree && (
-                    <div className="bg-muted text-muted-foreground text-[10px] font-bold tracking-wider px-3 py-1 rounded-full">
-                      Demo
                     </div>
                   )}
                 </div>
@@ -214,14 +205,7 @@ export default function SubscriptionPage() {
                     }
                   `}
                 >
-                  {plan.isFree ? (
-                    <>
-                      {/* <InfinityIcon className="w-4 h-4" /> */}
-                      <span>Start Free Demo</span>
-                    </>
-                  ) : (
-                    <span>Choose this plan</span>
-                  )}
+                  <span>Choose this plan</span>
                 </button>
               </div>
 
@@ -230,17 +214,17 @@ export default function SubscriptionPage() {
                 {/* Stats row */}
                 <div className="space-y-3 pt-5 border-t border-border">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-medium">Server Limits</span>
+                    <span className="text-muted-foreground font-medium">Access Level</span>
                     <span className="text-foreground font-semibold">{plan.accountSize}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-medium">Performance</span>
+                    <span className="text-muted-foreground font-medium">Plan Tier</span>
                     <span className="font-semibold px-2.5 py-0.5 rounded-md text-[11px] bg-violet-500/10 text-violet-600 dark:text-violet-400">
                       {plan.targetLabel}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-medium">RAM &middot; Max Webhooks</span>
+                    <span className="text-muted-foreground font-medium">Features &middot; Support</span>
                     <span className="text-foreground font-semibold">
                       {plan.lotSize} &middot; {plan.maxTrades}
                     </span>
@@ -276,11 +260,11 @@ export default function SubscriptionPage() {
       <section className="max-w-[1400px] mx-auto px-4 lg:px-8 mt-6 w-full">
         <div className="max-w-3xl mx-auto pb-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-            Automated Bot vs Manual Moderation
+            Premium Features vs Basic Solutions
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed mx-auto font-normal">
-            Choose a plan and let our automated bot management systems protect and run your community.
-            Logs and analytics updated continuously every 24 hours.
+            Compare our advanced community management platform with traditional solutions.
+            From market tracking to prediction engines, we provide the tools you need to grow.
           </p>
         </div>
 
@@ -288,9 +272,9 @@ export default function SubscriptionPage() {
         <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
           {/* Header Row */}
           <div className="hidden md:grid grid-cols-3 border-b border-border bg-muted p-5 text-xs font-bold uppercase tracking-wider">
-            <div className="text-foreground">Metric</div>
-            <div className="text-rose-500">Manual Management</div>
-            <div className="text-emerald-500">Automated Bot Management</div>
+            <div className="text-foreground">Feature</div>
+            <div className="text-rose-500">Basic Solutions</div>
+            <div className="text-emerald-500">Premium Platform</div>
           </div>
 
           {/* Table Body rows */}
@@ -308,7 +292,7 @@ export default function SubscriptionPage() {
                 {/* Manual Column */}
                 <div className="flex items-start gap-2.5 md:pr-4">
                   <span className="md:hidden text-xs font-semibold text-rose-500 block mb-1">
-                    Manual:
+                    Basic:
                   </span>
                   <div className="flex items-start gap-2">
                     <X className="w-4 h-4 stroke-[2.5] text-rose-500 shrink-0 mt-0.5" />
@@ -321,7 +305,7 @@ export default function SubscriptionPage() {
                 {/* Automated Column */}
                 <div className="flex items-start gap-2.5">
                   <span className="md:hidden text-xs font-semibold text-emerald-500 block mb-1">
-                    Automated:
+                    Premium:
                   </span>
                   <div className="flex items-start gap-2">
                     <Check className="w-4 h-4 stroke-[2.5] text-emerald-500 shrink-0 mt-0.5" />

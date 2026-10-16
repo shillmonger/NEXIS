@@ -1,25 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Landmark,
   Plus,
   Search,
-  Server,
   Users,
   ShieldAlert,
   Activity,
   Settings,
   Trash2,
-  ExternalLink,
-  CheckCircle2,
-  XCircle,
   Clock,
   FolderOpen,
-  ChevronRight,
   MoreVertical,
+  LayoutGrid,
+  List,
+  Copy,
+  Check,
+  Server,
   Radio,
+  ArrowUpRight,
+  ArrowUpDown,
 } from "lucide-react";
 
 import {
@@ -42,6 +43,8 @@ import {
 
 type BotStatus = "online" | "offline" | "installing";
 type HealthStatus = "healthy" | "warning" | "critical";
+type SortKey = "members" | "events" | "name";
+type ViewMode = "grid" | "list";
 
 interface DiscordServer {
   id: string;
@@ -54,6 +57,7 @@ interface DiscordServer {
   lastActivity: string;
   moderationEventsCount: number;
   healthStatus: HealthStatus;
+  activity: number[]; // moderation events per day, last 7 days
 }
 
 const MOCK_SERVERS: DiscordServer[] = [
@@ -68,6 +72,7 @@ const MOCK_SERVERS: DiscordServer[] = [
     lastActivity: "2 mins ago",
     moderationEventsCount: 1420,
     healthStatus: "healthy",
+    activity: [120, 180, 150, 240, 210, 300, 220],
   },
   {
     id: "srv_2",
@@ -80,6 +85,7 @@ const MOCK_SERVERS: DiscordServer[] = [
     lastActivity: "14 mins ago",
     moderationEventsCount: 680,
     healthStatus: "healthy",
+    activity: [60, 90, 120, 80, 110, 130, 90],
   },
   {
     id: "srv_3",
@@ -92,61 +98,387 @@ const MOCK_SERVERS: DiscordServer[] = [
     lastActivity: "3 hours ago",
     moderationEventsCount: 94,
     healthStatus: "warning",
+    activity: [20, 14, 18, 9, 12, 6, 0],
   },
 ];
 
-// ─── HELPER BADGE COMPONENTS ─────────────────────────────────────────────────
+const BASE = "/UserDashboard/Discord/servers";
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+const compact = (n: number) =>
+  new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 
 function HealthBadge({ status }: { status: HealthStatus }) {
-  switch (status) {
-    case "healthy":
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-          Healthy
-        </span>
-      );
-    case "warning":
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
-          Warning
-        </span>
-      );
-    case "critical":
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 border border-rose-500/20">
-          Critical
-        </span>
-      );
-  }
+  const styles: Record<HealthStatus, string> = {
+    healthy: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    warning: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+    critical: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${styles[status]}`}
+    >
+      {status}
+    </span>
+  );
 }
 
 function StatusIndicator({ status }: { status: BotStatus }) {
-  switch (status) {
-    case "online":
-      return (
-        <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-bold">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          Online
+  if (status === "online")
+    return (
+      <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-bold">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+        Online
+      </div>
+    );
+  if (status === "offline")
+    return (
+      <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold">
+        <span className="h-2 w-2 rounded-full bg-slate-500" />
+        Offline
+      </div>
+    );
+  return (
+    <div className="flex items-center gap-1.5 text-amber-500 text-xs font-bold">
+      <Clock className="w-3 h-3 animate-spin" />
+      Installing
+    </div>
+  );
+}
+
+function Sparkline({ data, active }: { data: number[]; active: boolean }) {
+  const max = Math.max(...data, 1);
+  return (
+    <div className="flex items-end gap-1 h-10" aria-hidden>
+      {data.map((v, i) => (
+        <div
+          key={i}
+          style={{ height: `${Math.max(8, (v / max) * 100)}%` }}
+          className={`w-1.5 rounded-full transition-all ${
+            active
+              ? i === data.length - 1
+                ? "bg-violet-500"
+                : "bg-violet-500/35"
+              : "bg-muted-foreground/25"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ServerAvatar({ server, size = "lg" }: { server: DiscordServer; size?: "lg" | "sm" }) {
+  const dim = size === "lg" ? "w-16 h-16 rounded-2xl" : "w-11 h-11 rounded-xl";
+  const dot =
+    server.botStatus === "online"
+      ? "bg-emerald-500"
+      : server.botStatus === "installing"
+      ? "bg-amber-500"
+      : "bg-slate-500";
+  return (
+    <div className="relative shrink-0">
+      <div className={`${dim} bg-card border-2 border-border p-0.5 shadow-lg overflow-hidden`}>
+        <img src={server.icon} alt={server.name} className="w-full h-full object-cover rounded-[inherit]" />
+      </div>
+      <span
+        className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card ${dot}`}
+      />
+    </div>
+  );
+}
+
+function CopyId({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title="Copy server ID"
+      className="group inline-flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+    >
+      ID: {value}
+      {copied ? (
+        <Check className="w-3 h-3 text-emerald-500" />
+      ) : (
+        <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+      )}
+    </button>
+  );
+}
+
+function ServerMenu({
+  server,
+  onRemove,
+}: {
+  server: DiscordServer;
+  onRemove: (s: DiscordServer) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Server options"
+        className="p-2 text-muted-foreground hover:text-violet-600 hover:bg-violet-600/10 rounded-xl transition-colors cursor-pointer outline-none"
+      >
+        <MoreVertical className="w-5 h-5" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48 bg-card border-border">
+        <Link href={`${BASE}/${server.serverId}/settings`}>
+          <DropdownMenuItem className="cursor-pointer text-xs font-bold flex items-center gap-2">
+            <Settings className="w-4 h-4 text-muted-foreground" /> Server Settings
+          </DropdownMenuItem>
+        </Link>
+        <Link href={`${BASE}/${server.serverId}/activity`}>
+          <DropdownMenuItem className="cursor-pointer text-xs font-bold flex items-center gap-2">
+            <Activity className="w-4 h-4 text-muted-foreground" /> View Activity
+          </DropdownMenuItem>
+        </Link>
+        <DropdownMenuItem
+          onClick={() => onRemove(server)}
+          className="cursor-pointer text-xs font-bold text-rose-500 focus:text-rose-500 flex items-center gap-2"
+        >
+          <Trash2 className="w-4 h-4" /> Remove Bot
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ─── CARDS ────────────────────────────────────────────────────────────────────
+
+function ServerCard({
+  server,
+  onRemove,
+}: {
+  server: DiscordServer;
+  onRemove: (s: DiscordServer) => void;
+}) {
+  const live = server.botStatus === "online";
+  return (
+    <div className="group relative bg-card border border-border/80 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-violet-600/5 hover:-translate-y-0.5 hover:border-violet-600/30 transition-all duration-300 flex flex-col">
+      {/* Banner */}
+      <div
+        className={`h-24 relative ${
+          live
+            ? "bg-gradient-to-br from-violet-600/40 via-fuchsia-500/20 to-indigo-500/10"
+            : "bg-gradient-to-br from-slate-500/25 via-slate-500/10 to-transparent"
+        }`}
+      >
+        <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_1px_1px,currentColor_1px,transparent_0)] [background-size:16px_16px] text-foreground/10" />
+        <div className="absolute top-3 right-3">
+          <ServerMenu server={server} onRemove={onRemove} />
         </div>
-      );
-    case "offline":
-      return (
-        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold">
-          <span className="h-2 w-2 rounded-full bg-slate-500"></span>
-          Offline
+        <div className="absolute top-4 left-5">
+          <HealthBadge status={server.healthStatus} />
         </div>
-      );
-    case "installing":
-      return (
-        <div className="flex items-center gap-1.5 text-amber-500 text-xs font-bold">
-          <Clock className="w-3 h-3 animate-spin" />
-          Installing...
+      </div>
+
+      {/* Body */}
+      <div className="px-6 pb-6 -mt-8 flex flex-col gap-5 flex-1">
+        <div className="flex items-end gap-4">
+          <ServerAvatar server={server} />
+          <div className="min-w-0 pb-1">
+            <h3 className="text-lg font-black uppercase tracking-tight truncate">{server.name}</h3>
+            <span className="text-[10px] font-black uppercase tracking-wider text-violet-600">
+              {server.subscriptionPlan}
+            </span>
+          </div>
         </div>
-      );
-  }
+
+        <CopyId value={server.serverId} />
+
+        {/* Metrics */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-muted/30 border border-border/60 p-3">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
+              Status
+            </span>
+            <StatusIndicator status={server.botStatus} />
+          </div>
+          <div className="rounded-2xl bg-muted/30 border border-border/60 p-3">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
+              Members
+            </span>
+            <span className="text-sm font-black flex items-center gap-1">
+              <Users className="w-3.5 h-3.5 text-muted-foreground" />
+              {server.memberCount.toLocaleString()}
+            </span>
+          </div>
+          <div className="rounded-2xl bg-muted/30 border border-border/60 p-3">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
+              Last Active
+            </span>
+            <span className="text-xs font-bold text-muted-foreground block truncate">
+              {server.lastActivity}
+            </span>
+          </div>
+        </div>
+
+        {/* Activity */}
+        <div className="flex items-end justify-between rounded-2xl border border-border/60 bg-muted/20 px-4 py-3">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block">
+              Mod events · 7d
+            </span>
+            <span className="text-2xl font-black tracking-tight flex items-center gap-1.5">
+              <ShieldAlert className="w-4 h-4 text-violet-600" />
+              {server.moderationEventsCount.toLocaleString()}
+            </span>
+          </div>
+          <Sparkline data={server.activity} active={live} />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-auto pt-1">
+          <Link
+            href={`${BASE}/${server.serverId}`}
+            className="flex-1 bg-violet-600 text-white py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-md shadow-violet-600/20"
+          >
+            Manage <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
+          <Link
+            href={`${BASE}/${server.serverId}/activity`}
+            className="bg-violet-600/10 text-violet-600 hover:bg-violet-600/20 border border-violet-600/20 px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+          >
+            <Activity className="w-3.5 h-3.5" /> Activity
+          </Link>
+          <Link
+            href={`${BASE}/${server.serverId}/settings`}
+            aria-label="Server settings"
+            className="bg-violet-600/10 text-violet-600 hover:bg-violet-600/20 border border-violet-600/20 p-2.5 rounded-xl transition-all"
+          >
+            <Settings className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ServerRow({
+  server,
+  onRemove,
+}: {
+  server: DiscordServer;
+  onRemove: (s: DiscordServer) => void;
+}) {
+  return (
+    <div className="bg-card border border-border/80 rounded-2xl px-4 py-3 shadow-sm hover:border-violet-600/30 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-4">
+      <div className="flex items-center gap-4 md:w-[34%] min-w-0">
+        <ServerAvatar server={server} size="sm" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-black uppercase tracking-tight truncate">{server.name}</h3>
+            <HealthBadge status={server.healthStatus} />
+          </div>
+          <CopyId value={server.serverId} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:flex-1 items-center">
+        <StatusIndicator status={server.botStatus} />
+        <span className="text-xs font-black flex items-center gap-1">
+          <Users className="w-3.5 h-3.5 text-muted-foreground" />
+          {server.memberCount.toLocaleString()}
+        </span>
+        <span className="text-xs font-black flex items-center gap-1">
+          <ShieldAlert className="w-3.5 h-3.5 text-violet-600" />
+          {server.moderationEventsCount.toLocaleString()}
+        </span>
+        <span className="text-[11px] font-bold text-muted-foreground">{server.lastActivity}</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Link
+          href={`${BASE}/${server.serverId}`}
+          className="bg-violet-600 text-white py-2 px-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all"
+        >
+          Manage
+        </Link>
+        <Link
+          href={`${BASE}/${server.serverId}/settings`}
+          aria-label="Server settings"
+          className="bg-violet-600/10 text-violet-600 hover:bg-violet-600/20 border border-violet-600/20 p-2 rounded-xl transition-all"
+        >
+          <Settings className="w-4 h-4" />
+        </Link>
+        <ServerMenu server={server} onRemove={onRemove} />
+      </div>
+    </div>
+  );
+}
+
+function AddServerCard() {
+ 
+return (
+  <Link
+    href="/UserDashboard/Discord/install"
+    className="group block h-full"
+  >
+    <button
+      type="button"
+      className="relative flex min-h-[200px] w-full cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border border-border/70 bg-card p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/50 hover:shadow-xl hover:shadow-violet-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+    >
+      {/* Subtle hover glow */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] via-transparent to-indigo-500/[0.08] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      {/* Icon */}
+      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-500/15 bg-violet-500/10 text-violet-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-500 group-hover:text-white">
+        <Plus className="h-7 w-7 transition-transform duration-300 group-hover:rotate-90" />
+      </div>
+
+      {/* Text */}
+      <div className="relative space-y-1.5">
+        <h3 className="text-sm font-bold tracking-tight text-foreground transition-colors group-hover:text-violet-500">
+          Add Another Server
+        </h3>
+
+        <p className="mx-auto max-w-[210px] text-xs leading-relaxed text-muted-foreground">
+          Connect a Discord server to manage your bot integrations.
+        </p>
+      </div>
+    </button>
+  </Link>
+);
+
+}
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  accent: string;
+}) {
+  return (
+    <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${accent}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div>
+        <div className="text-2xl font-black tracking-tight leading-none">{value}</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1.5">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
@@ -154,20 +486,40 @@ function StatusIndicator({ status }: { status: BotStatus }) {
 export default function BotServersPage() {
   const [servers, setServers] = useState<DiscordServer[]>(MOCK_SERVERS);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | BotStatus>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("members");
+  const [view, setView] = useState<ViewMode>("grid");
   const [serverToRemove, setServerToRemove] = useState<DiscordServer | null>(null);
 
-  // Filter logic
-  const filteredServers = servers.filter((server) => {
-    const matchesSearch =
-      server.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      server.serverId.includes(searchQuery);
+  const stats = useMemo(
+    () => ({
+      total: servers.length,
+      online: servers.filter((s) => s.botStatus === "online").length,
+      members: servers.reduce((a, s) => a + s.memberCount, 0),
+      events: servers.reduce((a, s) => a + s.moderationEventsCount, 0),
+    }),
+    [servers]
+  );
 
-    const matchesStatus =
-      statusFilter === "all" || server.botStatus === statusFilter;
+  const filteredServers = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return servers
+      .filter((s) => {
+        const matchesSearch = s.name.toLowerCase().includes(q) || s.serverId.includes(searchQuery);
+        const matchesStatus = statusFilter === "all" || s.botStatus === statusFilter;
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) =>
+        sortKey === "name"
+          ? a.name.localeCompare(b.name)
+          : sortKey === "events"
+          ? b.moderationEventsCount - a.moderationEventsCount
+          : b.memberCount - a.memberCount
+      );
+  }, [servers, searchQuery, statusFilter, sortKey]);
 
-    return matchesSearch && matchesStatus;
-  });
+  const countFor = (st: "all" | BotStatus) =>
+    st === "all" ? servers.length : servers.filter((s) => s.botStatus === st).length;
 
   const handleRemoveBot = () => {
     if (serverToRemove) {
@@ -176,34 +528,54 @@ export default function BotServersPage() {
     }
   };
 
+  const isFiltering = searchQuery !== "" || statusFilter !== "all";
+
   return (
-       <div className="min-h-screen bg-background text-foreground transition-colors duration-200 py-5">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200 py-5">
       <div className="max-w-[1500px] mx-auto space-y-8">
-
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/60 pb-8">
-          <div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter">
-              Discord Servers
-            </h1>
-            <p className="text-muted-foreground text-sm font-medium mt-1 max-w-2xl">
-              Manage connected Discord communities, monitor bot uptime, inspect moderation event counters, and adjust server settings.
-            </p>
-          </div>
+          
 
-          <button
-            type="button"
-            className="cursor-pointer bg-violet-600 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 active:scale-[0.99] transition-all flex items-center gap-2 shadow-md shadow-violet-600/20 self-start md:self-auto"
-          >
-            <Plus className="w-4 h-4" /> Add Server
-          </button>
+            <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-black uppercase tracking-tighter">
+                Discord Servers
+              </h1>
+              <p className="text-muted-foreground text-sm font-medium mt-0.5 max-w-2xl">
+                Manage connected communities, watch bot uptime and moderation activity, and jump
+                  into each server&apos;s settings.
+              </p>
+            </div>
+          </div>
+<Link href="/UserDashboard/Discord/install">
+            <button
+              className="cursor-pointer bg-violet-600 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 active:scale-[0.99] transition-all flex items-center gap-2 shadow-md shadow-violet-600/20 self-start md:self-auto"
+            >
+              <Plus className="w-4 h-4" /> Add Server
+            </button>
+            </Link>
         </div>
 
-        {/* Search & Filter Bar */}
+        {/* Stats */}
         {servers.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card border border-border/80 p-4 rounded-2xl shadow-sm">
-            {/* Search Input */}
-            <div className="relative w-full sm:w-80">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatTile icon={Server} label="Servers" value={String(stats.total)} accent="bg-violet-600/10 text-violet-600" />
+            <StatTile
+              icon={Radio}
+              label="Bots Online"
+              value={`${stats.online}/${stats.total}`}
+              accent="bg-emerald-500/10 text-emerald-500"
+            />
+            <StatTile icon={Users} label="Total Members" value={compact(stats.members)} accent="bg-blue-500/10 text-blue-500" />
+            <StatTile icon={ShieldAlert} label="Mod Events" value={compact(stats.events)} accent="bg-amber-500/10 text-amber-500" />
+          </div>
+        )}
+
+        {/* Toolbar */}
+        {servers.length > 0 && (
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card border border-border/80 p-4 rounded-2xl shadow-sm">
+            <div className="relative w-full xl:w-96">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
@@ -214,172 +586,120 @@ export default function BotServersPage() {
               />
             </div>
 
-            {/* Status Filter */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                Filter Uptime:
-              </span>
-              <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60 w-full sm:w-auto">
-                {["all", "online", "offline"].map((st) => (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              {/* Status filter with counts */}
+              <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60">
+                {(["all", "online", "offline"] as const).map((st) => (
                   <button
                     key={st}
                     type="button"
                     onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer flex-1 sm:flex-none ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer flex-1 sm:flex-none flex items-center justify-center gap-1.5 ${
                       statusFilter === st
                         ? "bg-violet-600 text-white shadow-sm shadow-violet-600/20"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {st}
+                    <span
+                      className={`text-[10px] px-1.5 rounded-full ${
+                        statusFilter === st ? "bg-white/20" : "bg-muted"
+                      }`}
+                    >
+                      {countFor(st)}
+                    </span>
                   </button>
                 ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Sort */}
+                <div className="relative flex-1 sm:flex-none">
+                  <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  <select
+                    value={sortKey}
+                    onChange={(e) => setSortKey(e.target.value as SortKey)}
+                    className="w-full bg-muted/40 border border-border/60 rounded-xl pl-8 pr-3 py-2 text-xs font-bold uppercase outline-none focus:ring-2 ring-violet-600/30 cursor-pointer"
+                  >
+                    <option value="members">Most members</option>
+                    <option value="events">Most mod events</option>
+                    <option value="name">Name A–Z</option>
+                  </select>
+                </div>
+
+                {/* View toggle */}
+                <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60">
+                  {(
+                    [
+                      ["grid", LayoutGrid],
+                      ["list", List],
+                    ] as const
+                  ).map(([mode, Icon]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      aria-label={`${mode} view`}
+                      onClick={() => setView(mode)}
+                      className={`p-2 rounded-lg transition-all cursor-pointer ${
+                        view === mode
+                          ? "bg-violet-600 text-white shadow-sm shadow-violet-600/20"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Server Cards Display */}
+        {/* Content */}
         {filteredServers.length === 0 ? (
-          <div className="bg-card border border-border rounded-2xl p-12 text-center max-w-lg mx-auto shadow-xl">
+          <div className="bg-card border border-border rounded-3xl p-12 text-center max-w-full mx-auto shadow-xl">
             <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground">
               <FolderOpen className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-black uppercase tracking-tight">No Discord Servers Connected</h3>
+            <h3 className="text-lg font-black uppercase tracking-tight">
+              {isFiltering ? "No Matching Servers" : "No Discord Servers Connected"}
+            </h3>
             <p className="text-sm text-muted-foreground mt-2 mb-6">
-              {searchQuery || statusFilter !== "all"
-                ? "No connected servers match your current search criteria."
+              {isFiltering
+                ? "No connected servers match your current search or filter."
                 : "Your bot isn't connected to any Discord servers yet. Invite your bot to start automating moderation."}
             </p>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Add Server Now
-            </button>
+            {isFiltering ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+                className="inline-flex items-center justify-center gap-2 bg-muted border border-border px-7 py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-muted/70 transition-all cursor-pointer"
+              >
+                Clear Filters
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add Server Now
+              </button>
+            )}
+          </div>
+        ) : view === "grid" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+            {filteredServers.map((server) => (
+              <ServerCard key={server.id} server={server} onRemove={setServerToRemove} />
+            ))}
+            {!isFiltering && <AddServerCard />}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-3">
             {filteredServers.map((server) => (
-              <div
-                key={server.id}
-                className="bg-card border border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6"
-              >
-                {/* Server Header */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-muted border border-border p-1 shadow-inner shrink-0 overflow-hidden">
-                      <img
-                        src={server.icon}
-                        alt={server.name}
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-black uppercase tracking-tight">{server.name}</h3>
-                        <HealthBadge status={server.healthStatus} />
-                      </div>
-                      <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                        ID: {server.serverId}
-                      </p>
-                      <span className="inline-block mt-1 text-[10px] font-black uppercase tracking-wider text-violet-600">
-                        {server.subscriptionPlan}
-                      </span>
-                    </div> 
-                  </div>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <button
-                        type="button"
-                        className="p-2 text-violet-600 hover:text-violet-700 hover:bg-violet-600/10 rounded-xl transition-colors cursor-pointer"
-                      >
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-card border-border">
-                      <Link href={`/UserDashboard/Discord/servers/${server.serverId}/settings`}>
-                        <DropdownMenuItem className="cursor-pointer text-xs font-bold flex items-center gap-2">
-                          <Settings className="w-4 h-4 text-muted-foreground" /> Server Settings
-                        </DropdownMenuItem>
-                      </Link>
-                      <DropdownMenuItem className="cursor-pointer text-xs font-bold flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-muted-foreground" /> View Activity
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setServerToRemove(server)}
-                        className="cursor-pointer text-xs font-bold text-rose-500 focus:text-rose-500 flex items-center gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" /> Remove Bot
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {/* Server Metrics Dashboard Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/20 p-4 rounded-xl border border-border/60">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
-                      Status
-                    </span>
-                    <StatusIndicator status={server.botStatus} />
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
-                      Members
-                    </span>
-                    <span className="text-xs font-black flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                      {server.memberCount.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
-                      Mod Logs
-                    </span>
-                    <span className="text-xs font-black flex items-center gap-1">
-                      <ShieldAlert className="w-3.5 h-3.5 text-violet-600" />
-                      {server.moderationEventsCount}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">
-                      Last Active
-                    </span>
-                    <span className="text-[11px] font-bold text-muted-foreground truncate block">
-                      {server.lastActivity}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Controls */}
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/60">
-                  <Link
-                    href={`/UserDashboard/Discord/servers/${server.serverId}`}
-                    className="flex-1 cursor-pointer bg-violet-600 text-white py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 shadow-md shadow-violet-600/20"
-                  >
-                    Manage
-                  </Link>
-
-                  <button
-                    type="button"
-                    className="cursor-pointer bg-violet-600/10 text-violet-600 hover:bg-violet-600/20 border border-violet-600/20 px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1"
-                  >
-                    <Activity className="w-3.5 h-3.5" /> Activity
-                  </button>
-
-                  <Link
-                    href={`/UserDashboard/Discord/servers/${server.serverId}/settings`}
-                    className="cursor-pointer bg-violet-600/10 text-violet-600 hover:bg-violet-600/20 border border-violet-600/20 p-2.5 rounded-xl transition-all"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
+              <ServerRow key={server.id} server={server} onRemove={setServerToRemove} />
             ))}
           </div>
         )}
@@ -426,7 +746,6 @@ export default function BotServersPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
       </div>
     </div>
   );

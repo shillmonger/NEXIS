@@ -6,28 +6,24 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
-  Radio,
   BadgeCheck,
-  History,
-  CircleGauge,
-  ShieldCogCorner,
-  Scale,
-  Shield,
-  Users,
-  Send,
+  Wallet,
+  PieChart,
   ScreenShare,
-  UserRound,
+  UserCog,
+  Users,
   BarChart3,
-  ScrollText,
-  Server,
-  Tags,
-  HelpCircle,
-  FileText,
+  CircleDollarSign,
+  Landmark,
+  Settings,
+  MessageCircle,
+  AlarmClock,
+  MailPlus,
+  User,
   LogOut,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   X,
+  ShieldCheck,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -51,33 +47,16 @@ export default function AdminSidebar({
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [countdown, setCountdown] = useState(10);
-  const [isCollapsed, setIsCollapsed] = useState(true); // Controls desktop collapse state - default hidden
 
-  // Load collapse state from localStorage on mount (desktop only)
-  useEffect(() => {
-    const savedState = localStorage.getItem('adminLeftSidebarCollapsed');
-    if (savedState !== null) {
-      setIsCollapsed(savedState === 'true');
-    }
-  }, []);
-
-  // Save collapse state to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('adminLeftSidebarCollapsed', isCollapsed.toString());
-  }, [isCollapsed]);
-
-  // Group status tracking for collapsible sub-menus
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    MAIN: true,
-    MANAGEMENT: true,
-    ANALYTICS: true,
-    SYSTEM: true,
+    Payments: true,
+    Users: true,
+    Finance: true,
+    Settings: true,
   });
 
-  // Updated to Admin Base Path
-  const basePath = "/admin-dashboard";
+  const basePath = "/AdminDashboard";
 
-  // Modal Auto-Close Countdown Logic
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (showLogoutConfirm && countdown > 0) {
@@ -91,27 +70,41 @@ export default function AdminSidebar({
     return () => clearTimeout(timer);
   }, [showLogoutConfirm, countdown]);
 
-  // Admin Structured Navigation Items
   const navItems: NavItem[] = [
-    // === MAIN ===
-    { name: "Overview", icon: LayoutDashboard, href: `${basePath}/dashboard` },
-    { name: "TG Provider", icon: Send, href: `${basePath}/providers` },
-    { name: "Subscriptions", icon: BadgeCheck, href: `${basePath}/subscription` },
-    { name: "MT5 Accounts", icon: Users, href: `${basePath}/mt5-accounts` },
-    { name: "Trades Actions", icon: History, href: `${basePath}/trades-actions` },
-    { name: "Copy jobs", icon: Tags, href: `${basePath}/copy-jobs` },
-    { name: "Master trades", icon: Server, href: `${basePath}/master-trades` },
-    { name: "Trades activity", icon: ScreenShare, href: `${basePath}/trade-activity` },
-    { name: "Lot size settings", icon: Scale, href: `${basePath}/lot-size` },
-    { name: "Stop lose settings", icon: ShieldCogCorner, href: `${basePath}/stop-loss` },
-    { name: "Open limits settings", icon: CircleGauge, href: `${basePath}/position-limits` },
+    { name: "Overview", icon: LayoutDashboard, href: `${basePath}/overview` },
+
+    
+    { name: "Crypto Deposit", icon: CircleDollarSign, href: `${basePath}/crypto-deposit` },
+      
+
+    {
+      name: "Users",
+      icon: Users,
+      children: [
+        // { name: "Manage Account", icon: UserCog, href: `${basePath}/manage-account` },
+        { name: "KYC Verification", icon: BadgeCheck, href: `#` },
+        { name: "User Management", icon: Users, href: `${basePath}/user-management` },
+        { name: "Users Subscriptions", icon: BarChart3, href: `${basePath}/user-subscriptions` },
+      ],
+    },
+    { name: "Overall Analytics", icon: PieChart, href: `#` },
+    {
+      name: "Settings",
+      icon: Settings,
+      children: [
+        { name: "Role Settings", icon: Settings, href: `${basePath}/role-settings` },
+        { name: "Email Distribution", icon: MailPlus, href: `${basePath}/email-distribution` },
+      ],
+    },
+    { name: "Switch to User", icon: User, href: "/UserDashboard/dashboard" },
   ];
 
-  // Auto-expand groups containing active pathnames
   useEffect(() => {
     navItems.forEach((item) => {
       if ("children" in item) {
-        const hasActive = item.children.some((child) => pathname === child.href);
+        const hasActive = item.children.some((child) =>
+          isActive(pathname, child.href)
+        );
         if (hasActive) {
           setOpenGroups((prev) => ({ ...prev, [item.name]: true }));
         }
@@ -120,46 +113,31 @@ export default function AdminSidebar({
   }, [pathname]);
 
   const toggleGroup = (name: string) => {
-    // Prevent expanding menus when sidebar is closed completely
-    if (isCollapsed) setIsCollapsed(false);
     setOpenGroups((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const isActive = (pathname: string, href: string): boolean => {
+    return pathname === href;
   };
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside
-        className={`hidden md:flex border-r border-indigo-900/50 h-screen sticky top-0 bg-gradient-to-b from-indigo-950 via-neutral-950 to-neutral-950 flex-col shadow-[4px_0_24px_rgba(79,70,229,0.15)] transition-all duration-300 relative ${
-          isCollapsed ? "w-20" : "w-65"
-        }`}
-      >
+      <aside className="hidden md:flex w-65 border-r border-violet-500/20 h-screen bg-background/95 backdrop-blur-xl flex-col">
         {/* Header */}
-        <div className={`flex-shrink-0 flex items-center h-16 border-b border-indigo-900/50 transition-all duration-300 relative ${
-          isCollapsed ? "justify-center px-2" : "justify-between px-6"
-        }`}>
-          <div className={`flex flex-col ${isCollapsed ? "items-center" : ""}`}>
-            <h1 className="text-xl font-black uppercase tracking-tighter text-neutral-50">
-              {isCollapsed ? "F" : "Shill"}<span className="text-neutral-50 font-black">{isCollapsed ? "X" : "Monger"}</span>
+        <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-violet-500/20 ">
+          <div className="flex flex-col">
+            <h1 className="text-xl font-black uppercase tracking-tighter text-foreground">
+              Admin Hub
             </h1>
-            {!isCollapsed && (
-              <p className="text-[8px] font-bold tracking-[0.2em] text-neutral-400 uppercase whitespace-nowrap">
-                Admin Control Room
-              </p>
-            )}
+            <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground/80 uppercase">
+              Nexis Admin Dashboard v1.0
+            </p>
           </div>
-
-          {/* Toggle Collapse Button */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-7 h-7 cursor-pointer bg-indigo-900 border border-indigo-700 rounded-full flex items-center justify-center text-indigo-300 hover:text-white shadow-md hover:bg-indigo-800 transition-colors z-10"
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-1 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-1 scrollbar-thin scrollbar-thumb-violet-500/30 scrollbar-track-transparent">
           {navItems.map((item) => {
             if ("href" in item) {
               const active = pathname === item.href;
@@ -167,74 +145,75 @@ export default function AdminSidebar({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center rounded-xl border border-transparent transition-all duration-200 ${
-                    isCollapsed ? "justify-center px-2 py-3" : "px-4 py-2.5"
-                  } ${
+                  className={`group flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${
                     active
-                      ? "bg-indigo-600 text-white font-black border-indigo-500"
-                      : "text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300"
+                      ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-600/40 ring-1 ring-violet-400/30"
+                      : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground hover:ring-1 hover:ring-violet-500/20"
                   }`}
-                  title={isCollapsed ? item.name : undefined}
                 >
                   <item.icon
-                    className={`w-5 h-5 transition-transform flex-shrink-0 ${
-                      isCollapsed ? "" : "mr-5"
-                    } ${active ? "scale-110" : "group-hover:scale-110"}`}
+                    className={`w-5 h-5 mr-4 transition-transform ${
+                      active ? "scale-110 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" : "group-hover:scale-110"
+                    }`}
                   />
-                  {!isCollapsed && (
-                    <span className="text-[12px] font-black uppercase tracking-widest whitespace-nowrap overflow-hidden">
-                      {item.name}
-                    </span>
-                  )}
+                  <span className="text-[12px] font-black uppercase tracking-widest">
+                    {item.name}
+                  </span>
                 </Link>
               );
             }
 
-            const isOpen = !isCollapsed && !!openGroups[item.name];
-            const hasActiveChild = item.children.some((c) => pathname === c.href);
+            const isOpen = !!openGroups[item.name];
+            const hasActiveChild = item.children.some((c) =>
+              isActive(pathname, c.href)
+            );
 
             return (
               <div key={item.name} className="flex flex-col">
                 <button
                   onClick={() => toggleGroup(item.name)}
-                  className={`group w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+                  className={`group w-full flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
                     hasActiveChild
-                      ? "text-indigo-300 font-black"
-                      : "text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300"
+                      ? "text-violet-400 bg-violet-500/10"
+                      : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                   }`}
                 >
                   <item.icon
-                    className={`w-5 h-5 mr-5 transition-transform ${
-                      hasActiveChild ? "scale-110" : "group-hover:scale-110"
+                    className={`w-5 h-5 mr-4 transition-transform ${
+                      hasActiveChild ? "scale-110 text-violet-400" : "group-hover:scale-110"
                     }`}
                   />
-                  <span className="flex-1 text-left text-[12px] font-black uppercase tracking-widest whitespace-nowrap overflow-hidden">
+                  <span className="flex-1 text-left text-[12px] font-black uppercase tracking-widest">
                     {item.name}
                   </span>
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-300 ${
+                    className={`w-4 h-4 transition-transform duration-300 opacity-70 ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
                 </button>
 
-                <div className={`${isOpen ? "block" : "hidden"} transition-all duration-300`}>
-                  <div className="ml-4 mt-1 mb-1 pl-4 border-l-2 border-indigo-800/50 space-y-1">
+                <div
+                  className={`${isOpen ? "block" : "hidden"} transition-all duration-300 ease-in-out`}
+                >
+                  <div className="ml-3 mt-1 mb-1 pl-3 border-l border-violet-500/20 space-y-0.5">
                     {item.children.map((child) => {
-                      const childActive = pathname === child.href;
+                      const childActive = isActive(pathname, child.href);
                       return (
                         <Link
                           key={child.name}
                           href={child.href}
-                          className={`group flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 ${
+                          className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ${
                             childActive
-                              ? "bg-indigo-600 text-white font-black border-indigo-500"
-                              : "text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300"
+                              ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-md shadow-violet-600/40"
+                              : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                           }`}
                         >
                           <child.icon
                             className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                              childActive ? "scale-110" : "group-hover:scale-110"
+                              childActive
+                                ? "scale-110 drop-shadow-[0_0_4px_rgba(167,139,250,0.7)]"
+                                : "group-hover:scale-110"
                             }`}
                           />
                           <span className="text-[11px] font-black uppercase tracking-widest">
@@ -250,75 +229,40 @@ export default function AdminSidebar({
           })}
         </nav>
 
-        {/* Footer Links */}
-        <div className={`flex-shrink-0 border-t border-indigo-900/50 py-2 space-y-1 ${isCollapsed ? "px-2" : "px-4"}`}>
-          {/* <Link
-            href={`${basePath}/support`}
-            className={`flex items-center w-full text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300 transition-all rounded-xl group ${
-              isCollapsed ? "justify-center px-2 py-3" : "px-4 py-2"
-            }`}
-            title={isCollapsed ? "Support" : undefined}
-          >
-            <HelpCircle className={`w-5 h-5 group-hover:scale-110 transition-transform ${isCollapsed ? "" : "mr-3"}`} />
-            {!isCollapsed && (
-              <span className="text-[12px] font-black uppercase tracking-widest">
-                Support
-              </span>
-            )}
-          </Link>
-
-          <Link
-            href={`${basePath}/documentation`}
-            className={`flex items-center w-full text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300 transition-all rounded-xl group ${
-              isCollapsed ? "justify-center px-2 py-3" : "px-4 py-2"
-            }`}
-            title={isCollapsed ? "Documentation" : undefined}
-          >
-            <FileText className={`w-5 h-5 group-hover:scale-110 transition-transform ${isCollapsed ? "" : "mr-3"}`} />
-            {!isCollapsed && (
-              <span className="text-[12px] font-black uppercase tracking-widest">
-                Documentation
-              </span>
-            )}
-          </Link> */}
-
+        {/* Logout */}
+        <div className="flex-shrink-0 border-t border-violet-500/20 px-3 py-3 bg-gradient-to-t from-violet-600/5 to-transparent">
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className={`flex items-center cursor-pointer w-full text-red-400 hover:bg-red-500/10 transition-all rounded-xl group ${
-              isCollapsed ? "justify-center py-3" : "px-4 py-3"
-            }`}
-            title={isCollapsed ? "Logout My Account" : undefined}
+            className="flex items-center cursor-pointer w-full px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all rounded-lg group"
           >
-            <LogOut className={`w-5 h-5 transition-transform group-hover:-translate-x-0.5 ${isCollapsed ? "" : "mr-3"}`} />
-            {!isCollapsed && (
-              <span className="text-xs font-black uppercase tracking-widest whitespace-nowrap">
-                Logout Admin
-              </span>
-            )}
+            <LogOut className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-xs font-black uppercase tracking-widest">
+              Logout My Account
+            </span>
           </button>
         </div>
       </aside>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar */}
       {sidebarOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden transition-opacity"
+            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-md lg:hidden transition-opacity"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="fixed top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-950 via-neutral-950 to-neutral-950 z-[500] flex flex-col shadow-2xl lg:hidden">
+          <aside className="fixed top-0 left-0 w-full h-full bg-background/95 backdrop-blur-xl z-[100] flex flex-col shadow-2xl lg:hidden border-r border-violet-500/20">
             {/* Mobile Header */}
-            <div className="flex-shrink-0 flex items-center justify-between h-16 px-6 border-b border-indigo-900/50">
+            <div className="flex-shrink-0 flex items-center justify-between h-15 px-6 border-b border-violet-500/20 bg-gradient-to-r from-violet-600/5 via-transparent to-cyan-500/5">
               <div className="flex flex-col">
-                <h1 className="text-xl font-black uppercase tracking-tighter text-neutral-50">
-                  SECURE<span className="text-neutral-50 font-black"> RISE</span>
+                <h1 className="text-xl font-black uppercase tracking-tighter text-foreground">
+                  NEX<span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">IS</span>
                 </h1>
-                <p className="text-[8px] font-bold tracking-[0.2em] text-neutral-400 uppercase">
-                  Admin Control Room
+                <p className="text-[8px] font-bold tracking-[0.2em] text-muted-foreground/80 uppercase">
+                  Admin Dashboard
                 </p>
               </div>
               <button
-                className="rounded-xl text-neutral-50 p-1 border border-indigo-800 bg-indigo-900"
+                className="rounded-lg text-foreground p-1.5 hover:bg-violet-500/10"
                 onClick={() => setSidebarOpen(false)}
               >
                 <X className="w-5 h-5" />
@@ -326,7 +270,7 @@ export default function AdminSidebar({
             </div>
 
             {/* Mobile Nav */}
-            <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-1 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+            <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1 scrollbar-thin scrollbar-thumb-violet-500/30 scrollbar-track-transparent">
               {navItems.map((item) => {
                 if ("href" in item) {
                   const active = pathname === item.href;
@@ -334,15 +278,15 @@ export default function AdminSidebar({
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`group flex items-center px-4 py-2.5 rounded-xl border border-transparent transition-all duration-200 ${
+                      className={`group flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${
                         active
-                          ? "bg-indigo-600 text-white font-black border-indigo-500"
-                          : "text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300"
+                          ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-600/40"
+                          : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                       }`}
                       onClick={() => setSidebarOpen(false)}
                     >
                       <item.icon
-                        className={`w-5 h-5 mr-5 transition-transform ${
+                        className={`w-5 h-5 mr-4 transition-transform ${
                           active ? "scale-110" : "group-hover:scale-110"
                         }`}
                       />
@@ -354,45 +298,49 @@ export default function AdminSidebar({
                 }
 
                 const isOpen = !!openGroups[item.name];
-                const hasActiveChild = item.children.some((c) => pathname === c.href);
+                const hasActiveChild = item.children.some((c) =>
+                  isActive(pathname, c.href)
+                );
 
                 return (
                   <div key={item.name} className="flex flex-col">
                     <button
                       onClick={() => toggleGroup(item.name)}
-                      className={`group w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
+                      className={`group w-full flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
                         hasActiveChild
-                          ? "text-indigo-300 font-black"
-                          : "text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300"
+                          ? "text-violet-400 bg-violet-500/10"
+                          : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                       }`}
                     >
                       <item.icon
-                        className={`w-5 h-5 mr-5 transition-transform ${
-                          hasActiveChild ? "scale-110" : "group-hover:scale-110"
+                        className={`w-5 h-5 mr-4 transition-transform ${
+                          hasActiveChild ? "scale-110 text-violet-400" : "group-hover:scale-110"
                         }`}
                       />
                       <span className="flex-1 text-left text-[12px] font-black uppercase tracking-widest">
                         {item.name}
                       </span>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform duration-300 ${
+                        className={`w-4 h-4 transition-transform duration-300 opacity-70 ${
                           isOpen ? "rotate-180" : ""
                         }`}
                       />
                     </button>
 
-                    <div className={`${isOpen ? "block" : "hidden"} transition-all duration-300`}>
-                      <div className="ml-4 mt-1 mb-1 pl-4 border-l-2 border-indigo-800/50 space-y-1">
+                    <div
+                      className={`${isOpen ? "block" : "hidden"} transition-all duration-300 ease-in-out`}
+                    >
+                      <div className="ml-3 mt-1 mb-1 pl-3 border-l border-violet-500/20 space-y-0.5">
                         {item.children.map((child) => {
-                          const childActive = pathname === child.href;
+                          const childActive = isActive(pathname, child.href);
                           return (
                             <Link
                               key={child.name}
                               href={child.href}
-                              className={`group flex items-center gap-3 px-3 py-2 rounded-lg border border-transparent transition-all duration-200 ${
+                              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ${
                                 childActive
-                                  ? "bg-indigo-600 text-white font-black border-indigo-500 shadow-lg shadow-indigo-500/30"
-                                  : "text-neutral-400 hover:bg-indigo-900/30 hover:text-indigo-300"
+                                  ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-md shadow-violet-600/40"
+                                  : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                               }`}
                               onClick={() => setSidebarOpen(false)}
                             >
@@ -414,18 +362,18 @@ export default function AdminSidebar({
               })}
             </nav>
 
-            {/* Mobile Footer Links */}
-            <div className="flex-shrink-0 border-t border-indigo-900/50 px-4 py-2 space-y-1">
+            {/* Mobile Logout */}
+            <div className="flex-shrink-0 border-t border-violet-500/20 px-3 py-3">
               <button
                 onClick={() => {
                   setSidebarOpen(false);
                   setShowLogoutConfirm(true);
                 }}
-                className="flex items-center cursor-pointer w-full px-4 py-3 text-red-400 hover:bg-red-500/10 transition-all rounded-xl group"
+                className="flex items-center cursor-pointer w-full px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all rounded-lg group"
               >
                 <LogOut className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
                 <span className="text-xs font-black uppercase tracking-widest">
-                  Logout Admin
+                  Logout My Account
                 </span>
               </button>
             </div>
@@ -436,29 +384,30 @@ export default function AdminSidebar({
       {/* Logout Modal */}
       {showLogoutConfirm && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-4"
           onClick={() => setShowLogoutConfirm(false)}
         >
           <div
-            className="bg-neutral-950 border-2 border-red-800 rounded-2xl w-full max-w-sm p-8 text-center relative"
+            className="bg-background/95 border border-violet-500/30 rounded-2xl shadow-2xl shadow-violet-900/20 w-full max-w-sm p-8 text-center backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-black uppercase tracking-tighter text-neutral-50 mb-2">
-              Exit Panel?
+            <h2 className="text-xl font-black uppercase tracking-tighter text-foreground mb-2">
+              Logout?
             </h2>
-            <p className="text-sm text-neutral-400 mb-4 leading-relaxed font-semibold">
-              Are you sure you want to log out of the administration console?
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to sign out? You&apos;ll need to log in again to
+              access your account.
             </p>
 
             {/* Countdown Progress Bar */}
-            <div className="mb-6 border border-neutral-800 p-3 bg-neutral-900/60 rounded-xl">
-              <div className="flex justify-between text-[10px] text-neutral-400 mb-2 uppercase tracking-widest font-bold">
+            <div className="mb-6">
+              <div className="flex justify-between text-xs text-muted-foreground mb-2">
                 <span>Auto-closing in...</span>
-                <span>{countdown}s</span>
+                <span className="text-violet-400 font-bold">{countdown}s</span>
               </div>
-              <div className="w-full bg-red-900 border border-red-800 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-red-500 h-full rounded-full transition-all duration-1000 ease-linear"
+                  className="bg-gradient-to-r from-violet-600 to-cyan-500 h-2 rounded-full transition-all duration-1000 ease-linear shadow-[0_0_12px_rgba(139,92,246,0.5)]"
                   style={{ width: `${(countdown / 10) * 100}%` }}
                 />
               </div>
@@ -470,18 +419,26 @@ export default function AdminSidebar({
                   setShowLogoutConfirm(false);
                   setCountdown(10);
                 }}
-                className="flex-1 px-6 py-3 rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-300 font-black text-xs uppercase tracking-widest transition-colors cursor-pointer"
+                className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:from-violet-500 hover:to-violet-400 transition-all shadow-lg shadow-violet-600/30"
               >
                 Stay
               </button>
               <button
-                onClick={() => {
-                  router.push("/auth-page/login");
-                  toast.success("Successfully logged out of Admin Panel");
-                  setShowLogoutConfirm(false);
-                  setCountdown(10);
+                onClick={async () => {
+                  try {
+                    // Call the logout API to clear the auth token
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    toast.success("Successfully signed out");
+                    setShowLogoutConfirm(false);
+                    setCountdown(10);
+                    // Redirect to login page
+                    router.push("/auth-page/login");
+                  } catch (error) {
+                    console.error("Logout error:", error);
+                    toast.error("Failed to sign out");
+                  }
                 }}
-                className="flex-1 px-6 py-3 rounded-xl bg-red-600 text-white font-black text-xs uppercase tracking-widest hover:bg-red-500 transition-colors border border-red-500 cursor-pointer animate-pulse"
+                className="flex-1 px-6 py-3 rounded-lg bg-red-500/90 cursor-pointer text-white font-bold text-xs uppercase tracking-widest hover:bg-red-500 transition-colors"
               >
                 Exit
               </button>

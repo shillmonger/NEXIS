@@ -28,7 +28,7 @@ export default function AdminDashboardLayout({
         </header>
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 min-w-0 overflow-y-auto px-4 pb-20 lg:px-6 lg:pb-6 scrollbar-hide">
+        <main className="flex-1 min-w-0 overflow-y-auto px-4 pt-5 pb-25 lg:px-6 lg:pb-6 scrollbar-hide">
           {children}
         </main>
       </div>

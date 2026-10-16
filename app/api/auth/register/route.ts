@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       role: 'user',
       status: 'active',
       agreedToTerms: true,
+      provider: 'local',
     });
 
     // Send verification email
