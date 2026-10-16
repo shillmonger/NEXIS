@@ -220,6 +220,7 @@ export default function LoginPage() {
 
                 <Button
                   type="button"
+                  onClick={() => window.location.href = '/api/auth/discord'}
                   className="h-11 rounded-xl cursor-pointer bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-foreground border border-neutral-200 dark:border-neutral-700 transition-all"
                 >
                   <svg
