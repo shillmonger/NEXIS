@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         code,
         client_id: process.env.DISCORD_CLIENT_ID!,
         client_secret: process.env.DISCORD_CLIENT_SECRET!,
-        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/discord/callback`,
+        redirect_uri: process.env.DISCORD_CALLBACK_URL!,
         grant_type: 'authorization_code',
       }),
     });

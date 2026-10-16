@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const redirect_uri = searchParams.get('redirect_uri') || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/discord/callback`;
+  const redirect_uri = searchParams.get('redirect_uri') || process.env.DISCORD_CALLBACK_URL!;
 
   const discordAuthUrl = 'https://discord.com/api/oauth2/authorize';
   const params = new URLSearchParams({
