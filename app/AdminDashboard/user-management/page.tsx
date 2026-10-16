@@ -13,12 +13,8 @@ import {
   MoreVertical,
   Mail,
   Loader2,
-  DollarSign,
   Eye,
   XCircle,
-  Phone,
-  Globe,
-  Wallet,
   User,
   AlertTriangle,
 } from "lucide-react";
@@ -58,6 +54,9 @@ interface User {
   referralId?: string;
   isActive?: boolean;
   profileImage?: string;
+  emailVerified?: boolean;
+  lastLoginAt?: string;
+  provider?: string;
 }
 
 interface ProfitHistoryEntry {
@@ -84,6 +83,8 @@ interface UserInvestment {
   endDate: string;
   lastProfitDate: string;
   updatedAt: string;
+  planType?: string;
+  billingPeriod?: string;
 }
 
 interface UserDetails {
@@ -136,278 +137,94 @@ export default function AdminUsersPage() {
       color: "text-purple-500",
       bg: "bg-purple-500/10",
     },
-    {
-      label: "Total Deposit",
-      value: "$0",
-      icon: DollarSign,
-      color: "text-teal-500",
-      bg: "bg-teal-500/10",
-    },
   ]);
 
   useEffect(() => {
-    // Mock data
-    const mockUsers: User[] = [
-      {
-        id: "user-001",
-        name: "John Doe",
-        email: "john@example.com",
-        username: "crypto_trader",
-        status: "Active",
-        balance: "5000",
-        profit: "1200",
-        totalDeposit: 5500,
-        totalWithdrawal: 500,
-        roles: ["user"],
-        country: "USA",
-        phone: "+1234567890",
-        createdAt: "2026-09-01T00:00:00Z",
-        updatedAt: "2026-10-15T00:00:00Z",
-        fullName: "John Doe",
-        accountBalance: 5000,
-        welcomeBonus: 100,
-        totalProfits: 1200,
-        referralBonus: 50,
-        totalReferrals: 5,
-        activeReferrals: 3,
-        myReferralId: "REF001",
-        referralId: "REF000",
-        isActive: true,
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-002",
-        name: "Jane Smith",
-        email: "jane@example.com",
-        username: "investor_hub",
-        status: "Active",
-        balance: "12500",
-        profit: "3400",
-        totalDeposit: 14500,
-        totalWithdrawal: 2000,
-        roles: ["user", "admin"],
-        country: "UK",
-        phone: "+441234567890",
-        createdAt: "2026-08-15T00:00:00Z",
-        updatedAt: "2026-10-14T00:00:00Z",
-        fullName: "Jane Smith",
-        accountBalance: 12500,
-        welcomeBonus: 100,
-        totalProfits: 3400,
-        referralBonus: 150,
-        totalReferrals: 12,
-        activeReferrals: 8,
-        myReferralId: "REF002",
-        referralId: "REF001",
-        isActive: true,
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-003",
-        name: "Mike Johnson",
-        email: "mike@example.com",
-        username: "whale_investor",
-        status: "Blocked",
-        balance: "8500",
-        profit: "2100",
-        totalDeposit: 10000,
-        totalWithdrawal: 1500,
-        roles: ["user"],
-        country: "Canada",
-        phone: "+11234567890",
-        createdAt: "2026-09-10T00:00:00Z",
-        updatedAt: "2026-10-13T00:00:00Z",
-        fullName: "Mike Johnson",
-        accountBalance: 8500,
-        welcomeBonus: 100,
-        totalProfits: 2100,
-        referralBonus: 75,
-        totalReferrals: 8,
-        activeReferrals: 4,
-        myReferralId: "REF003",
-        referralId: "REF001",
-        isActive: false,
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-004",
-        name: "Sarah Williams",
-        email: "sarah@example.com",
-        username: "swing_trader",
-        status: "Active",
-        balance: "2500",
-        profit: "300",
-        totalDeposit: 2600,
-        totalWithdrawal: 0,
-        roles: ["user"],
-        country: "Australia",
-        phone: "+61234567890",
-        createdAt: "2026-10-01T00:00:00Z",
-        updatedAt: "2026-10-12T00:00:00Z",
-        fullName: "Sarah Williams",
-        accountBalance: 2500,
-        welcomeBonus: 100,
-        totalProfits: 300,
-        referralBonus: 25,
-        totalReferrals: 2,
-        activeReferrals: 1,
-        myReferralId: "REF004",
-        referralId: "REF002",
-        isActive: true,
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-005",
-        name: "David Brown",
-        email: "david@example.com",
-        username: "newbie_trader",
-        status: "Active",
-        balance: "15000",
-        profit: "4500",
-        totalDeposit: 18000,
-        totalWithdrawal: 3000,
-        roles: ["user"],
-        country: "Germany",
-        phone: "+491234567890",
-        createdAt: "2026-09-20T00:00:00Z",
-        updatedAt: "2026-10-11T00:00:00Z",
-        fullName: "David Brown",
-        accountBalance: 15000,
-        welcomeBonus: 100,
-        totalProfits: 4500,
-        referralBonus: 200,
-        totalReferrals: 15,
-        activeReferrals: 10,
-        myReferralId: "REF005",
-        referralId: "REF001",
-        isActive: true,
-        profileImage: "https://github.com/shadcn.png",
-      },
-    ];
-
-    const mockInvestments: UserInvestment[] = [
-      {
-        id: "inv-001",
-        userId: "user-001",
-        planId: 1,
-        planName: "Basic Plan",
-        roiRate: 5,
-        investmentAmount: 1000,
-        durationDays: 30,
-        daysPassed: 15,
-        profitEarned: 250,
-        completionPercentage: 50,
-        status: "active",
-        profitHistory: [
-          { date: "2026-10-01", rate: 5, amount: 50, timestamp: "2026-10-01T00:00:00Z" },
-          { date: "2026-10-05", rate: 5, amount: 50, timestamp: "2026-10-05T00:00:00Z" },
-          { date: "2026-10-10", rate: 5, amount: 50, timestamp: "2026-10-10T00:00:00Z" },
-          { date: "2026-10-15", rate: 5, amount: 50, timestamp: "2026-10-15T00:00:00Z" },
-        ],
-        startDate: "2026-10-01T00:00:00Z",
-        endDate: "2026-10-31T00:00:00Z",
-        lastProfitDate: "2026-10-15T00:00:00Z",
-        updatedAt: "2026-10-15T00:00:00Z",
-      },
-    ];
-
-    setTimeout(() => {
-      setUsers(mockUsers);
-
-      // Calculate stats
-      const activeUsers = mockUsers.filter((u) => u.status === "Active").length;
-      const blockedUsers = mockUsers.filter((u) => u.status === "Blocked").length;
-      const investedUsers = mockUsers.filter((u) => u.totalDeposit > 0).length;
-      const totalDeposit = mockUsers.reduce((sum, u) => sum + u.totalDeposit, 0);
-
-      setStats([
-        {
-          label: "Total Users",
-          value: mockUsers.length.toString(),
-          icon: Users,
-          color: "text-blue-500",
-          bg: "bg-blue-500/10",
-        },
-        {
-          label: "Active Users",
-          value: activeUsers.toString(),
-          icon: UserCheck,
-          color: "text-teal-500",
-          bg: "bg-teal-500/10",
-        },
-        {
-          label: "Blocked Users",
-          value: blockedUsers.toString(),
-          icon: UserMinus,
-          color: "text-red-500",
-          bg: "bg-red-500/10",
-        },
-        {
-          label: "This week users",
-          value: investedUsers.toString(),
-          icon: Briefcase,
-          color: "text-purple-500",
-          bg: "bg-purple-500/10",
-        },
-      ]);
-
-      setLoading(false);
-    }, 800);
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/users');
+      const data = await response.json();
+
+      if (response.ok) {
+        setUsers(data.users);
+        setStats([
+          {
+            label: "Total Users",
+            value: data.stats.totalUsers.toString(),
+            icon: Users,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+          },
+          {
+            label: "Active Users",
+            value: data.stats.activeUsers.toString(),
+            icon: UserCheck,
+            color: "text-teal-500",
+            bg: "bg-teal-500/10",
+          },
+          {
+            label: "Blocked Users",
+            value: data.stats.blockedUsers.toString(),
+            icon: UserMinus,
+            color: "text-red-500",
+            bg: "bg-red-500/10",
+          },
+          {
+            label: "Users This Week",
+            value: data.stats.usersThisWeek.toString(),
+            icon: Briefcase,
+            color: "text-purple-500",
+            bg: "bg-purple-500/10",
+          },
+        ]);
+      } else {
+        toast.error(data.error || 'Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to fetch users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleUserStatus = async (userId: string, currentStatus: string) => {
     setUpdatingUserId(userId);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Convert frontend status to backend status
+      const newStatus = currentStatus === "Active" ? "suspended" : "active";
 
-      const newStatus = currentStatus === "Active" ? "Blocked" : "Active";
+      const response = await fetch(`/api/admin/users/${userId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update user status');
+      }
 
       setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
+        prev.map((u) => (u.id === userId ? { ...u, status: data.user.status } : u))
       );
 
-      toast.success(`User ${newStatus === "Active" ? "activated" : "suspended"}`);
+      const actionMessage = newStatus === 'active' ? 'activated' : 'suspended';
+      toast.success(`User ${actionMessage}`);
 
       // Refresh stats
-      const activeUsers = users.filter((u) => u.status === "Active").length;
-      const blockedUsers = users.filter((u) => u.status === "Blocked").length;
-      const investedUsers = users.filter((u) => u.totalDeposit > 0).length;
-      const totalDeposit = users.reduce((sum, u) => sum + u.totalDeposit, 0);
-
-      setStats([
-        {
-          label: "Total Users",
-          value: users.length.toString(),
-          icon: Users,
-          color: "text-blue-500",
-          bg: "bg-blue-500/10",
-        },
-        {
-          label: "Active Users",
-          value: activeUsers.toString(),
-          icon: UserCheck,
-          color: "text-teal-500",
-          bg: "bg-teal-500/10",
-        },
-        {
-          label: "Blocked Users",
-          value: blockedUsers.toString(),
-          icon: UserMinus,
-          color: "text-red-500",
-          bg: "bg-red-500/10",
-        },
-        {
-          label: "Users Deposited",
-          value: investedUsers.toString(),
-          icon: Briefcase,
-          color: "text-purple-500",
-          bg: "bg-purple-500/10",
-        },
-      ]);
+      await fetchUsers();
     } catch (error) {
       console.error("Error updating user status:", error);
-      toast.error("Failed to update user status");
+      toast.error(error instanceof Error ? error.message : 'Failed to update user status');
     } finally {
       setUpdatingUserId(null);
       setConfirmModal(null);
@@ -418,51 +235,25 @@ export default function AdminUsersPage() {
     setUpdatingUserId(userId);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete user');
+      }
 
       setUsers((prev) => prev.filter((u) => u.id !== userId));
 
       toast.success(`User ${userName} deleted successfully`);
 
       // Refresh stats
-      const activeUsers = users.filter((u) => u.status === "Active").length;
-      const blockedUsers = users.filter((u) => u.status === "Blocked").length;
-      const investedUsers = users.filter((u) => u.totalDeposit > 0).length;
-      const totalDeposit = users.reduce((sum, u) => sum + u.totalDeposit, 0);
-
-      setStats([
-        {
-          label: "Total Users",
-          value: users.length.toString(),
-          icon: Users,
-          color: "text-blue-500",
-          bg: "bg-blue-500/10",
-        },
-        {
-          label: "Active Users",
-          value: activeUsers.toString(),
-          icon: UserCheck,
-          color: "text-teal-500",
-          bg: "bg-teal-500/10",
-        },
-        {
-          label: "Blocked Users",
-          value: blockedUsers.toString(),
-          icon: UserMinus,
-          color: "text-red-500",
-          bg: "bg-red-500/10",
-        },
-        {
-          label: "This week users",
-          value: investedUsers.toString(),
-          icon: Briefcase,
-          color: "text-purple-500",
-          bg: "bg-purple-500/10",
-        },
-      ]);
+      await fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast.error("Failed to delete user");
+      toast.error(error instanceof Error ? error.message : 'Failed to delete user');
     } finally {
       setUpdatingUserId(null);
       setConfirmModal(null);
@@ -496,39 +287,16 @@ export default function AdminUsersPage() {
     setLoadingUserDetails(userId);
 
     try {
-      const currentUser = users.find((u) => u.id === userId);
+      const response = await fetch(`/api/admin/users/${userId}`);
+      const data = await response.json();
 
-      if (currentUser) {
-        const mockInvestments: UserInvestment[] = [
-          {
-            id: "inv-001",
-            userId: userId,
-            planId: 1,
-            planName: "Basic Plan",
-            roiRate: 5,
-            investmentAmount: 1000,
-            durationDays: 30,
-            daysPassed: 15,
-            profitEarned: 250,
-            completionPercentage: 50,
-            status: "active",
-            profitHistory: [
-              { date: "2026-10-01", rate: 5, amount: 50, timestamp: "2026-10-01T00:00:00Z" },
-              { date: "2026-10-05", rate: 5, amount: 50, timestamp: "2026-10-05T00:00:00Z" },
-              { date: "2026-10-10", rate: 5, amount: 50, timestamp: "2026-10-10T00:00:00Z" },
-              { date: "2026-10-15", rate: 5, amount: 50, timestamp: "2026-10-15T00:00:00Z" },
-            ],
-            startDate: "2026-10-01T00:00:00Z",
-            endDate: "2026-10-31T00:00:00Z",
-            lastProfitDate: "2026-10-15T00:00:00Z",
-            updatedAt: "2026-10-15T00:00:00Z",
-          },
-        ];
-
+      if (response.ok) {
         setSelectedUser({
-          user: currentUser,
-          investments: mockInvestments,
+          user: data.user,
+          investments: data.investments || [],
         });
+      } else {
+        toast.error(data.error || 'Failed to fetch user details');
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -660,7 +428,7 @@ export default function AdminUsersPage() {
                     <th className="px-6 py-4 hidden md:table-cell">Joined</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 hidden sm:table-cell">
-                      Account Balance
+                      Email Verified
                     </th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
@@ -712,11 +480,16 @@ export default function AdminUsersPage() {
                           {user.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 hidden sm:table-cell font-bold text-emerald-600">
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4 text-emerald-600" />
-                          {formatCurrency(user.accountBalance || user.balance || 0)}
-                        </div>
+                      <td className="px-6 py-4 hidden sm:table-cell">
+                        <span
+                          className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            user.emailVerified
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                              : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                          }`}
+                        >
+                          {user.emailVerified ? "Verified" : "Pending"}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
@@ -838,15 +611,29 @@ export default function AdminUsersPage() {
                     </p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Phone number</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {selectedUser.user.phone}
+                    <p className="text-[11px] text-muted-foreground mb-1">Email Verified</p>
+                    <span
+                      className={`text-sm font-medium ${
+                        selectedUser.user.emailVerified
+                          ? "text-emerald-600"
+                          : "text-amber-600"
+                      }`}
+                    >
+                      {selectedUser.user.emailVerified ? "Yes" : "No"}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-lg border border-border">
+                    <p className="text-[11px] text-muted-foreground mb-1">Provider</p>
+                    <p className="text-sm font-medium text-foreground capitalize">
+                      {selectedUser.user.provider || 'local'}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Country</p>
+                    <p className="text-[11px] text-muted-foreground mb-1">Last Login</p>
                     <p className="text-sm font-medium text-foreground">
-                      {selectedUser.user.country}
+                      {selectedUser.user.lastLoginAt
+                        ? formatDate(selectedUser.user.lastLoginAt)
+                        : "Never"}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg border border-border">
@@ -867,35 +654,15 @@ export default function AdminUsersPage() {
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Account balance</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {formatCurrency(
-                        selectedUser.user.accountBalance || selectedUser.user.balance || 0
-                      )}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border">
                     <p className="text-[11px] text-muted-foreground mb-1">Total deposits</p>
                     <p className="text-sm font-medium text-foreground">
-                      {formatCurrency(selectedUser.user.totalDeposit)}
+                      {formatCurrency(selectedUser.user.totalDeposit || 0)}
                     </p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg border border-border">
                     <p className="text-[11px] text-muted-foreground mb-1">Total withdrawals</p>
                     <p className="text-sm font-medium text-foreground">
-                      {formatCurrency(selectedUser.user.totalWithdrawal)}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Total profit</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {formatCurrency(selectedUser.user.totalProfits || 0)}
-                    </p>
-                  </div>
-                  <div className="col-span-2 p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Welcome bonus</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {formatCurrency(selectedUser.user.welcomeBonus || 0)}
+                      {formatCurrency(selectedUser.user.totalWithdrawal || 0)}
                     </p>
                   </div>
                 </div>
@@ -928,45 +695,10 @@ export default function AdminUsersPage() {
 
               <hr className="border-border" />
 
-              {/* Referral Information */}
-              <div>
-                <p className="text-[11px] font-medium text-amber-600 uppercase tracking-widest mb-3">
-                  Referral Information
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">My referral ID</p>
-                    <p className="text-sm font-medium text-foreground font-mono">
-                      {selectedUser.user.myReferralId || "N/A"}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Referred by</p>
-                    <p className="text-sm font-medium text-foreground font-mono">
-                      {selectedUser.user.referralId || "N/A"}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Total referrals</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {selectedUser.user.totalReferrals || 0}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border">
-                    <p className="text-[11px] text-muted-foreground mb-1">Active referrals</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {selectedUser.user.activeReferrals || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <hr className="border-border" />
-
-              {/* Investment Information */}
+              {/* Subscription Information */}
               <div>
                 <p className="text-[11px] font-medium text-teal-600 uppercase tracking-widest mb-3">
-                  Investment Information
+                  Subscription Information
                 </p>
 
                 {selectedUser.investments && selectedUser.investments.length > 0 ? (
@@ -982,16 +714,17 @@ export default function AdminUsersPage() {
                               {investment.planName}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {formatDate(investment.startDate)} -{" "}
-                              {formatDate(investment.endDate)}
+                              {investment.billingPeriod || 'monthly'} subscription
                             </p>
                           </div>
                           <span
                             className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
                               investment.status === "active"
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                : investment.status === "completed"
-                                ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                : investment.status === "pending"
+                                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                : investment.status === "rejected"
+                                ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
                                 : "bg-gray-500/10 text-gray-600 border-gray-500/20"
                             }`}
                           >
@@ -1001,68 +734,45 @@ export default function AdminUsersPage() {
 
                         <div className="grid grid-cols-2 gap-2 mb-3">
                           <div className="p-2 bg-background/50 rounded-lg">
-                            <p className="text-[10px] text-muted-foreground mb-1">Invested</p>
+                            <p className="text-[10px] text-muted-foreground mb-1">Amount</p>
                             <p className="text-sm font-bold text-foreground">
                               {formatCurrency(investment.investmentAmount)}
                             </p>
                           </div>
                           <div className="p-2 bg-background/50 rounded-lg">
-                            <p className="text-[10px] text-muted-foreground mb-1">Profit Earned</p>
-                            <p className="text-sm font-bold text-emerald-600">
-                              {formatCurrency(investment.profitEarned)}
+                            <p className="text-[10px] text-muted-foreground mb-1">Plan Type</p>
+                            <p className="text-sm font-bold text-foreground">
+                              {investment.planType || 'Standard'}
                             </p>
                           </div>
                           <div className="p-2 bg-background/50 rounded-lg">
-                            <p className="text-[10px] text-muted-foreground mb-1">ROI Rate</p>
+                            <p className="text-[10px] text-muted-foreground mb-1">Start Date</p>
                             <p className="text-sm font-bold text-foreground">
-                              {investment.roiRate}%
+                              {formatDate(investment.startDate)}
                             </p>
                           </div>
                           <div className="p-2 bg-background/50 rounded-lg">
-                            <p className="text-[10px] text-muted-foreground mb-1">Progress</p>
+                            <p className="text-[10px] text-muted-foreground mb-1">End Date</p>
                             <p className="text-sm font-bold text-foreground">
-                              {investment.daysPassed}/{investment.durationDays} days
+                              {investment.endDate ? formatDate(investment.endDate) : 'N/A'}
                             </p>
                           </div>
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="mb-3">
-                          <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                            <span>Completion</span>
-                            <span>{investment.completionPercentage.toFixed(1)}%</span>
-                          </div>
-                          <div className="w-full bg-border rounded-full h-2">
-                            <div
-                              className="bg-teal-500 h-2 rounded-full transition-all"
-                              style={{
-                                width: `${Math.min(100, investment.completionPercentage)}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Profit History */}
-                        {investment.profitHistory && investment.profitHistory.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                              Profit History ({investment.profitHistory.length} entries)
-                            </p>
-                            <div className="max-h-32 overflow-y-auto space-y-1">
-                              {investment.profitHistory
-                                .slice(-5)
-                                .reverse()
-                                .map((entry, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center justify-between p-2 bg-background/50 rounded-lg text-[10px]"
-                                  >
-                                    <span className="text-muted-foreground">{entry.date}</span>
-                                    <span className="font-bold text-emerald-600">
-                                      +{formatCurrency(entry.amount)}
-                                    </span>
-                                  </div>
-                                ))}
+                        {investment.endDate && (
+                          <div className="mb-3">
+                            <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                              <span>Subscription Progress</span>
+                              <span>{investment.completionPercentage.toFixed(1)}%</span>
+                            </div>
+                            <div className="w-full bg-border rounded-full h-2">
+                              <div
+                                className="bg-teal-500 h-2 rounded-full transition-all"
+                                style={{
+                                  width: `${Math.min(100, investment.completionPercentage)}%`,
+                                }}
+                              />
                             </div>
                           </div>
                         )}
@@ -1071,8 +781,8 @@ export default function AdminUsersPage() {
                   </div>
                 ) : (
                   <div className="p-4 bg-muted/30 rounded-xl border border-border text-center">
-                    <Wallet className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm font-medium text-muted-foreground">No investments found</p>
+                    <User className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm font-medium text-muted-foreground">No subscriptions found</p>
                   </div>
                 )}
               </div>

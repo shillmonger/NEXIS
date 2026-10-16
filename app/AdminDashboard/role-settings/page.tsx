@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, UserCheck, Mail, MoreVertical, ChevronDown, DollarSign, Loader2 } from "lucide-react";
+import { Users, UserCheck, Mail, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Shadcn UI Imports
@@ -18,19 +18,12 @@ interface User {
   name: string;
   email: string;
   status: string;
-  balance: string;
-  profit: string;
-  roles: string[];
+  role: string;
   username: string;
-  country: string;
-  phoneNumber: string;
-  welcomeBonus: number;
-  referralBonus: number;
-  totalWithdrawal: number;
-  totalDeposit: number;
   createdAt: string;
   updatedAt: string;
   profileImage?: string;
+  emailVerified?: boolean;
 }
 
 export default function AdminRolesPage() {
@@ -43,130 +36,56 @@ export default function AdminRolesPage() {
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock data
-    const mockUsers: User[] = [
-      {
-        id: "user-001",
-        name: "John Doe",
-        email: "john@example.com",
-        status: "Active",
-        balance: "5000",
-        profit: "1200",
-        roles: ["user"],
-        username: "crypto_trader",
-        country: "USA",
-        phoneNumber: "+1234567890",
-        welcomeBonus: 100,
-        referralBonus: 50,
-        totalWithdrawal: 500,
-        totalDeposit: 5500,
-        createdAt: "2026-09-01T00:00:00Z",
-        updatedAt: "2026-10-15T00:00:00Z",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-002",
-        name: "Jane Smith",
-        email: "jane@example.com",
-        status: "Active",
-        balance: "12500",
-        profit: "3400",
-        roles: ["user", "admin"],
-        username: "investor_hub",
-        country: "UK",
-        phoneNumber: "+441234567890",
-        welcomeBonus: 100,
-        referralBonus: 150,
-        totalWithdrawal: 2000,
-        totalDeposit: 14500,
-        createdAt: "2026-08-15T00:00:00Z",
-        updatedAt: "2026-10-14T00:00:00Z",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-003",
-        name: "Mike Johnson",
-        email: "mike@example.com",
-        status: "Active",
-        balance: "8500",
-        profit: "2100",
-        roles: ["user"],
-        username: "whale_investor",
-        country: "Canada",
-        phoneNumber: "+11234567890",
-        welcomeBonus: 100,
-        referralBonus: 75,
-        totalWithdrawal: 1500,
-        totalDeposit: 10000,
-        createdAt: "2026-09-10T00:00:00Z",
-        updatedAt: "2026-10-13T00:00:00Z",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-004",
-        name: "Sarah Williams",
-        email: "sarah@example.com",
-        status: "Inactive",
-        balance: "2500",
-        profit: "300",
-        roles: ["user"],
-        username: "swing_trader",
-        country: "Australia",
-        phoneNumber: "+61234567890",
-        welcomeBonus: 100,
-        referralBonus: 25,
-        totalWithdrawal: 0,
-        totalDeposit: 2600,
-        createdAt: "2026-10-01T00:00:00Z",
-        updatedAt: "2026-10-12T00:00:00Z",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        id: "user-005",
-        name: "David Brown",
-        email: "david@example.com",
-        status: "Active",
-        balance: "15000",
-        profit: "4500",
-        roles: ["user"],
-        username: "newbie_trader",
-        country: "Germany",
-        phoneNumber: "+491234567890",
-        welcomeBonus: 100,
-        referralBonus: 200,
-        totalWithdrawal: 3000,
-        totalDeposit: 18000,
-        createdAt: "2026-09-20T00:00:00Z",
-        updatedAt: "2026-10-11T00:00:00Z",
-        profileImage: "https://github.com/shadcn.png",
-      },
-    ];
-
-    setTimeout(() => {
-      setUsers(mockUsers);
-      setLoading(false);
-    }, 800);
+    fetchUsers();
   }, []);
 
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/users');
+      const data = await response.json();
+
+      if (response.ok) {
+        setUsers(data.users);
+      } else {
+        toast.error(data.error || 'Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to fetch users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Update user role
-  const changeRole = async (userId: string, newRoles: string[]) => {
+  const changeRole = async (userId: string, newRole: string) => {
     setUpdatingUserId(userId);
 
     try {
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update role');
+      }
 
       // Update local state
       setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, roles: newRoles } : u))
+        prev.map((u) => (u.id === userId ? { ...u, role: data.user.role } : u))
       );
 
-      toast.success(
-        `Role updated to ${newRoles.includes("admin") ? "Admin" : "User"}`
-      );
+      toast.success(`Role updated to ${newRole === 'admin' ? 'Admin' : 'User'}`);
     } catch (error) {
       console.error("Error updating role:", error);
-      toast.error("Failed to update role");
+      toast.error(error instanceof Error ? error.message : 'Failed to update role');
     } finally {
       setUpdatingUserId(null);
     }
@@ -180,19 +99,9 @@ export default function AdminRolesPage() {
       user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Format currency
-  const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === "string" ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(num);
-  };
-
   // Get display role
-  const getDisplayRole = (roles: string[]) => {
-    return roles.includes("admin") ? "Admin" : "User";
+  const getDisplayRole = (role: string) => {
+    return role === "admin" ? "Admin" : "User";
   };
 
   return (
@@ -263,7 +172,6 @@ export default function AdminRolesPage() {
                   <tr>
                     <th className="px-6 py-4">User</th>
                     <th className="px-6 py-4">Email</th>
-                    <th className="px-6 py-4">Account Balance</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Role</th>
                     <th className="px-6 py-4 text-right">Actions</th>
@@ -306,14 +214,6 @@ export default function AdminRolesPage() {
                         <Mail className="w-3 h-3" /> {user.email}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4 text-emerald-600" />
-                          <span className="font-semibold text-emerald-600">
-                            {formatCurrency(user.balance)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
                         <span
                           className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
                             user.status === "Active"
@@ -338,7 +238,7 @@ export default function AdminRolesPage() {
                               </>
                             ) : (
                               <>
-                                {getDisplayRole(user.roles)}
+                                {getDisplayRole(user.role)}
                                 <ChevronDown className="w-3 h-3 text-gray-400" />
                               </>
                             )}
@@ -349,17 +249,15 @@ export default function AdminRolesPage() {
                           >
                             <DropdownMenuItem
                               className="text-xs font-medium py-2 px-4 cursor-pointer focus:bg-emerald-500/10 focus:text-emerald-600"
-                              onClick={() => changeRole(user.id, ["user"])}
-                              disabled={
-                                user.roles.length === 1 && user.roles[0] === "user"
-                              }
+                              onClick={() => changeRole(user.id, "user")}
+                              disabled={user.role === "user"}
                             >
                               User
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-xs font-medium py-2 px-4 cursor-pointer focus:bg-violet-500/10 focus:text-violet-600"
-                              onClick={() => changeRole(user.id, ["user", "admin"])}
-                              disabled={user.roles.includes("admin")}
+                              onClick={() => changeRole(user.id, "admin")}
+                              disabled={user.role === "admin"}
                             >
                               Admin
                             </DropdownMenuItem>
@@ -367,24 +265,9 @@ export default function AdminRolesPage() {
                         </DropdownMenu>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            className="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"
-                            onClick={() =>
-                              toast.info(
-                                `User: ${user.name} | Balance: ${formatCurrency(
-                                  user.balance
-                                )} | Total Deposit: ${formatCurrency(
-                                  user.totalDeposit
-                                )} | Total Withdrawal: ${formatCurrency(
-                                  user.totalWithdrawal
-                                )}`
-                              )
-                            }
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {user.emailVerified ? "Verified" : "Unverified"}
+                        </span>
                       </td>
                     </tr>
                   ))}
