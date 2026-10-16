@@ -1,8 +1,7 @@
 "use client";
 
-// UI-ONLY PREVIEW: all data below is mock. No backend, no real Discord calls.
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   CalendarDays,
   CheckCircle2,
@@ -16,50 +15,28 @@ import {
   Settings2,
 } from "lucide-react";
 
-// ─── MOCK DATA ───────────────────────────────────────────────────────────────
-// Each item is one SUBSCRIPTION record (not a payment transaction).
+// ─── TYPES ───────────────────────────────────────────────────────────────
 
-type SubStatus = "active" | "expired";
+type EntitlementStatus = "active" | "expired" | "revoked";
 
-interface Subscription {
-  id: string; // internal key
-  subscriptionId: string; // e.g. SUB-1048
+interface Entitlement {
+  id: string;
+  subscriptionId: string;
+  botProductId: string;
   botName: string;
-  plan: string;
-  status: SubStatus;
+  planName: string;
+  planType: string;
+  status: EntitlementStatus;
+  startedAt: string;
   expiresAt: string;
-  serverName: string | null; // null = not connected
+  createdAt: string;
+  serverName: string | null;
+  serverId: string | null;
+  subscriptionDetails?: {
+    billingPeriod: string;
+    amount: number;
+  };
 }
-
-const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  {
-    id: "sub-1",
-    subscriptionId: "SUB-1048",
-    botName: "Nexis Bot",
-    plan: "Basic Plan",
-    status: "active",
-    expiresAt: "November 15, 2026",
-    serverName: null,
-  },
-  {
-    id: "sub-2",
-    subscriptionId: "SUB-1052",
-    botName: "Nexis Bot",
-    plan: "Pro Plan",
-    status: "active",
-    expiresAt: "November 20, 2026",
-    serverName: "Community Hub",
-  },
-  {
-    id: "sub-3",
-    subscriptionId: "SUB-0981",
-    botName: "Nexis Bot",
-    plan: "Basic Plan",
-    status: "expired",
-    expiresAt: "October 10, 2026",
-    serverName: null,
-  },
-];
 
 // ─── STYLE HELPERS ───────────────────────────────────────────────────────────
 
@@ -91,29 +68,31 @@ function InfoRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 text-xs">
-      <span className="text-muted-foreground shrink-0">{icon}</span>
-      <span className="text-muted-foreground w-28 shrink-0">{label}</span>
-      <span className="font-bold min-w-0 truncate">{children}</span>
+    <div className="flex items-center justify-between text-xs">
+      <div className="flex items-center gap-3">
+        <span className="text-muted-foreground shrink-0">{icon}</span>
+        <span className="text-muted-foreground">{label}</span>
+      </div>
+      <span className="font-bold text-right min-w-0 truncate">{children}</span>
     </div>
   );
 }
 
 function SubscriptionCard({
-  sub,
+  entitlement,
   featured,
   busy,
   onAdd,
   onManage,
 }: {
-  sub: Subscription;
+  entitlement: Entitlement;
   featured: boolean;
   busy: boolean;
   onAdd: (id: string) => void;
   onManage: (id: string) => void;
 }) {
-  const expired = sub.status === "expired";
-  const connected = !expired && sub.serverName !== null;
+  const expired = entitlement.status === "expired" || entitlement.status === "revoked";
+  const connected = !expired && entitlement.serverName !== null;
 
   return (
     <article
@@ -134,7 +113,7 @@ function SubscriptionCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="text-base font-black tracking-tight truncate">{sub.botName}</h3>
+            <h3 className="text-base font-black tracking-tight truncate">{entitlement.botName}</h3>
             {expired ? (
               <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground border border-border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider">
                 Expired
@@ -146,7 +125,7 @@ function SubscriptionCard({
             )}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Plan: <span className="font-bold text-violet-600">{sub.plan}</span>
+            Plan: <span className="font-bold text-violet-600">{entitlement.planName}</span>
           </p>
         </div>
       </div>
@@ -154,7 +133,7 @@ function SubscriptionCard({
       {/* Details */}
       <div className={`mt-5 space-y-4 ${expired ? "opacity-60" : ""}`}>
         <InfoRow icon={<FileText className="w-4 h-4" />} label="Subscription ID">
-          {sub.subscriptionId}
+          {entitlement.subscriptionId?.replace(/[{}]/g, '')}
         </InfoRow>
 
         <InfoRow icon={<CheckCircle2 className="w-4 h-4" />} label="Server status">
@@ -170,12 +149,32 @@ function SubscriptionCard({
 
         {connected && (
           <InfoRow icon={<Server className="w-4 h-4" />} label="Discord server">
-            {sub.serverName}
+            {entitlement.serverName}
           </InfoRow>
         )}
 
+        <InfoRow icon={<CalendarDays className="w-4 h-4" />} label="Started">
+          {new Date(entitlement.startedAt).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+        </InfoRow>
+
+        <InfoRow icon={<CalendarDays className="w-4 h-4" />} label="Created">
+          {new Date(entitlement.createdAt).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+        </InfoRow>
+
         <InfoRow icon={<CalendarDays className="w-4 h-4" />} label="Expiration">
-          {sub.expiresAt}
+          {new Date(entitlement.expiresAt).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })}
         </InfoRow>
       </div>
 
@@ -189,7 +188,7 @@ function SubscriptionCard({
         ) : connected ? (
           <button
             type="button"
-            onClick={() => onManage(sub.id)}
+            onClick={() => onManage(entitlement.id)}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-violet-600/30 bg-violet-600/5 px-5 py-3 text-xs font-bold uppercase tracking-wider text-violet-600 transition-all hover:bg-violet-600/10 cursor-pointer"
           >
             <Settings2 className="w-4 h-4" />
@@ -199,7 +198,7 @@ function SubscriptionCard({
           <button
             type="button"
             disabled={busy}
-            onClick={() => onAdd(sub.id)}
+            onClick={() => onAdd(entitlement.id)}
             className={`${primaryBtn} w-full`}
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <DiscordIcon className="w-5 h-5" />}
@@ -241,27 +240,53 @@ function VisualGuide() {
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 
 export default function InstallBotPage() {
+  const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // The first active, not-yet-connected subscription is the most prominent card.
-  const featuredId = MOCK_SUBSCRIPTIONS.find((s) => s.status === "active" && s.serverName === null)?.id;
+  // Fetch entitlements on mount
+  useEffect(() => {
+    fetchEntitlements();
+  }, []);
+
+  const fetchEntitlements = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/user/entitlements');
+      const data = await response.json();
+
+      if (response.ok) {
+        setEntitlements(data.entitlements);
+      } else {
+        toast.error(data.error || 'Failed to fetch entitlements');
+      }
+    } catch (error) {
+      console.error('Error fetching entitlements:', error);
+      toast.error('Failed to fetch entitlements');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // The first active, not-yet-connected entitlement is the most prominent card.
+  const featuredId = entitlements.find((e) => e.status === "active" && e.serverName === null)?.id;
 
   const handleAddToDiscord = (id: string) => {
-    const sub = MOCK_SUBSCRIPTIONS.find((s) => s.id === id);
-    // Only active subscriptions can ever be installed.
-    if (!sub || sub.status !== "active") return;
+    const entitlement = entitlements.find((e) => e.id === id);
+    // Only active entitlements can ever be installed.
+    if (!entitlement || entitlement.status !== "active") return;
     setBusyId(id);
-    // Simulate redirect to Discord OAuth2 authorization URL
+    // TODO: Implement Discord OAuth2 authorization flow
     setTimeout(() => {
       setBusyId(null);
-      alert("Redirecting to Discord for secure bot authorization...");
+      toast.info("Discord OAuth integration will be implemented in the next phase");
     }, 1500);
   };
 
   const handleManageServer = (id: string) => {
-    const sub = MOCK_SUBSCRIPTIONS.find((s) => s.id === id);
-    if (!sub?.serverName) return;
-    alert(`Opening management for ${sub.serverName}...`);
+    const entitlement = entitlements.find((e) => e.id === id);
+    if (!entitlement?.serverName) return;
+    toast.info(`Opening management for ${entitlement.serverName}...`);
   };
 
   return (
@@ -293,18 +318,55 @@ export default function InstallBotPage() {
         </div>
 
         {/* SUBSCRIPTION CARDS — active, connected, expired */}
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {MOCK_SUBSCRIPTIONS.map((sub) => (
-            <SubscriptionCard
-              key={sub.id}
-              sub={sub}
-              featured={sub.id === featuredId}
-              busy={busyId === sub.id}
-              onAdd={handleAddToDiscord}
-              onManage={handleManageServer}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse">
+                <div className="flex items-start gap-4 pb-5 border-b border-border/60">
+                  <div className="w-14 h-14 rounded-full bg-muted shrink-0"></div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-5 bg-muted rounded w-32"></div>
+                    <div className="h-4 bg-muted rounded w-24"></div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-muted rounded w-full"></div>
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : entitlements.length === 0 ? (
+          <div className="bg-card border border-border rounded-2xl p-12 text-center max-w-full mx-auto shadow-xl">
+            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground">
+              <Server className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-black uppercase tracking-tight">No Active Entitlements</h3>
+            <p className="text-sm text-muted-foreground mt-2 mb-6">
+              You don't have any active bot entitlements. Purchase a subscription to get started.
+            </p>
+            <a
+              href="/UserDashboard/Discord/pricing"
+              className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20"
+            >
+              View Plans
+            </a>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 max-w-7xl mx-auto">
+            {entitlements.map((entitlement) => (
+              <SubscriptionCard
+                key={entitlement.id}
+                entitlement={entitlement}
+                featured={entitlement.id === featuredId}
+                busy={busyId === entitlement.id}
+                onAdd={handleAddToDiscord}
+                onManage={handleManageServer}
+              />
+            ))}
+          </div>
+        )}
 
         {/* GUIDE SECTIONS (kept) */}
         <div className="grid gap-6 lg:grid-cols-12">

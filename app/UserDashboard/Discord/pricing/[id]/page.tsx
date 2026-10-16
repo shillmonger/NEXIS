@@ -176,12 +176,40 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
     }
 
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('botProductId', id);
+      formData.append('planName', planName);
+      formData.append('planType', planName);
+      formData.append('amount', amount);
+      formData.append('billingPeriod', billing);
+      formData.append('paymentMethod', wallet.name);
+      formData.append('walletAddress', wallet.address);
+      formData.append('transactionId', transactionId.trim());
+      if (screenshot) {
+        formData.append('proofFile', screenshot);
+      }
+
+      const response = await fetch('/api/payments/submit', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit payment');
+      }
+
       toast.success("Payment proof submitted successfully! We'll verify and activate your plan within 24 hours.");
       router.push("/UserDashboard/Discord/subscriptions");
-    }, 1500);
+    } catch (error) {
+      console.error('Payment submission error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit payment. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ─── MAIN PAGE ─────────────────────────────────────────────────────────────

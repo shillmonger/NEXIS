@@ -8,17 +8,23 @@ interface Deposit {
   _id: string;
   paymentMethod: string;
   amount: number;
-  proofImageUrl: string;
-  status: "pending" | "approved" | "rejected";
+  proofFileUrl?: string;
+  status: "pending" | "verified" | "rejected";
   userId: {
     _id: string;
-    username: string;
-    fullName: string;
+    userName: string;
     email: string;
-    profileImage?: string;
+    avatar?: string;
   };
-  walletAddress: string;
-  network: string;
+  walletAddress?: string;
+  transactionId: string;
+  subscriptionId: {
+    _id: string;
+    status: string;
+    planName: string;
+    planType: string;
+    billingPeriod: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -26,7 +32,7 @@ interface Deposit {
 // Helpers using brand colors (violet/purple theme)
 const getStatusClasses = (status: string) => {
   switch (status) {
-    case "approved":
+    case "verified":
       return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
     case "rejected":
       return "bg-rose-500/10 text-rose-600 border-rose-500/20";
@@ -37,7 +43,7 @@ const getStatusClasses = (status: string) => {
 
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case "approved":
+    case "verified":
       return <Check className="w-3 h-3 mr-1" />;
     case "rejected":
       return <X className="w-3 h-3 mr-1" />;
@@ -98,182 +104,96 @@ export default function AdminCryptoDepositPage() {
     depositId: string;
     userName: string;
     amount: number;
+    rejectionReason?: string;
   } | null>(null);
 
   useEffect(() => {
-    // Mock data
-    const mockDeposits: Deposit[] = [
-      {
-        _id: "dep-001",
-        paymentMethod: "USDT (TRC20)",
-        amount: 500,
-        proofImageUrl: "https://example.com/proof1.jpg",
-        status: "pending",
-        userId: {
-          _id: "user-001",
-          username: "crypto_trader",
-          fullName: "John Doe",
-          email: "john@example.com",
-          profileImage: "https://github.com/shadcn.png",
-        },
-        walletAddress: "0x1234...5678",
-        network: "Tron",
-        createdAt: "2026-10-15T10:30:00Z",
-        updatedAt: "2026-10-15T10:30:00Z",
-      },
-      {
-        _id: "dep-002",
-        paymentMethod: "USDT (ERC20)",
-        amount: 1000,
-        proofImageUrl: "https://example.com/proof2.jpg",
-        status: "approved",
-        userId: {
-          _id: "user-002",
-          username: "investor_hub",
-          fullName: "Jane Smith",
-          email: "jane@example.com",
-          profileImage: "https://github.com/shadcn.png",
-        },
-        walletAddress: "0xabcd...efgh",
-        network: "Ethereum",
-        createdAt: "2026-10-14T15:20:00Z",
-        updatedAt: "2026-10-14T16:00:00Z",
-      },
-      {
-        _id: "dep-003",
-        paymentMethod: "BTC",
-        amount: 250,
-        proofImageUrl: "https://example.com/proof3.jpg",
-        status: "pending",
-        userId: {
-          _id: "user-003",
-          username: "whale_investor",
-          fullName: "Mike Johnson",
-          email: "mike@example.com",
-          profileImage: "https://github.com/shadcn.png",
-        },
-        walletAddress: "bc1q...xyz",
-        network: "Bitcoin",
-        createdAt: "2026-10-14T09:15:00Z",
-        updatedAt: "2026-10-14T09:15:00Z",
-      },
-      {
-        _id: "dep-004",
-        paymentMethod: "ETH",
-        amount: 750,
-        proofImageUrl: "https://example.com/proof4.jpg",
-        status: "rejected",
-        userId: {
-          _id: "user-004",
-          username: "swing_trader",
-          fullName: "Sarah Williams",
-          email: "sarah@example.com",
-          profileImage: "https://github.com/shadcn.png",
-        },
-        walletAddress: "0x9876...5432",
-        network: "Ethereum",
-        createdAt: "2026-10-13T14:45:00Z",
-        updatedAt: "2026-10-13T15:30:00Z",
-      },
-      {
-        _id: "dep-005",
-        paymentMethod: "USDT (TRC20)",
-        amount: 1500,
-        proofImageUrl: "https://example.com/proof5.jpg",
-        status: "pending",
-        userId: {
-          _id: "user-005",
-          username: "newbie_trader",
-          fullName: "David Brown",
-          email: "david@example.com",
-          profileImage: "https://github.com/shadcn.png",
-        },
-        walletAddress: "0x5555...6666",
-        network: "Tron",
-        createdAt: "2026-10-13T08:00:00Z",
-        updatedAt: "2026-10-13T08:00:00Z",
-      },
-    ];
+    fetchDeposits();
+  }, [statusFilter]);
 
-    setTimeout(() => {
-      setDeposits(mockDeposits);
+  const fetchDeposits = async () => {
+    setLoading(true);
+    try {
+      const url = statusFilter
+        ? `/api/admin/payments?status=${statusFilter}`
+        : '/api/admin/payments';
 
-      // Calculate stats
-      const totalDeposits = mockDeposits.length;
-      const pending = mockDeposits.filter((d) => d.status === "pending").length;
-      const approved = mockDeposits.filter((d) => d.status === "approved").length;
-      const rejected = mockDeposits.filter((d) => d.status === "rejected").length;
-      const totalAmount = mockDeposits.reduce((sum, d) => sum + d.amount, 0);
+      const response = await fetch(url);
+      const data = await response.json();
 
-      setStats([
-        {
-          label: "Total Deposits",
-          value: totalDeposits.toString(),
-          icon: Wallet,
-          color: "text-blue-500",
-          bg: "bg-blue-500/10",
-        },
-        {
-          label: "Pending",
-          value: pending.toString(),
-          icon: Clock,
-          color: "text-orange-500",
-          bg: "bg-orange-500/10",
-        },
-        {
-          label: "Approved",
-          value: approved.toString(),
-          icon: CheckCircle2,
-          color: "text-teal-500",
-          bg: "bg-teal-500/10",
-        },
-        {
-          label: "Rejected",
-          value: rejected.toString(),
-          icon: XCircle,
-          color: "text-red-500",
-          bg: "bg-red-500/10",
-        },
-        {
-          label: "Total Amount",
-          value: `$${(totalAmount / 1000).toFixed(1)}k`,
-          icon: TrendingUp,
-          color: "text-teal-500",
-          bg: "bg-teal-500/10",
-        },
-      ]);
+      if (response.ok) {
+        setDeposits(data.payments);
 
+        // Calculate stats
+        const totalDeposits = data.payments.length;
+        const pending = data.payments.filter((d: Deposit) => d.status === "pending").length;
+        const approved = data.payments.filter((d: Deposit) => d.status === "verified").length;
+        const rejected = data.payments.filter((d: Deposit) => d.status === "rejected").length;
+        const totalAmount = data.payments.reduce((sum: number, d: Deposit) => sum + d.amount, 0);
+
+        setStats([
+          {
+            label: "Total Deposits",
+            value: totalDeposits.toString(),
+            icon: Wallet,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+          },
+          {
+            label: "Pending",
+            value: pending.toString(),
+            icon: Clock,
+            color: "text-orange-500",
+            bg: "bg-orange-500/10",
+          },
+          {
+            label: "Approved",
+            value: approved.toString(),
+            icon: CheckCircle2,
+            color: "text-teal-500",
+            bg: "bg-teal-500/10",
+          },
+          {
+            label: "Rejected",
+            value: rejected.toString(),
+            icon: XCircle,
+            color: "text-red-500",
+            bg: "bg-red-500/10",
+          },
+          {
+            label: "Total Amount",
+            value: `$${(totalAmount / 1000).toFixed(1)}k`,
+            icon: TrendingUp,
+            color: "text-teal-500",
+            bg: "bg-teal-500/10",
+          },
+        ]);
+      } else {
+        toast.error('Failed to fetch payments');
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      toast.error('Failed to fetch payments');
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
   const handleApprove = async (depositId: string, userName: string) => {
     setActionLoading(depositId);
     try {
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success(`Payment from ${userName} approved`);
-      setDeposits((prev) =>
-        prev.map((dep) =>
-          dep._id === depositId ? { ...dep, status: "approved" } : dep
-        )
-      );
+      const response = await fetch(`/api/admin/payments/${depositId}/approve`, {
+        method: 'POST',
+      });
 
-      // Update stats
-      const updatedDeposits = deposits.map((dep) =>
-        dep._id === depositId ? { ...dep, status: "approved" } : dep
-      );
-      const pending = updatedDeposits.filter((d) => d.status === "pending").length;
-      const approved = updatedDeposits.filter((d) => d.status === "approved").length;
-      const rejected = updatedDeposits.filter((d) => d.status === "rejected").length;
+      const data = await response.json();
 
-      setStats((prev) => [
-        prev[0],
-        { ...prev[1], value: pending.toString() },
-        { ...prev[2], value: approved.toString() },
-        { ...prev[3], value: rejected.toString() },
-        prev[4],
-      ]);
+      if (response.ok) {
+        toast.success(`Payment from ${userName} approved`);
+        fetchDeposits();
+      } else {
+        toast.error(data.error || 'Failed to approve payment');
+      }
     } catch (error) {
       console.error("Error approving deposit:", error);
       toast.error("Error approving payment");
@@ -283,33 +203,25 @@ export default function AdminCryptoDepositPage() {
     }
   };
 
-  const handleReject = async (depositId: string, userName: string) => {
+  const handleReject = async (depositId: string, userName: string, reason: string) => {
     setActionLoading(depositId);
     try {
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.error(`Payment from ${userName} rejected`);
-      setDeposits((prev) =>
-        prev.map((dep) =>
-          dep._id === depositId ? { ...dep, status: "rejected" } : dep
-        )
-      );
+      const response = await fetch(`/api/admin/payments/${depositId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason }),
+      });
 
-      // Update stats
-      const updatedDeposits = deposits.map((dep) =>
-        dep._id === depositId ? { ...dep, status: "rejected" } : dep
-      );
-      const pending = updatedDeposits.filter((d) => d.status === "pending").length;
-      const approved = updatedDeposits.filter((d) => d.status === "approved").length;
-      const rejected = updatedDeposits.filter((d) => d.status === "rejected").length;
+      const data = await response.json();
 
-      setStats((prev) => [
-        prev[0],
-        { ...prev[1], value: pending.toString() },
-        { ...prev[2], value: approved.toString() },
-        { ...prev[3], value: rejected.toString() },
-        prev[4],
-      ]);
+      if (response.ok) {
+        toast.error(`Payment from ${userName} rejected`);
+        fetchDeposits();
+      } else {
+        toast.error(data.error || 'Failed to reject payment');
+      }
     } catch (error) {
       console.error("Error rejecting deposit:", error);
       toast.error("Error rejecting payment");
@@ -338,15 +250,19 @@ export default function AdminCryptoDepositPage() {
     if (confirmModal.action === "approve") {
       handleApprove(confirmModal.depositId, confirmModal.userName);
     } else {
-      handleReject(confirmModal.depositId, confirmModal.userName);
+      if (!confirmModal.rejectionReason || confirmModal.rejectionReason.trim().length === 0) {
+        toast.error('Please provide a rejection reason');
+        return;
+      }
+      handleReject(confirmModal.depositId, confirmModal.userName, confirmModal.rejectionReason);
     }
   };
 
   const filteredDeposits = deposits.filter((deposit) => {
     const matchesSearch =
-      deposit.userId?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      deposit.userId?.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       deposit.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deposit.userId?.username?.toLowerCase().includes(searchTerm.toLowerCase());
+      deposit.transactionId?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter
       ? deposit.status === statusFilter
@@ -407,7 +323,7 @@ export default function AdminCryptoDepositPage() {
             >
               <option value="">All Status</option>
               <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
+              <option value="verified">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -458,6 +374,7 @@ export default function AdminCryptoDepositPage() {
                 <thead className="bg-muted text-muted-foreground text-[10px] uppercase tracking-widest font-bold">
                   <tr>
                     <th className="px-6 py-4">User Details</th>
+                    <th className="px-6 py-4">Plan</th>
                     <th className="px-6 py-4">Amount</th>
                     <th className="px-6 py-4">Payment Method</th>
                     <th className="px-6 py-4">Proof</th>
@@ -496,8 +413,8 @@ export default function AdminCryptoDepositPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <img
-                              src={deposit.userId?.profileImage || defaultProfileImage}
-                              alt={deposit.userId?.fullName || "Unknown User"}
+                              src={deposit.userId?.avatar || defaultProfileImage}
+                              alt={deposit.userId?.userName || "Unknown User"}
                               className="w-10 h-10 rounded-lg object-cover cursor-pointer"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
@@ -508,16 +425,26 @@ export default function AdminCryptoDepositPage() {
                             <div
                               className={`w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-600 font-bold text-xs hidden`}
                             >
-                              {deposit.userId?.fullName?.charAt(0) || "U"}
+                              {deposit.userId?.userName?.charAt(0) || "U"}
                             </div>
                             <div className="flex flex-col">
                               <span className="text-sm font-bold text-foreground">
-                                {deposit.userId?.fullName || "Unknown User"}
+                                {deposit.userId?.userName || "Unknown User"}
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 {deposit.userId?.email || "No email"}
                               </span>
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-foreground">
+                              {deposit.subscriptionId?.planName || "N/A"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {deposit.subscriptionId?.planType || ""}
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -531,15 +458,19 @@ export default function AdminCryptoDepositPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <a
-                            href={deposit.proofImageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-violet-600 hover:text-violet-700 text-xs font-medium underline flex items-center gap-1 transition-colors"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            View Proof
-                          </a>
+                          {deposit.proofFileUrl ? (
+                            <a
+                              href={deposit.proofFileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-violet-600 hover:text-violet-700 text-xs font-medium underline flex items-center gap-1 transition-colors"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              View Proof
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No proof</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-xs text-muted-foreground font-medium">
@@ -558,7 +489,7 @@ export default function AdminCryptoDepositPage() {
                                     openConfirmModal(
                                       "approve",
                                       deposit._id,
-                                      deposit.userId?.fullName || "Unknown User",
+                                      deposit.userId?.userName || "Unknown User",
                                       deposit.amount
                                     )
                                   }
@@ -572,7 +503,7 @@ export default function AdminCryptoDepositPage() {
                                     openConfirmModal(
                                       "reject",
                                       deposit._id,
-                                      deposit.userId?.fullName || "Unknown User",
+                                      deposit.userId?.userName || "Unknown User",
                                       deposit.amount
                                     )
                                   }
@@ -661,7 +592,7 @@ export default function AdminCryptoDepositPage() {
                   ${confirmModal.amount.toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2">
+              <div className="flex justify-between items-center py-2 border-b border-border/50">
                 <span className="text-xs text-muted-foreground uppercase tracking-wider">
                   Action
                 </span>
@@ -675,6 +606,27 @@ export default function AdminCryptoDepositPage() {
                   {confirmModal.action}
                 </span>
               </div>
+
+              {confirmModal.action === "reject" && (
+                <div className="py-2">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-2">
+                    Rejection Reason <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    value={confirmModal.rejectionReason || ''}
+                    onChange={(e) =>
+                      setConfirmModal({
+                        ...confirmModal,
+                        rejectionReason: e.target.value,
+                      })
+                    }
+                    placeholder="Please provide a reason for rejection..."
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50 resize-none"
+                    rows={3}
+                    required
+                  />
+                </div>
+              )}
             </div>
 
             {/* Buttons */}

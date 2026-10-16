@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -12,13 +13,8 @@ import {
   Server,
   FileText,
   CreditCard,
-  ShieldAlert,
   FolderOpen,
-  X,
-  Banknote,
-  Layers,
-  CalendarDays,
-  Hourglass,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,18 +27,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
-type SubscriptionStatus = "active" | "expired" | "cancelled" | "pending";
+type SubscriptionStatus = "active" | "expired" | "pending" | "rejected";
 type PaymentStatus = "Paid" | "Failed" | "Pending";
 
 interface Subscription {
@@ -51,11 +38,11 @@ interface Subscription {
   status: SubscriptionStatus;
   startDate: string;
   expirationDate: string;
-  autoRenew: boolean;
   connectedServers: number;
   serverLimit: number;
   price: number; // USD
   billingCycle: string;
+  _raw?: any;
 }
 
 interface PaymentRecord {
@@ -65,68 +52,20 @@ interface PaymentRecord {
   amount: number; // USD
   method: string;
   status: PaymentStatus;
+  proofFileUrl?: string;
+  subscriptionId?: string;
 }
 
 interface HistoryRecord {
   id: string;
   planName: string;
-  action: "Created" | "Renewed" | "Upgraded" | "Cancelled" | "Expired";
+  action: "Created" | "Renewed" | "Upgraded" | "Expired";
   date: string;
   expirationDate: string;
 }
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
-
-const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  {
-    id: "sub_10928374",
-    planName: "Pro Sentinel Tier",
-    status: "active",
-    startDate: "OCT 12, 2026",
-    expirationDate: "NOV 12, 2026",
-    autoRenew: true,
-    connectedServers: 4,
-    serverLimit: 5,
-    price: 29,
-    billingCycle: "Monthly",
-  },
-  {
-    id: "sub_10455120",
-    planName: "Growth",
-    status: "active",
-    startDate: "SEP 15, 2026",
-    expirationDate: "OCT 15, 2026",
-    autoRenew: true,
-    connectedServers: 2,
-    serverLimit: 10,
-    price: 70,
-    billingCycle: "Monthly",
-  },
-  {
-    id: "sub_10977001",
-    planName: "Basic",
-    status: "active",
-    startDate: "OCT 01, 2026",
-    expirationDate: "NOV 01, 2026",
-    autoRenew: false,
-    connectedServers: 1,
-    serverLimit: 3,
-    price: 30,
-    billingCycle: "Monthly",
-  },
-];
-
-const MOCK_PAYMENTS: PaymentRecord[] = [
-  { id: "tx_104", invoiceId: "INV-2026-1012", date: "OCT 12, 2026", amount: 29, method: "Crypto (USDT)", status: "Paid" },
-  { id: "tx_101", invoiceId: "INV-2026-0915", date: "SEP 15, 2026", amount: 70, method: "Crypto (USDT)", status: "Paid" },
-  { id: "tx_102", invoiceId: "INV-2026-1001", date: "OCT 01, 2026", amount: 30, method: "Crypto (BTC)", status: "Paid" },
-];
-
-const MOCK_HISTORY: HistoryRecord[] = [
-  { id: "h_1", planName: "Pro Sentinel Tier", action: "Created", date: "OCT 12, 2026", expirationDate: "NOV 12, 2026" },
-  { id: "h_2", planName: "Growth", action: "Created", date: "SEP 15, 2026", expirationDate: "OCT 15, 2026" },
-  { id: "h_3", planName: "Basic", action: "Created", date: "OCT 01, 2026", expirationDate: "NOV 01, 2026" },
-];
+// Removed - now fetching from API
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -153,8 +92,8 @@ const STATUS_STYLES: Record<
     icon: Clock,
     className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
   },
-  cancelled: {
-    label: "Cancelled",
+  rejected: {
+    label: "Rejected",
     icon: XCircle,
     className: "bg-rose-500/10 text-rose-500 border-rose-500/20",
   },
@@ -186,7 +125,6 @@ const ACTION_STYLES: Record<HistoryRecord["action"], string> = {
   Created: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   Renewed: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   Upgraded: "bg-violet-500/10 text-violet-500 border-violet-500/20",
-  Cancelled: "bg-rose-500/10 text-rose-500 border-rose-500/20",
   Expired: "bg-slate-500/10 text-slate-400 border-slate-500/20",
 };
 
@@ -279,41 +217,54 @@ function InfoTile({
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function SubscriptionsPage() {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>(MOCK_SUBSCRIPTIONS);
-  const [payments] = useState<PaymentRecord[]>(MOCK_PAYMENTS);
-  const [history] = useState<HistoryRecord[]>(MOCK_HISTORY);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [history, setHistory] = useState<HistoryRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
+
+  const fetchSubscriptions = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/user/subscriptions');
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubscriptions(data.subscriptions);
+        setPayments(data.payments);
+        setHistory(data.history);
+      } else {
+        toast.error(data.error || 'Failed to fetch subscriptions');
+      }
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+      toast.error('Failed to fetch subscriptions');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateSubscription = (id: string, patch: Partial<Subscription>) =>
     setSubscriptions((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-
-  const handleCancelSubscription = () => {
-    if (subscription) updateSubscription(subscription.id, { status: "cancelled", autoRenew: false });
-    setIsCancelModalOpen(false);
-  };
 
   // Derived stats
   const stats = useMemo(() => {
     const count = (status: SubscriptionStatus) =>
       subscriptions.filter((s) => s.status === status).length;
-    const amountSpent = payments
-      .filter((p) => p.status === "Paid")
-      .reduce((sum, p) => sum + p.amount, 0);
-    const paidCount = payments.filter((p) => p.status === "Paid").length;
 
     return {
       active: count("active"),
-      expired: count("expired"),
       pending: count("pending"),
-      amountSpent,
-      paidCount,
+      expired: count("expired"),
+      rejected: count("rejected"),
     };
-  }, [subscriptions, payments]);
+  }, [subscriptions]);
 
-  const usagePercentage = subscription
-    ? Math.min(Math.round((subscription.connectedServers / subscription.serverLimit) * 100), 100)
-    : 0;
+
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-200 py-5">
@@ -328,39 +279,73 @@ export default function SubscriptionsPage() {
         </header>
 
         {/* 2. Stats overview */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard
-            label="Total Plans"
-            value={subscriptions.length}
-            hint="All subscription plans"
-            icon={CheckCircle2}
-            iconClassName="bg-emerald-500/10 text-emerald-500"
-          />
-          <StatCard
-            label="Active"
-            value={stats.active}
-            hint="Plans currently running"
-            icon={CheckCircle2}
-            iconClassName="bg-emerald-500/10 text-emerald-500"
-          />
-          <StatCard
-            label="Expired"
-            value={stats.expired}
-            hint="Plans past their end date"
-            icon={AlertTriangle}
-            iconClassName="bg-slate-500/10 text-slate-400"
-          />
-          <StatCard
-            label="Spendings"
-            value={formatUSD(stats.amountSpent)}
-            hint={`${stats.paidCount} paid transaction${stats.paidCount === 1 ? "" : "s"}`}
-            icon={Banknote}
-            iconClassName="bg-violet-600/10 text-violet-600"
-          />
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-card border border-border rounded-2xl shadow-lg p-4 md:p-5 animate-pulse">
+                <div className="h-8 bg-muted rounded-lg mb-2"></div>
+                <div className="h-6 bg-muted rounded-lg mb-1"></div>
+                <div className="h-4 bg-muted rounded-lg w-2/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <StatCard
+              label="Active"
+              value={stats.active}
+              hint="Plans currently running"
+              icon={CheckCircle2}
+              iconClassName="bg-emerald-500/10 text-emerald-500"
+            />
+            <StatCard
+              label="Pending"
+              value={stats.pending}
+              hint="Awaiting approval"
+              icon={Clock}
+              iconClassName="bg-amber-500/10 text-amber-500"
+            />
+            <StatCard
+              label="Expired"
+              value={stats.expired}
+              hint="Plans past their end date"
+              icon={AlertTriangle}
+              iconClassName="bg-slate-500/10 text-slate-400"
+            />
+            <StatCard
+              label="Rejected"
+              value={stats.rejected}
+              hint="Payments not approved"
+              icon={XCircle}
+              iconClassName="bg-rose-500/10 text-rose-500"
+            />
+          </div>
+        )}
 
         {/* 3. Current plans (or empty state) */}
-        {subscriptions.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-4 rounded-3xl border border-border/70 bg-card p-4 shadow-sm md:p-5 animate-pulse">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="h-11 w-11 shrink-0 rounded-2xl bg-muted"></div>
+                    <div className="min-w-0 space-y-2">
+                      <div className="h-4 bg-muted rounded w-32"></div>
+                      <div className="h-3 bg-muted rounded w-24"></div>
+                    </div>
+                  </div>
+                  <div className="h-6 w-16 rounded-full bg-muted"></div>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-muted/20 p-3 md:p-4 space-y-2">
+                  <div className="h-3 bg-muted rounded w-20"></div>
+                  <div className="h-8 bg-muted rounded w-24"></div>
+                  <div className="h-4 bg-muted rounded w-full"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : subscriptions.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-12 text-center max-w-full mx-auto shadow-xl">
             <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground">
               <FolderOpen className="w-8 h-8" />
@@ -371,7 +356,7 @@ export default function SubscriptionsPage() {
               deploy your bot.
             </p>
             <Link
-              href="/bots/pricing"
+              href="/UserDashboard/Discord/pricing"
               className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20"
             >
               Explore Bot Plans <ArrowUpRight className="w-4 h-4" />
@@ -422,13 +407,11 @@ export default function SubscriptionsPage() {
     </div>
 
     <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-      {sub.autoRenew
-        ? `Your next payment of ${formatUSD(sub.price)} is scheduled for ${sub.expirationDate}.`
-        : `Your subscription is scheduled to end on ${sub.expirationDate}.`}
+      Your subscription is scheduled to end on {sub.expirationDate}.
     </p>
   </div>
 
-  
+
 {/* Subscription details */}
 <div className="divide-y divide-border/60">
   <div className="flex items-center justify-between gap-4 py-2">
@@ -442,23 +425,12 @@ export default function SubscriptionsPage() {
   </div>
 
   <div className="flex items-center justify-between gap-4 py-2">
-    <span className="text-sm text-muted-foreground">Auto renewal</span>
-    <span
-      className={`text-sm font-medium ${
-        sub.autoRenew ? "text-emerald-500" : "text-muted-foreground"
-      }`}
-    >
-      {sub.autoRenew ? "Enabled" : "Disabled"}
-    </span>
-  </div>
-
-  <div className="flex items-center justify-between gap-4 py-2">
     <span className="text-sm text-muted-foreground">Plan status</span>
     <span
       className={`text-sm font-medium capitalize ${
         sub.status === "active"
           ? "text-emerald-500"
-          : sub.status === "cancelled"
+          : sub.status === "rejected"
           ? "text-rose-500"
           : "text-amber-600"
       }`}
@@ -475,50 +447,54 @@ export default function SubscriptionsPage() {
     </span>
 
     <code className="max-w-full break-all rounded-lg bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
-      {sub.id}
+      {sub.id?.replace(/[{}]/g, '')}
     </code>
   </div>
 
   {/* Actions */}
   <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-end">
-    <Link
-      href="/UserDashboard/Discord/pricing"
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:flex-1"
-    >
-      <ArrowUpRight className="h-4 w-4" />
-      Upgrade plan
-    </Link>
-
-    {sub.status === "active" && (
-      <button
-        type="button"
-        onClick={() => {
-          setSubscription(sub);
-          setIsCancelModalOpen(true);
-        }}
-        className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition-opacity hover:bg-rose-700 active:scale-[0.99] sm:flex-1"
+    {sub.status === "rejected" ? (
+      <Link
+        href="/UserDashboard/Discord/pricing"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700 sm:flex-1"
       >
-        <X className="h-4 w-4" />
-        Cancel plan
-      </button>
-    )}
-
-    {sub.status === "cancelled" && (
-      <button
-        type="button"
-        onClick={() => {
-          setSubscription(sub);
-          updateSubscription(sub.id, {
-            status: "active",
-            autoRenew: true,
-          });
-        }}
-        className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-opacity hover:bg-emerald-700 active:scale-[0.99] sm:flex-1"
+        <RefreshCw className="h-4 w-4" />
+        Subscribe again
+      </Link>
+    ) : sub.status === "active" ? (
+      <>
+        <Link
+          href="/UserDashboard/Discord/pricing"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:flex-1"
+        >
+          <ArrowUpRight className="h-4 w-4" />
+          Upgrade plan
+        </Link>
+        <Link
+          href="#"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 sm:flex-1"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Renew plan
+        </Link>
+      </>
+    ) : sub.status === "expired" ? (
+      <Link
+        href="/UserDashboard/Discord/pricing"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 sm:flex-1"
       >
         <RefreshCw className="h-4 w-4" />
         Renew plan
-      </button>
-    )}
+      </Link>
+    ) : sub.status === "pending" ? (
+      <Link
+        href="/UserDashboard/Discord/pricing"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:flex-1"
+      >
+        <ArrowUpRight className="h-4 w-4" />
+        Upgrade plan
+      </Link>
+    ) : null}
   </div>
 </section>
               );
@@ -590,75 +566,68 @@ export default function SubscriptionsPage() {
         {/* 5. Payment History (full width below) */}
         <SectionCard title="Payment History" meta={`${payments.length} Transactions`}>
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border">
-                  <TableHead className="font-black uppercase text-[10px] md:text-xs">Invoice Ref</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] md:text-xs">Date</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] md:text-xs">Method</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] md:text-xs">Amount</TableHead>
-                  <TableHead className="text-right font-black uppercase text-[10px] md:text-xs">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((p) => (
-                  <TableRow key={p.id} className="border-border/60">
-                    <TableCell className="font-mono text-[10px] md:text-xs font-bold text-violet-600">{p.invoiceId}</TableCell>
-                    <TableCell className="text-[10px] md:text-xs font-medium">{p.date}</TableCell>
-                    <TableCell className="text-[10px] md:text-xs font-medium">{p.method}</TableCell>
-                    <TableCell className="text-[10px] md:text-xs font-black">{formatUSD(p.amount)}</TableCell>
-                    <TableCell className="text-right">
-                      <PaymentBadge status={p.status} />
-                    </TableCell>
+            {loading ? (
+              <div className="p-12 text-center">
+                <div className="inline-block w-8 h-8 border-2 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm font-black uppercase tracking-tighter mt-4 text-muted-foreground">
+                  Loading payments...
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border">
+                    <TableHead className="font-black uppercase text-[10px] md:text-xs">Invoice Ref</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] md:text-xs">Date</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] md:text-xs">Method</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] md:text-xs">Amount</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] md:text-xs">Proof</TableHead>
+                    <TableHead className="text-right font-black uppercase text-[10px] md:text-xs">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {payments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="px-6 py-12 text-center">
+                        <p className="text-sm font-black uppercase tracking-tighter text-muted-foreground">
+                          No payment history
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    payments.map((p) => (
+                      <TableRow key={p.id} className="border-border/60">
+                        <TableCell className="font-mono text-[10px] md:text-xs font-bold text-violet-600">{p.invoiceId}</TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-medium">{p.date}</TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-medium">{p.method}</TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-black">{formatUSD(p.amount)}</TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-medium">
+                          {p.proofFileUrl ? (
+                            <a
+                              href={p.proofFileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-violet-600 hover:text-violet-700 underline flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              View
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">N/A</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <PaymentBadge status={p.status} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </SectionCard>
 
-        {/* Cancellation confirmation modal */}
-        <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
-          <DialogContent className="sm:max-w-md bg-card border-border rounded-2xl">
-            <DialogHeader>
-              <div className="flex items-center gap-2 text-rose-500">
-                <ShieldAlert className="w-5 h-5" />
-                <DialogTitle className="font-black uppercase text-lg">Confirm Cancellation</DialogTitle>
-              </div>
-              <DialogDescription className="text-xs text-muted-foreground mt-1">
-                Are you sure you want to cancel your bot subscription?
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-xs space-y-2 text-rose-400 my-2">
-              <p className="font-bold uppercase tracking-wider">Warning:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>
-                  Your bot will lose premium moderation tools at the end of the current billing cycle (
-                  {subscription?.expirationDate}).
-                </li>
-                <li>Guild connection limits will revert to free tier limits.</li>
-              </ul>
-            </div>
-
-            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-2">
-              <button
-                type="button"
-                onClick={() => setIsCancelModalOpen(false)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-muted hover:bg-muted/80 border border-border transition-colors"
-              >
-                Keep Subscription
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelSubscription}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-md shadow-rose-600/20"
-              >
-                Confirm Cancellation
-              </button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
