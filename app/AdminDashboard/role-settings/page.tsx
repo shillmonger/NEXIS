@@ -15,7 +15,8 @@ import {
 // Types
 interface User {
   id: string;
-  name: string;
+  name?: string;
+  fullName?: string;
   email: string;
   status: string;
   role: string;
@@ -94,9 +95,9 @@ export default function AdminRolesPage() {
   // Filter users based on search term
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.username || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Get display role
@@ -187,7 +188,7 @@ export default function AdminRolesPage() {
                         <div className="flex items-center gap-3">
                           <img
                             src={user.profileImage || defaultProfileImage}
-                            alt={user.name}
+                            alt={user.fullName || user.username}
                             className="w-10 h-10 rounded-lg object-cover cursor-pointer"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
@@ -198,14 +199,14 @@ export default function AdminRolesPage() {
                           <div
                             className={`w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-600 font-bold text-xs hidden`}
                           >
-                            {user.name.charAt(0)}
+                            {(user.username || user.name || 'U').charAt(0)}
                           </div>
                           <div>
                             <span className="text-xs text-muted-foreground">
                               @{user.username}
                             </span>
                             <span className="font-bold text-foreground block">
-                              {user.name}
+                              {user.fullName || user.username}
                             </span>
                           </div>
                         </div>

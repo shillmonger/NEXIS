@@ -30,20 +30,23 @@ import {
 interface User {
   id: string;
   _id?: string;
-  name: string;
+  name?: string;
+  fullName?: string;
   email: string;
   username: string;
   status: string;
-  balance: string;
-  profit: string;
-  totalDeposit: number;
-  totalWithdrawal: number;
-  roles: string[];
-  country: string;
-  phone: string;
+  balance?: string;
+  profit?: string;
+  totalDeposit?: number;
+  totalWithdrawal?: number;
+  roles?: string[];
+  country?: string;
+  phone?: string;
   createdAt: string;
   updatedAt: string;
-  fullName?: string;
+  role?: string;
+  profileImage?: string;
+  emailVerified?: boolean;
   accountBalance?: number;
   welcomeBonus?: number;
   totalProfits?: number;
@@ -53,8 +56,6 @@ interface User {
   myReferralId?: string;
   referralId?: string;
   isActive?: boolean;
-  profileImage?: string;
-  emailVerified?: boolean;
   lastLoginAt?: string;
   provider?: string;
 }
@@ -308,9 +309,9 @@ export default function AdminUsersPage() {
 
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.fullName?.toLowerCase() || user.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.username || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatCurrency = (amount: string | number) => {
@@ -443,7 +444,7 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-3">
                           <img
                             src={user.profileImage || defaultProfileImage}
-                            alt={user.name}
+                            alt={user.fullName || user.name}
                             className="w-10 h-10 rounded-lg object-cover cursor-pointer"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
@@ -454,11 +455,11 @@ export default function AdminUsersPage() {
                           <div
                             className={`w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-600 font-bold text-xs hidden`}
                           >
-                            {user.name.charAt(0)}
+                            {(user.fullName || user.name || 'U').charAt(0)}
                           </div>
                           <div className="flex flex-col gap-1">
                             <span className="font-bold text-sm text-foreground">
-                              {user.name}
+                              {user.fullName || user.name}
                             </span>
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Mail className="w-3 h-3" /> {user.email}
@@ -510,7 +511,7 @@ export default function AdminUsersPage() {
                               openConfirmModal(
                                 user.status === "Active" ? "suspend" : "activate",
                                 user.id,
-                                user.name,
+                                user.fullName || user.name || 'User',
                                 user.status
                               )
                             }
@@ -529,7 +530,7 @@ export default function AdminUsersPage() {
                             <Ban className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => openConfirmModal("delete", user.id, user.name)}
+                            onClick={() => openConfirmModal("delete", user.id, user.fullName || user.name || 'User')}
                             disabled={updatingUserId === user.id}
                             className="p-3 bg-rose-500/10 text-rose-500 cursor-pointer hover:bg-rose-500/20 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete User"
