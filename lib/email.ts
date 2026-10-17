@@ -15,17 +15,19 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (
-  to: string,
-  subject: string,
-  html: string
-): Promise<boolean> => {
+export const sendEmail = async (options: {
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: any[];
+}): Promise<boolean> => {
   try {
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
-      to,
-      subject,
-      html,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      attachments: options.attachments,
     });
     return true;
   } catch (error) {

@@ -51,16 +51,16 @@ export const sendPaymentRejectedEmail = async (
 ): Promise<boolean> => {
   const { sendEmail } = await import('../email');
   const html = getPaymentRejectedEmail(data);
-  
-  const success = await sendEmail(
+
+  const success = await sendEmail({
     to,
-    `Payment Rejected - ${data.planName} - Action Required`,
+    subject: `Payment Rejected - ${data.planName} - Action Required`,
     html
-  );
-  
+  });
+
   if (!success) {
     console.error(`Failed to send payment rejection email to ${to}`);
   }
-  
+
   return success;
 };

@@ -36,6 +36,11 @@ export default function StatsGrid() {
     "https://github.com/shadcn.png",
     "https://github.com/shadcn.png",
   ]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    countries: 0,
+  });
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -49,6 +54,7 @@ export default function StatsGrid() {
 
   useEffect(() => {
     fetchRandomUsers();
+    fetchStats();
   }, []);
 
   const fetchRandomUsers = async () => {
@@ -56,7 +62,7 @@ export default function StatsGrid() {
       const response = await fetch('/api/users/random');
       const data = await response.json();
       if (data.success && data.users) {
-        const avatarUrls = data.users.map((user: any) => user.profileImage);
+        const avatarUrls = data.users.map((user: any) => user.avatar || "https://github.com/shadcn.png");
         setUserAvatars(avatarUrls);
       }
     } catch (error) {
@@ -64,10 +70,22 @@ export default function StatsGrid() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/stats');
+      const data = await response.json();
+      if (data.success && data.stats) {
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
   const rewards = useCounter(1.3, 1600, active);
-  const members = useCounter(3000, 2000, active);
-  const countries = useCounter(160, 1400, active);
-  const community = useCounter(1000, 2200, active);
+  const members = useCounter(stats.activeUsers || 3000, 2000, active);
+  const countries = useCounter(stats.countries || 160, 1400, active);
+  const community = useCounter(stats.totalUsers || 1000, 2200, active);
 
   return (
     <section

@@ -50,11 +50,11 @@ export async function GET(request: NextRequest) {
     // Send welcome email
     const appUrl = getAppUrl();
     const dashboardUrl = `${appUrl}/UserDashboard/dashboard`;
-    await sendEmail(
-      user.email,
-      'Your Account Has Been Verified — Welcome to NEXIS',
-      getWelcomeEmail(user.userName, dashboardUrl)
-    );
+    await sendEmail({
+      to: user.email,
+      subject: 'Your Account Has Been Verified — Welcome to NEXIS',
+      html: getWelcomeEmail(user.userName, dashboardUrl)
+    });
 
     return NextResponse.json(
       { message: 'Email verified successfully' },

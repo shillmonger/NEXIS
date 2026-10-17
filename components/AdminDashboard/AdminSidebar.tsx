@@ -82,9 +82,9 @@ export default function AdminSidebar({
       icon: Users,
       children: [
         // { name: "Manage Account", icon: UserCog, href: `${basePath}/manage-account` },
+        { name: "Subscriptions", icon: BarChart3, href: `${basePath}/user-subscriptions` },
         { name: "KYC Verification", icon: BadgeCheck, href: `#` },
         { name: "User Management", icon: Users, href: `${basePath}/user-management` },
-        { name: "Subscriptions", icon: BarChart3, href: `${basePath}/user-subscriptions` },
       ],
     },
     { name: "Overall Analytics", icon: PieChart, href: `#` },

@@ -63,16 +63,16 @@ export const sendPaymentApprovedEmail = async (
 ): Promise<boolean> => {
   const { sendEmail } = await import('../email');
   const html = getPaymentApprovedEmail(data);
-  
-  const success = await sendEmail(
+
+  const success = await sendEmail({
     to,
-    `Payment Approved - ${data.planName} Subscription Active`,
+    subject: `Payment Approved - ${data.planName} Subscription Active`,
     html
-  );
-  
+  });
+
   if (!success) {
     console.error(`Failed to send payment approval email to ${to}`);
   }
-  
+
   return success;
 };

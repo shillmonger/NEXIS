@@ -78,11 +78,11 @@ export async function POST(request: NextRequest) {
     // Send verification email
     const appUrl = getAppUrl();
     const verificationUrl = `${appUrl}/auth-page/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
-    const emailSent = await sendEmail(
-      email,
-      'Welcome to NEXIS — Verify Your Email Address',
-      getVerificationEmail(username, verificationUrl)
-    );
+    const emailSent = await sendEmail({
+      to: email,
+      subject: 'Welcome to NEXIS — Verify Your Email Address',
+      html: getVerificationEmail(username, verificationUrl)
+    });
 
     if (!emailSent) {
       console.error('Failed to send verification email to:', email);

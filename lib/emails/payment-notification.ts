@@ -68,20 +68,20 @@ export const sendPaymentNotificationEmail = async (
 ): Promise<boolean> => {
   const { sendEmail } = await import('../email');
   const html = getPaymentNotificationEmail(data);
-  
+
   const recipients = Array.isArray(to) ? to : [to];
-  
+
   for (const recipient of recipients) {
-    const success = await sendEmail(
-      recipient,
-      `New Payment Submission - ${data.planName} - ${data.userName}`,
+    const success = await sendEmail({
+      to: recipient,
+      subject: `New Payment Submission - ${data.planName} - ${data.userName}`,
       html
-    );
-    
+    });
+
     if (!success) {
       console.error(`Failed to send payment notification to ${recipient}`);
     }
   }
-  
+
   return true;
 };

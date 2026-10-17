@@ -52,11 +52,11 @@ export async function POST(request: NextRequest) {
     // Send reset email
     const appUrl = getAppUrl();
     const resetUrl = `${appUrl}/auth-page/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
-    const emailSent = await sendEmail(
-      email,
-      'Reset Your SHILLMONGER Password',
-      getForgotPasswordEmail(user.userName, resetUrl)
-    );
+    const emailSent = await sendEmail({
+      to: email,
+      subject: 'Reset Your Nexis Password',
+      html: getForgotPasswordEmail(user.userName, resetUrl)
+    });
 
     if (!emailSent) {
       console.error('Failed to send reset email to:', email);

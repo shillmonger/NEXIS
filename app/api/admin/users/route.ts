@@ -23,7 +23,7 @@ export async function GET() {
     const transformedUsers = users.map((user) => ({
       id: user._id.toString(),
       _id: user._id.toString(),
-      name: user.userName,
+      fullName: user.userName,
       email: user.email,
       username: user.userName,
       status: user.status === 'suspended' ? 'Blocked' : user.status === 'active' ? 'Active' : 'Inactive',
@@ -43,6 +43,7 @@ export async function GET() {
     const usersThisWeek = users.filter((u) => new Date(u.createdAt) >= oneWeekAgo).length;
 
     return NextResponse.json({
+      success: true,
       users: transformedUsers,
       stats: {
         totalUsers,

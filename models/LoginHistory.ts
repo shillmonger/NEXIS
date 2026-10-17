@@ -41,6 +41,11 @@ const LoginHistorySchema: Schema<ILoginHistory> = new Schema(
   }
 );
 
+// Delete existing model to force schema reload
+if (mongoose.models.LoginHistory) {
+  delete mongoose.models.LoginHistory;
+}
+
 const LoginHistory: Model<ILoginHistory> = mongoose.model<ILoginHistory>('LoginHistory', LoginHistorySchema);
 
 export default LoginHistory;

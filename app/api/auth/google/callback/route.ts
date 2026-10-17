@@ -112,11 +112,11 @@ export async function GET(request: NextRequest) {
         // Send welcome email for new Google users
         const appUrl = getAppUrl();
         const dashboardUrl = `${appUrl}/UserDashboard/dashboard`;
-        const emailSent = await sendEmail(
-          googleUser.email,
-          'Welcome to NEXIS! Your Account is Ready',
-          getWelcomeEmail(finalUsername, dashboardUrl)
-        );
+        const emailSent = await sendEmail({
+          to: googleUser.email,
+          subject: 'Welcome to NEXIS! Your Account is Ready',
+          html: getWelcomeEmail(finalUsername, dashboardUrl)
+        });
 
         if (!emailSent) {
           console.error('Failed to send welcome email to:', googleUser.email);

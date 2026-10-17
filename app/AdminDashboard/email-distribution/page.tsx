@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   UserCheck,
   History,
+  Paperclip,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ interface SiteUser {
   email: string;
   username: string;
   profileImage?: string;
+  country?: string;
 }
 
 export default function AdminEmailDistributionPage() {
@@ -44,76 +46,54 @@ export default function AdminEmailDistributionPage() {
 
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
 
   const [isSending, setIsSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    // Mock data
-    const mockUsers: SiteUser[] = [
-      {
-        _id: "user-001",
-        fullName: "John Doe",
-        email: "john@example.com",
-        username: "crypto_trader",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        _id: "user-002",
-        fullName: "Jane Smith",
-        email: "jane@example.com",
-        username: "investor_hub",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        _id: "user-003",
-        fullName: "Mike Johnson",
-        email: "mike@example.com",
-        username: "whale_investor",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        _id: "user-004",
-        fullName: "Sarah Williams",
-        email: "sarah@example.com",
-        username: "swing_trader",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        _id: "user-005",
-        fullName: "David Brown",
-        email: "david@example.com",
-        username: "newbie_trader",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        _id: "user-006",
-        fullName: "Emily Davis",
-        email: "emily@example.com",
-        username: "emily_crypto",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        _id: "user-007",
-        fullName: "Chris Wilson",
-        email: "chris@example.com",
-        username: "chris_trades",
-        profileImage: "https://github.com/shadcn.png",
-      },
-      {
-        _id: "user-008",
-        fullName: "Amanda Taylor",
-        email: "amanda@example.com",
-        username: "amanda_invest",
-        profileImage: "https://github.com/shadcn.png",
-      },
-    ];
-
-    setTimeout(() => {
-      setUsers(mockUsers);
-      setLoadingUsers(false);
-    }, 800);
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/users');
+      const data = await response.json();
+      if (data.success && data.users) {
+        const siteUsers: SiteUser[] = data.users.map((u: any) => ({
+          _id: u._id,
+          fullName: u.fullName,
+          email: u.email,
+          username: u.username,
+          profileImage: u.profileImage,
+          country: u.country,
+        }));
+        setUsers(siteUsers);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      // Fallback to mock data if API fails
+      const mockUsers: SiteUser[] = [
+        {
+          _id: "user-001",
+          fullName: "John Doe",
+          email: "john@example.com",
+          username: "crypto_trader",
+          profileImage: "https://github.com/shadcn.png",
+        },
+        {
+          _id: "user-002",
+          fullName: "Jane Smith",
+          email: "jane@example.com",
+          username: "investor_hub",
+          profileImage: "https://github.com/shadcn.png",
+        },
+      ];
+      setUsers(mockUsers);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   const filteredUsers = useMemo(() => {
     if (!userSearch) return users;
@@ -172,13 +152,47 @@ export default function AdminEmailDistributionPage() {
   const handleConfirmSend = async () => {
     setIsSending(true);
     try {
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success(`Email sent to ${recipientCount} recipient(s)`);
-      setSubject("");
-      setBody("");
-      setSendToAll(true);
-      setSelectedUserIds([]);
+      // Convert attachment to base64 if exists
+      let attachmentData = null;
+      if (attachment) {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(attachment);
+        });
+        const base64Data = base64.split(',')[1];
+        attachmentData = {
+          filename: attachment.name,
+          content: base64Data,
+        };
+      }
+
+      const response = await fetch('/api/admin/email-broadcast', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject,
+          body,
+          sendToAll,
+          selectedUserIds,
+          attachment: attachmentData,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(data.message);
+        setSubject("");
+        setBody("");
+        setAttachment(null);
+        setSendToAll(true);
+        setSelectedUserIds([]);
+      } else {
+        toast.error(data.error || 'Failed to send email');
+      }
     } catch (error) {
       toast.error("Failed to send email");
     } finally {
@@ -408,6 +422,45 @@ export default function AdminEmailDistributionPage() {
                 </p>
               </div>
 
+              {/* Attachment (Optional) */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  04. Attachment <span className="text-muted-foreground/50">(Optional)</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-3 bg-muted/30 border-2 border-dashed border-border rounded-lg p-3 hover:border-violet-500/50 transition-all">
+                      <div className="w-8 h-8 rounded-lg bg-background border flex items-center justify-center">
+                        <Paperclip className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        {attachment ? (
+                          <p className="text-xs font-bold text-foreground truncate">{attachment.name}</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Click to attach a file</p>
+                        )}
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setAttachment(file);
+                      }}
+                    />
+                  </label>
+                  {attachment && (
+                    <button
+                      onClick={() => setAttachment(null)}
+                      className="p-2 cursor-pointer bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <button
                 onClick={handleSendClick}
                 disabled={!isFormValid()}
@@ -446,6 +499,14 @@ export default function AdminEmailDistributionPage() {
                   </span>
                   <span className="text-xs font-bold truncate max-w-[140px] text-right">
                     {subject || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase text-muted-foreground">
+                    Attachment
+                  </span>
+                  <span className="text-xs font-bold truncate max-w-[140px] text-right">
+                    {attachment ? attachment.name : "None"}
                   </span>
                 </div>
               </div>
