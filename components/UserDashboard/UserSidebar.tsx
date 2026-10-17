@@ -140,7 +140,7 @@ export default function UserSidebar({
       icon: FaDiscord,
       children: [
         { name: "Bot Pricing", icon: Wallet, href: `${basePath}/Discord/pricing` },
-        { name: "My Subscriptions", icon: Gem, href: `${basePath}/Discord/subscriptions` }, 
+        { name: "Subscriptions", icon: Gem, href: `${basePath}/Discord/subscriptions` }, 
         { name: "Install Nexis bot", icon: DatabaseArrowDown, href: `${basePath}/Discord/install` },
         { name: "Discord Servers", icon: ServerPlus, href: `${basePath}/Discord/servers` },
       ],

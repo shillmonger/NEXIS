@@ -9,11 +9,9 @@ import {
   User,
   Lock,
   Palette,
+  ShieldOff,
   Moon,
   Sun,
-  Shield,
-  ShieldOff,
-  AlertCircle,
   Eye,
   Phone,
   EyeOff,
@@ -22,15 +20,13 @@ import {
   ChevronDown,
   Loader2,
   Globe,
-  Clock,
   History,
   Bell,
-  ViewIcon,
+  Shield,
   Globe2,
   Monitor,
   ShieldCheck,
-  Building2,
-  Bitcoin,
+  AlertCircle,
 } from "lucide-react";
 
 // ─── Loading Skeleton Components ───────────────────────────────────────────
@@ -113,7 +109,6 @@ export default function UserSettingsPage() {
     phone: "",
     country: "",
     language: "en",
-    timezone: "UTC",
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -133,40 +128,73 @@ export default function UserSettingsPage() {
   const [profileImage, setProfileImage] = useState<string>("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Image crop modal state
-  const [showCropModal, setShowCropModal] = useState(false);
-  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
-
-  // 2FA state
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  
-  // Privacy toggles
-  const [profileVisibility, setProfileVisibility] = useState("public");
-  const [leaderboardVisibility, setLeaderboardVisibility] = useState(true);
-  const [activityVisibility, setActivityVisibility] = useState(true);
-  const [marketingPreferences, setMarketingPreferences] = useState(false);
-
   // Member since
   const [memberSince, setMemberSince] = useState("");
   // User role
-  const [userRole, setUserRole] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string>("");
+  // Two factor auth (mock)
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-  // Load user profile data - UI only
+  // Sessions and login history
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+
+  // Load user profile data
   useEffect(() => {
-    // Mock data for UI
-    setPersonalInfo({
-      username: "FUTUREX",
-      name: "Future Trader",
-      email: "future@nexis.io",
-      phone: "+1 234 567 8900",
-      country: "United States",
-      language: "en",
-      timezone: "UTC",
-    });
-    setProfileImage("https://github.com/shadcn.png");
-    setUserRole(["ADMIN"]);
-    setMemberSince("JUL 15, 2026, 10:30 AM");
-    setIsLoading(false);
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user/info');
+        const data = await response.json();
+
+        if (data.success) {
+          const user = data.user;
+          setPersonalInfo({
+            username: user.userName || "",
+            name: user.userName || "",
+            email: user.email || "",
+            phone: user.phone || "",
+            country: user.country || "",
+            language: user.language || "en",
+          });
+          setProfileImage(user.avatar || "https://github.com/shadcn.png");
+          setUserRole(user.role || "user");
+          setMemberSince(user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "N/A");
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        toast.error('Failed to load user data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Load sessions and login history
+  useEffect(() => {
+    const fetchSessionsAndHistory = async () => {
+      try {
+        const [sessionsRes, historyRes] = await Promise.all([
+          fetch('/api/user/sessions'),
+          fetch('/api/user/login-history'),
+        ]);
+
+        const sessionsData = await sessionsRes.json();
+        const historyData = await historyRes.json();
+
+        if (sessionsData.success) {
+          setSessions(sessionsData.sessions || []);
+        }
+        if (historyData.success) {
+          setLoginHistory(historyData.history || []);
+        }
+      } catch (error) {
+        console.error('Error fetching sessions/history:', error);
+      }
+    };
+
+    fetchSessionsAndHistory();
   }, []);
 
 
@@ -182,51 +210,81 @@ export default function UserSettingsPage() {
 
 
 
-  // Profile image upload - show crop modal
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Profile image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Read file as data URL for crop modal
-    const reader = new FileReader();
-    reader.onload = () => {
-      setSelectedImageSrc(reader.result as string);
-      setShowCropModal(true);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Handle cropped image upload - UI only
-  const handleCroppedImageUpload = async (croppedBlob: Blob) => {
     setIsUploadingImage(true);
-    // Simulate upload delay
-    setTimeout(() => {
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/user/upload-avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setProfileImage(data.url);
+        toast.success('Profile image updated successfully');
+      } else {
+        toast.error(data.error || 'Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
       setIsUploadingImage(false);
-      setSelectedImageSrc(null);
-      toast.success('Profile image updated');
-    }, 1000);
+    }
   };
 
-  // Profile update - UI only
+  // Profile update
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Profile updated successfully');
+    try {
+      const response = await fetch('/api/user/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: personalInfo.username,
+          avatar: profileImage,
+          country: personalInfo.country,
+          phone: personalInfo.phone,
+          language: personalInfo.language,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Profile updated successfully');
+      } else {
+        toast.error(data.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+    } finally {
       setIsUpdating(false);
-    }, 500);
+    }
   };
 
-  // Password update - UI only
+  // Password update
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match");
       return;
     }
-    
+
     if (newPassword.length < 8) {
       toast.error("Password must be at least 8 characters long");
       return;
@@ -234,14 +292,34 @@ export default function UserSettingsPage() {
 
     setIsUpdatingPassword(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Password updated successfully");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Password updated successfully');
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        toast.error(data.error || 'Failed to update password');
+      }
+    } catch (error) {
+      console.error('Error updating password:', error);
+      toast.error('Failed to update password');
+    } finally {
       setIsUpdatingPassword(false);
-    }, 500);
+    }
   };
 
   return (
@@ -261,8 +339,8 @@ export default function UserSettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column */}
-              <div className="space-y-6 lg:sticky lg:top-4 lg:self-start">
+          {/* Left Column */}
+          <div className="space-y-6 lg:sticky lg:top-4 lg:self-start">
                 {/* Identity */}
                 {isLoading ? (
                   <IdentitySkeleton />
@@ -296,7 +374,7 @@ export default function UserSettingsPage() {
                         </label>
                       </div>
                       <p className="text-sm font-black uppercase text-violet-600">{personalInfo.username}</p>
-                      <p className="text-[10px] text-violet-500 font-bold uppercase tracking-tight">Investor Account</p>
+                      <p className="text-[12px] text-violet-500 font-bold uppercase tracking-tight">{personalInfo.email}</p>
                     </div>
                   </div>
                 )}
@@ -314,7 +392,7 @@ export default function UserSettingsPage() {
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-bold text-muted-foreground uppercase">Role</span>
                         <span className="text-[10px] bg-violet-600/10 text-violet-600 px-2 py-0.5 rounded-full font-black uppercase border border-violet-600/20">
-                          {userRole.join(", ").toUpperCase() || "USER"}
+                          {userRole.toUpperCase() || "USER"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
@@ -356,8 +434,8 @@ export default function UserSettingsPage() {
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div className="lg:col-span-2 space-y-6">
+          {/* Right Column */}
+          <div className="lg:col-span-2 space-y-6">
                 {/* Personal Information */}
                 {isLoading ? (
                   <PersonalInfoSkeleton />
@@ -423,7 +501,7 @@ export default function UserSettingsPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-1 md:col-span-2">
+                      <div className="space-y-1">
                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Phone Number</label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-500" />
@@ -458,27 +536,6 @@ export default function UserSettingsPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Timezone</label>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-500" />
-                          <select
-                            name="timezone"
-                            value={personalInfo.timezone}
-                            onChange={(e) => handleInputChange(e as any)}
-                            className="w-full bg-muted/30 border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 ring-violet-600/20 outline-none appearance-none cursor-pointer"
-                          >
-                            <option value="UTC">UTC (Coordinated Universal Time)</option>
-                            <option value="EST">EST (Eastern Standard Time)</option>
-                            <option value="PST">PST (Pacific Standard Time)</option>
-                            <option value="GMT">GMT (Greenwich Mean Time)</option>
-                            <option value="CET">CET (Central European Time)</option>
-                            <option value="JST">JST (Japan Standard Time)</option>
-                          </select>
-                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                        </div>
-                      </div>
-
                       <div className="md:col-span-2 pt-2">
                         <button
                           type="submit"
@@ -504,33 +561,33 @@ export default function UserSettingsPage() {
                     <Monitor className="w-4 h-4 text-violet-600" /> Active Sessions
                   </h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between bg-muted/30 border border-border rounded-xl p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-violet-600/10 flex items-center justify-center">
-                          <Monitor className="w-5 h-5 text-violet-600" />
+                    {sessions.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No active sessions</p>
+                    ) : (
+                      sessions.map((session: any, index: number) => (
+                        <div key={session._id} className="flex items-center justify-between bg-muted/30 border border-border rounded-xl p-4">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${index === 0 ? 'bg-violet-600/10' : 'bg-muted'}`}>
+                              <Monitor className={`w-5 h-5 ${index === 0 ? 'text-violet-600' : 'text-muted-foreground'}`} />
+                            </div>
+                            <div>
+                              <div className="font-bold text-sm">{session.device} - {session.browser}</div>
+                              <div className="text-xs text-muted-foreground">{session.location} • {index === 0 ? 'Current session' : `${Math.floor((Date.now() - new Date(session.lastActivity).getTime()) / (1000 * 60 * 60))} hours ago`}</div>
+                            </div>
+                          </div>
+                          {index === 0 ? (
+                            <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-black uppercase border border-emerald-500/20">Active</span>
+                          ) : (
+                            <button className="text-xs text-red-500 font-bold hover:text-red-600 transition-colors">Revoke</button>
+                          )}
                         </div>
-                        <div>
-                          <div className="font-bold text-sm">Windows PC - Chrome</div>
-                          <div className="text-xs text-muted-foreground">New York, US • Current session</div>
-                        </div>
-                      </div>
-                      <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-black uppercase border border-emerald-500/20">Active</span>
-                    </div>
-                    <div className="flex items-center justify-between bg-muted/30 border border-border rounded-xl p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                          <Monitor className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm">iPhone - Safari</div>
-                          <div className="text-xs text-muted-foreground">Los Angeles, US • 2 hours ago</div>
-                        </div>
-                      </div>
-                      <button className="text-xs text-red-500 font-bold hover:text-red-600 transition-colors">Revoke</button>
-                    </div>
-                    <button className="w-full text-xs font-bold text-violet-600 hover:text-violet-700 transition-colors mt-2">
-                      Sign out of all devices
-                    </button>
+                      ))
+                    )}
+                    {sessions.length > 1 && (
+                      <button className="w-full text-xs font-bold text-violet-600 hover:text-violet-700 transition-colors mt-2">
+                        Sign out of all devices
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -540,145 +597,32 @@ export default function UserSettingsPage() {
                     <History className="w-4 h-4 text-violet-600" /> Login History
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                        <div>
-                          <div className="text-sm font-semibold">Successful login</div>
-                          <div className="text-[10px] text-muted-foreground">Windows PC - Chrome</div>
+                    {loginHistory.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No login history</p>
+                    ) : (
+                      loginHistory.map((entry: any) => (
+                        <div key={entry._id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                          <div className="flex items-center gap-3">
+                            {entry.status === 'success' ? (
+                              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                            ) : (
+                              <AlertCircle className="w-4 h-4 text-red-500" />
+                            )}
+                            <div>
+                              <div className="text-sm font-semibold">{entry.status === 'success' ? 'Successful login' : 'Failed login attempt'}</div>
+                              <div className="text-[10px] text-muted-foreground">{entry.device} - {entry.browser}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-bold">{new Date(entry.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                            <div className="text-[10px] text-muted-foreground">{entry.location}</div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-bold">Today, 10:30 AM</div>
-                        <div className="text-[10px] text-muted-foreground">New York, US</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                        <div>
-                          <div className="text-sm font-semibold">Successful login</div>
-                          <div className="text-[10px] text-muted-foreground">iPhone - Safari</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-bold">Yesterday, 8:15 PM</div>
-                        <div className="text-[10px] text-muted-foreground">Los Angeles, US</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-3">
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                        <div>
-                          <div className="text-sm font-semibold">Failed login attempt</div>
-                          <div className="text-[10px] text-muted-foreground">Unknown device</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-bold">2 days ago</div>
-                        <div className="text-[10px] text-muted-foreground">London, UK</div>
-                      </div>
-                    </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
-                {/* Connected Accounts */}
-                <div className="bg-card rounded-2xl shadow-lg border border-border p-6 border-violet-500/10">
-                  <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-violet-600" /> Connected Accounts
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between bg-muted/30 border border-border rounded-xl p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-violet-600/10 flex items-center justify-center">
-                          <Building2 className="w-5 h-5 text-violet-600" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm">Discord</div>
-                          <div className="text-xs text-muted-foreground">Connected as FutureX#1234</div>
-                        </div>
-                      </div>
-                      <button className="text-xs text-red-500 font-bold hover:text-red-600 transition-colors">Disconnect</button>
-                    </div>
-                    <div className="flex items-center justify-between bg-muted/30 border border-border rounded-xl p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-violet-600/10 flex items-center justify-center">
-                          <Bitcoin className="w-5 h-5 text-violet-600" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm">Wallet</div>
-                          <div className="text-xs text-muted-foreground">0x1234...5678 • Verified</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="text-xs text-violet-600 font-bold hover:text-violet-700 transition-colors">Change</button>
-                        <button className="text-xs text-red-500 font-bold hover:text-red-600 transition-colors">Disconnect</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Privacy Settings */}
-                <div className="bg-card rounded-2xl shadow-lg border border-border p-6 border-violet-500/10">
-                  <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <ViewIcon className="w-4 h-4 text-violet-600" /> Privacy
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between pb-4 border-b border-border">
-                      <div>
-                        <p className="text-sm font-bold">Profile Visibility</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">Control who can see your profile</p>
-                      </div>
-                      <select className="bg-muted/30 border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-violet-600/20 outline-none">
-                        <option>Public</option>
-                        <option>Friends Only</option>
-                        <option>Private</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center justify-between pb-4 border-b border-border">
-                      <div>
-                        <p className="text-sm font-bold">Leaderboard Visibility</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">Show your ranking on leaderboards</p>
-                      </div>
-                      <button
-                        onClick={() => setLeaderboardVisibility(!leaderboardVisibility)}
-                        className={`relative w-14 h-8 rounded-full cursor-pointer border border-border transition-colors ${leaderboardVisibility ? "bg-violet-600" : "bg-muted"}`}
-                      >
-                        <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform flex items-center justify-center ${leaderboardVisibility ? "translate-x-6" : "translate-x-1"}`}>
-                          <ViewIcon className="w-3.5 h-3.5 text-black" />
-                        </div>
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between pb-4 border-b border-border">
-                      <div>
-                        <p className="text-sm font-bold">Activity Visibility</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">Show your recent activity</p>
-                      </div>
-                      <button
-                        onClick={() => setActivityVisibility(!activityVisibility)}
-                        className={`relative w-14 h-8 rounded-full cursor-pointer border border-border transition-colors ${activityVisibility ? "bg-violet-600" : "bg-muted"}`}
-                      >
-                        <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform flex items-center justify-center ${activityVisibility ? "translate-x-6" : "translate-x-1"}`}>
-                          <ViewIcon className="w-3.5 h-3.5 text-black" />
-                        </div>
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-bold">Marketing Preferences</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">Receive promotional emails</p>
-                      </div>
-                      <button
-                        onClick={() => setMarketingPreferences(!marketingPreferences)}
-                        className={`relative w-14 h-8 rounded-full cursor-pointer border border-border transition-colors ${marketingPreferences ? "bg-violet-600" : "bg-muted"}`}
-                      >
-                        <div className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform flex items-center justify-center ${marketingPreferences ? "translate-x-6" : "translate-x-1"}`}>
-                          <Bell className="w-3.5 h-3.5 text-muted-foreground" />
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Security */}
                 <div className="bg-card rounded-2xl shadow-lg border border-border p-6 border-violet-500/10">
@@ -838,53 +782,6 @@ export default function UserSettingsPage() {
               </div>
             </div>
           </div>
-
-      {/* Image Crop Modal - UI Only */}
-      {showCropModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-500 p-4">
-          <div className="bg-card rounded-2xl shadow-2xl border border-border max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black uppercase tracking-tighter">Crop Profile Image</h3>
-              <button
-                onClick={() => {
-                  setShowCropModal(false);
-                  setSelectedImageSrc(null);
-                }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="aspect-square bg-muted rounded-xl mb-4 flex items-center justify-center">
-              {selectedImageSrc && (
-                <img src={selectedImageSrc} alt="Preview" className="max-w-full max-h-full object-contain rounded-xl" />
-              )}
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowCropModal(false);
-                  setSelectedImageSrc(null);
-                }}
-                className="flex-1 border border-border py-3 rounded-xl font-bold text-sm hover:bg-muted transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  // Simulate crop completion - UI only
-                  setShowCropModal(false);
-                  setSelectedImageSrc(null);
-                  toast.success("Profile image updated");
-                }}
-                className="flex-1 bg-violet-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors shadow-lg shadow-violet-600/20"
-              >
-                Save Image
-              </button>
-            </div>
-          </div>
         </div>
-      )}
-    </div>
   );
 }

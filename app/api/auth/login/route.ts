@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
+import Session from '@/models/Session';
+import LoginHistory from '@/models/LoginHistory';
 import { comparePassword, generateToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -62,6 +64,32 @@ export async function POST(request: NextRequest) {
     // Update last login
     user.lastLoginAt = new Date();
     await user.save();
+
+    // Get user agent info (basic implementation)
+    const userAgent = request.headers.get('user-agent') || '';
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'Unknown';
+
+    // Create session
+    const session = await Session.create({
+      userId: user._id,
+      device: 'Unknown Device',
+      browser: userAgent.includes('Chrome') ? 'Chrome' : userAgent.includes('Firefox') ? 'Firefox' : userAgent.includes('Safari') ? 'Safari' : 'Unknown',
+      os: userAgent.includes('Windows') ? 'Windows' : userAgent.includes('Mac') ? 'MacOS' : userAgent.includes('Linux') ? 'Linux' : 'Unknown',
+      location: 'Unknown',
+      ipAddress,
+      isActive: true,
+      lastActivity: new Date(),
+    });
+
+    // Create login history entry
+    await LoginHistory.create({
+      userId: user._id,
+      device: session.device,
+      browser: session.browser,
+      location: session.location,
+      status: 'success',
+      ipAddress,
+    });
 
     // Generate JWT token
     const token = generateToken(user._id.toString(), user.email);

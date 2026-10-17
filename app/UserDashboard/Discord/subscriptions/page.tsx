@@ -183,7 +183,7 @@ function SectionCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {Icon && <Icon className="w-5 h-5 text-violet-600" />}
-          <h2 className="text-base md:text-xl font-black uppercase tracking-tight">{title}</h2>
+          <h2 className="text-sm md:text-base font-black uppercase tracking-tight">{title}</h2>
         </div>
         {meta && <span className="text-[10px] md:text-xs text-muted-foreground font-mono">{meta}</span>}
       </div>
@@ -516,18 +516,28 @@ export default function SubscriptionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {subscriptions.map((s) => (
-                    <TableRow key={s.id} className="border-border/60">
-                      <TableCell className="text-[10px] md:text-xs font-bold">{s.planName}</TableCell>
-                      <TableCell className="text-[10px] md:text-xs font-medium">
-                        {s.startDate} → {s.expirationDate}
-                      </TableCell>
-                      <TableCell className="text-[10px] md:text-xs font-black">{formatUSD(s.price)}</TableCell>
-                      <TableCell className="text-right">
-                        <StatusBadge status={s.status} />
+                  {subscriptions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="px-6 py-12 text-center">
+                        <p className="text-sm font-black uppercase tracking-tighter text-muted-foreground">
+                          No subscriptions
+                        </p>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    subscriptions.map((s) => (
+                      <TableRow key={s.id} className="border-border/60">
+                        <TableCell className="text-[10px] md:text-xs font-bold">{s.planName}</TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-medium">
+                          {s.startDate} → {s.expirationDate}
+                        </TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-black">{formatUSD(s.price)}</TableCell>
+                        <TableCell className="text-right">
+                          <StatusBadge status={s.status} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -545,18 +555,28 @@ export default function SubscriptionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.map((h) => (
-                    <TableRow key={h.id} className="border-border/60">
-                      <TableCell className="text-[10px] md:text-xs font-bold">{h.planName}</TableCell>
-                      <TableCell className="text-[10px] md:text-xs font-medium">{h.date}</TableCell>
-                      <TableCell className="text-[10px] md:text-xs font-medium">{h.expirationDate}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={`font-black uppercase text-[9px] md:text-[10px] px-2 md:px-2.5 py-1 rounded-md border ${ACTION_STYLES[h.action]}`}>
-                          {h.action}
-                        </span>
+                  {history.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="px-6 py-12 text-center">
+                        <p className="text-sm font-black uppercase tracking-tighter text-muted-foreground">
+                          No activity history
+                        </p>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    history.map((h) => (
+                      <TableRow key={h.id} className="border-border/60">
+                        <TableCell className="text-[10px] md:text-xs font-bold">{h.planName}</TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-medium">{h.date}</TableCell>
+                        <TableCell className="text-[10px] md:text-xs font-medium">{h.expirationDate}</TableCell>
+                        <TableCell className="text-right">
+                          <span className={`font-black uppercase text-[9px] md:text-[10px] px-2 md:px-2.5 py-1 rounded-md border ${ACTION_STYLES[h.action]}`}>
+                            {h.action}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

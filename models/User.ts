@@ -20,6 +20,9 @@ export interface IUser extends Document {
   provider?: 'local' | 'google' | 'discord';
   googleId?: string;
   discordId?: string;
+  country?: string;
+  phone?: string;
+  language?: string;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -93,6 +96,16 @@ const UserSchema: Schema<IUser> = new Schema(
     agreedToTerms: {
       type: Boolean,
       default: false,
+    },
+    country: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    language: {
+      type: String,
+      default: 'en',
     },
   },
   {

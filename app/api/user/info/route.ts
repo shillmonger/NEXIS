@@ -22,6 +22,10 @@ export async function GET() {
         emailVerified: user.emailVerified,
         role: user.role,
         status: user.status,
+        createdAt: user.createdAt,
+        country: user.country,
+        phone: user.phone,
+        language: user.language,
       }
     });
   } catch (error) {
