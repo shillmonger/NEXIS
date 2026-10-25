@@ -113,11 +113,6 @@ const UserSchema: Schema<IUser> = new Schema(
   }
 );
 
-// Delete existing model to force schema reload
-if (mongoose.models.User) {
-  delete mongoose.models.User;
-}
-
-const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
+const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
 export default User;

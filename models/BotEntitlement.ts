@@ -82,11 +82,6 @@ const BotEntitlementSchema: Schema<IBotEntitlement> = new Schema(
 // Index to prevent duplicate entitlements for the same subscription
 BotEntitlementSchema.index({ subscriptionId: 1 }, { unique: true });
 
-// Delete existing model to force schema reload
-if (mongoose.models.BotEntitlement) {
-  delete mongoose.models.BotEntitlement;
-}
-
-const BotEntitlement: Model<IBotEntitlement> = mongoose.model<IBotEntitlement>('BotEntitlement', BotEntitlementSchema);
+const BotEntitlement: Model<IBotEntitlement> = mongoose.models.BotEntitlement || mongoose.model<IBotEntitlement>('BotEntitlement', BotEntitlementSchema);
 
 export default BotEntitlement;

@@ -102,11 +102,6 @@ const PaymentSchema: Schema<IPayment> = new Schema(
   }
 );
 
-// Delete existing model to force schema reload
-if (mongoose.models.Payment) {
-  delete mongoose.models.Payment;
-}
-
-const Payment: Model<IPayment> = mongoose.model<IPayment>('Payment', PaymentSchema);
+const Payment: Model<IPayment> = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
 
 export default Payment;

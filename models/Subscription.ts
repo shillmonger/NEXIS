@@ -78,11 +78,6 @@ const SubscriptionSchema: Schema<ISubscription> = new Schema(
   }
 );
 
-// Delete existing model to force schema reload
-if (mongoose.models.Subscription) {
-  delete mongoose.models.Subscription;
-}
-
-const Subscription: Model<ISubscription> = mongoose.model<ISubscription>('Subscription', SubscriptionSchema);
+const Subscription: Model<ISubscription> = mongoose.models.Subscription || mongoose.model<ISubscription>('Subscription', SubscriptionSchema);
 
 export default Subscription;

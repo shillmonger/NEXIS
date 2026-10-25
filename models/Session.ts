@@ -49,11 +49,6 @@ const SessionSchema: Schema<ISession> = new Schema(
   }
 );
 
-// Delete existing model to force schema reload
-if (mongoose.models.Session) {
-  delete mongoose.models.Session;
-}
-
-const Session: Model<ISession> = mongoose.model<ISession>('Session', SessionSchema);
+const Session: Model<ISession> = mongoose.models.Session || mongoose.model<ISession>('Session', SessionSchema);
 
 export default Session;
