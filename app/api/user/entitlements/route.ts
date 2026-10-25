@@ -68,6 +68,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching entitlements:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
     
     if (error instanceof Error && error.message === 'Unauthorized') {
       return NextResponse.json(
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to fetch entitlements' },
+      { error: 'Failed to fetch entitlements', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
