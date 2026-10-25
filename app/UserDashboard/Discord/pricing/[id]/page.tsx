@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -15,6 +15,9 @@ import {
   Server,
   ShieldCheck,
   X,
+  AlertCircle,
+  Link as LinkIcon,
+  Loader2,
 } from "lucide-react";
 
 // ─── WALLETS ─────────────────────────────────────────────────────────────────
@@ -128,8 +131,34 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const [dragActive, setDragActive] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discordLinked, setDiscordLinked] = useState(false);
+  const [isLinkingDiscord, setIsLinkingDiscord] = useState(false);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   const wallet = WALLETS.find((w) => w.id === selectedWalletId) ?? WALLETS[0];
+
+  // Fetch user info to check Discord link status
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetch('/api/user/info');
+        const data = await response.json();
+        if (data.success) {
+          setDiscordLinked(!!data.user.discordId);
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+    fetchUserInfo();
+  }, []);
+
+  const handleLinkDiscord = () => {
+    setIsLinkingDiscord(true);
+    window.location.href = '/api/auth/discord/link';
+  };
 
   const truncateAddress = (address: string) => {
     if (address.length <= 12) return address;
@@ -260,6 +289,56 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
               </div>
             </section>
 
+            {/* DISCORD CONNECTION REQUIREMENT */}
+            <section className={`rounded-3xl p-6 shadow-lg border ${
+              discordLinked
+                ? 'bg-emerald-500/10 border-emerald-500/20'
+                : 'bg-amber-500/10 border-amber-500/20'
+            }`}>
+              <div className="flex items-start gap-4">
+                {isLoadingUser ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                ) : discordLinked ? (
+                  <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0 mt-1" />
+                ) : (
+                  <AlertCircle className="w-6 h-6 text-amber-500 shrink-0 mt-1" />
+                )}
+                <div className="flex-1">
+                  <h3 className="text-sm font-black uppercase tracking-widest mb-2">
+                    Discord Connection Required
+                  </h3>
+                  {isLoadingUser ? (
+                    <p className="text-xs text-muted-foreground">Checking Discord connection status...</p>
+                  ) : discordLinked ? (
+                    <p className="text-xs text-muted-foreground">
+                      Your Discord account is connected. You can proceed with payment submission.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground">
+                        You must connect your Discord account before submitting payment. This is required for bot service activation and is used to identify your account in the NEXIS service.
+                      </p>
+                      <button
+                        onClick={handleLinkDiscord}
+                        disabled={isLinkingDiscord}
+                        className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider disabled:opacity-50 cursor-pointer shadow-md shadow-indigo-600/20"
+                      >
+                        {isLinkingDiscord ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" /> Linking...
+                          </>
+                        ) : (
+                          <>
+                            <LinkIcon className="w-4 h-4" /> Connect Discord
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
             {/* PAYMENT DETAILS + SUBMIT (one card, like the reference) */}
             <section className="bg-card border border-border rounded-3xl p-6 shadow-lg space-y-6">
               {/* Payment details */}
@@ -373,6 +452,15 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
                   </p>
                 </div>
 
+                {!discordLinked && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                    <p className="text-xs text-amber-600 font-medium flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      Please connect your Discord account above before submitting payment.
+                    </p>
+                  </div>
+                )}
+
                 {/* Transaction ID */}
                 <div className="space-y-2">
                   <label htmlFor="txid" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -451,7 +539,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || !transactionId.trim()}
+                  disabled={isSubmitting || !transactionId.trim() || !discordLinked}
                   className="w-full cursor-pointer bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-violet-600/20 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (

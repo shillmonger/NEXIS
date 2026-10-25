@@ -26,6 +26,8 @@ export async function GET() {
         country: user.country,
         phone: user.phone,
         language: user.language,
+        discordId: user.discordId,
+        provider: user.provider,
       }
     });
   } catch (error) {

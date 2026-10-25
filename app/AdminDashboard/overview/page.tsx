@@ -17,6 +17,9 @@ import {
   Star,
   CreditCard,
   Wallet,
+  Wifi,
+  WifiOff,
+  AlertCircle,
 } from "lucide-react";
 
 // ─── Helper Functions ───────────────────────────────────────────────────────
@@ -49,6 +52,8 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sentinelStatus, setSentinelStatus] = useState<'online' | 'offline' | 'unavailable' | 'loading'>('loading');
+  const [sentinelMessage, setSentinelMessage] = useState<string>('');
 
   const iconMap: { [key: string]: any } = {
     Users,
@@ -68,8 +73,28 @@ export default function AdminDashboardPage() {
     Wallet,
   };
 
+  const fetchSentinelStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/sentinel/status');
+      const data = await response.json();
+
+      if (response.ok) {
+        setSentinelStatus(data.status);
+        setSentinelMessage(data.message || '');
+      } else {
+        setSentinelStatus('unavailable');
+        setSentinelMessage('Unable to check status');
+      }
+    } catch (error) {
+      console.error('Error fetching Sentinel status:', error);
+      setSentinelStatus('unavailable');
+      setSentinelMessage('Unable to check status');
+    }
+  };
+
   useEffect(() => {
     fetchOverviewData();
+    fetchSentinelStatus();
   }, []);
 
   const fetchOverviewData = async () => {
@@ -130,6 +155,43 @@ export default function AdminDashboardPage() {
             <Layers className="w-3 h-3 text-primary" />
             Platform Analytics
           </p>
+        </div>
+
+        {/* Sentinel Status Indicator */}
+        <div className="mb-6">
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
+              sentinelStatus === 'online'
+                ? 'bg-emerald-500/10 border-emerald-500/20'
+                : sentinelStatus === 'offline'
+                ? 'bg-rose-500/10 border-rose-500/20'
+                : 'bg-amber-500/10 border-amber-500/20'
+            }`}
+          >
+            {sentinelStatus === 'loading' ? (
+              <div className="w-5 h-5 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+            ) : sentinelStatus === 'online' ? (
+              <Wifi className="w-5 h-5 text-emerald-500" />
+            ) : sentinelStatus === 'offline' ? (
+              <WifiOff className="w-5 h-5 text-rose-500" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+            )}
+            <div className="flex-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-foreground">
+                NEXIS Service Status
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {sentinelStatus === 'loading'
+                  ? 'Checking status...'
+                  : sentinelStatus === 'online'
+                  ? sentinelMessage || 'NEXIS is operational'
+                  : sentinelStatus === 'offline'
+                  ? sentinelMessage || 'NEXIS is not operational'
+                  : sentinelMessage || 'Unable to verify service status'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Stats Grid */}

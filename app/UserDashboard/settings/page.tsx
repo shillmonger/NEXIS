@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import {
@@ -27,6 +27,9 @@ import {
   Monitor,
   ShieldCheck,
   AlertCircle,
+  Link as LinkIcon,
+  Unlink,
+  CheckCircle2,
 } from "lucide-react";
 
 // ─── Loading Skeleton Components ───────────────────────────────────────────
@@ -93,9 +96,14 @@ function PersonalInfoSkeleton() {
 
 export default function UserSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Discord linking state
+  const [discordLinked, setDiscordLinked] = useState(false);
+  const [isLinkingDiscord, setIsLinkingDiscord] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -159,6 +167,7 @@ export default function UserSettingsPage() {
           setProfileImage(user.avatar || "https://github.com/shadcn.png");
           setUserRole(user.role || "user");
           setMemberSince(user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase() : "N/A");
+          setDiscordLinked(!!user.discordId);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -170,6 +179,35 @@ export default function UserSettingsPage() {
 
     fetchUserData();
   }, []);
+
+  // Handle OAuth callback messages
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+
+    if (success === 'discord_linked') {
+      toast.success('Discord account linked successfully!');
+      router.replace('/UserDashboard/settings');
+    } else if (error) {
+      const errorMessages: Record<string, string> = {
+        'invalid_state': 'Invalid or expired authorization request',
+        'expired_state': 'Authorization request expired, please try again',
+        'user_not_found': 'User not found',
+        'token_exchange_failed': 'Failed to exchange authorization code',
+        'user_info_failed': 'Failed to retrieve Discord user information',
+        'discord_already_linked': 'This Discord account is already linked to another Nexus account',
+        'server_error': 'An error occurred during linking',
+      };
+      toast.error(errorMessages[error] || 'Failed to link Discord account');
+      router.replace('/UserDashboard/settings');
+    }
+  }, [searchParams, router]);
+
+  // Handle Discord linking
+  const handleLinkDiscord = () => {
+    setIsLinkingDiscord(true);
+    window.location.href = '/api/auth/discord/link';
+  };
 
   // Load sessions and login history
   useEffect(() => {
@@ -403,6 +441,55 @@ export default function UserSettingsPage() {
                         <span className="text-xs font-bold text-muted-foreground uppercase">Member Since</span>
                         <span className="text-xs font-black">{memberSince || "N/A"}</span>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Discord Account Linking */}
+                {isLoading ? (
+                  <AccountStatusSkeleton />
+                ) : (
+                  <div className="bg-card rounded-2xl shadow-lg border border-border p-6 border-violet-500/10">
+                    <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-violet-600" /> Discord Account
+                    </h3>
+                    <div className="space-y-4">
+                      {discordLinked ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-emerald-500">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="text-xs font-bold uppercase">Discord Connected</span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            Your Discord account is linked to your Nexus account. This is required for bot service activation.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-amber-500">
+                            <AlertCircle className="w-4 h-4" />
+                            <span className="text-xs font-bold uppercase">Discord Not Connected</span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            Link your Discord account to enable bot service activation. This is required before submitting payment proofs.
+                          </p>
+                          <button
+                            onClick={handleLinkDiscord}
+                            disabled={isLinkingDiscord}
+                            className="w-full cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20"
+                          >
+                            {isLinkingDiscord ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" /> Linking...
+                              </>
+                            ) : (
+                              <>
+                                <LinkIcon className="w-4 h-4" /> Connect Discord
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
