@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from './auth';
-import User from '@/models/User';
+import { User } from '@/models';
 import connectDB from './db';
 
 export async function getCurrentUser() {

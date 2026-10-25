@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import User from '@/models/User';
-import Subscription from '@/models/Subscription';
-import Payment from '@/models/Payment';
-import BotEntitlement from '@/models/BotEntitlement';
+import { User, Subscription, Payment, BotEntitlement } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
 
 export async function DELETE(

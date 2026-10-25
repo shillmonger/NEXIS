@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import Payment from '@/models/Payment';
-import Subscription from '@/models/Subscription';
-import BotEntitlement from '@/models/BotEntitlement';
-import User from '@/models/User';
+import { Payment, Subscription, BotEntitlement, User } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
 import { sendPaymentApprovedEmail } from '@/lib/emails';
 

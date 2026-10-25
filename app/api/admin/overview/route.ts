@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import User from '@/models/User';
-import Payment from '@/models/Payment';
-import Subscription from '@/models/Subscription';
-import BotEntitlement from '@/models/BotEntitlement';
+import { User, Payment, Subscription, BotEntitlement } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
 
 export async function GET() {

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import Subscription from '@/models/Subscription';
-import Payment from '@/models/Payment';
-import User from '@/models/User';
+import { Subscription, Payment, User } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
 import { sendPaymentNotificationEmail } from '@/lib/emails';
 import { uploadImage } from '@/lib/cloudinary';

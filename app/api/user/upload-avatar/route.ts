@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import connectDB from '@/lib/db';
-import User from '@/models/User';
+import { User } from '@/models';
 import { verifyToken } from '@/lib/auth';
 
 // Configure Cloudinary

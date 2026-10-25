@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-helper';
-import LoginHistory from '@/models/LoginHistory';
+import { LoginHistory } from '@/models';
 
 export async function GET() {
   try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import User from '@/models/User';
+import { User } from '@/models';
 import { generateResetToken } from '@/lib/auth';
 import { sendEmail, getForgotPasswordEmail } from '@/lib/email';
 import { getAppUrl } from '@/lib/config';
