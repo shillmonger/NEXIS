@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { DiscordServerConnection, BotEntitlement, User, WebhookEventLog } from '@/models';
+import { BotEntitlement, User, WebhookEventLog } from '@/models';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 const SENTINEL_WEBHOOK_SECRET = process.env.SENTINEL_WEBHOOK_SECRET;
@@ -230,22 +230,17 @@ async function handleServerAdded(payload: SentinelWebhookPayload): Promise<boole
     return false;
   }
 
-  // Check if connection already exists and is connected
-  const existingConnection = await DiscordServerConnection.findOne({
-    entitlementId: entitlement._id,
-    guildId: guild_id,
-  });
-
-  if (existingConnection && existingConnection.status === 'connected') {
-    console.log(`[Webhook] Connection already exists for guild ${guild_id}, entitlement ${entitlement._id}`);
+  // Check if entitlement already has server connected
+  if (entitlement.serverStatus === 'connected' && entitlement.guildId === guild_id) {
+    console.log(`[Webhook] Server already connected for guild ${guild_id}, entitlement ${entitlement._id}`);
     return true; // Already in desired state, consider success
   }
 
-  // If connection exists but was removed, check event ordering
-  if (existingConnection && existingConnection.status === 'removed') {
+  // If server was removed, check event ordering
+  if (entitlement.serverStatus === 'removed' && entitlement.guildId === guild_id) {
     const eventTime = new Date(occurred_at);
-    const removedTime = existingConnection.removedAt;
-    
+    const removedTime = entitlement.serverRemovedAt;
+
     // Only reconnect if the add event is newer than the removal
     if (removedTime && eventTime <= removedTime) {
       console.log(`[Webhook] Ignoring stale server_added event for guild ${guild_id} (event time ${occurred_at} <= removal time ${removedTime.toISOString()})`);
@@ -253,28 +248,25 @@ async function handleServerAdded(payload: SentinelWebhookPayload): Promise<boole
     }
   }
 
-  // Create or update connection
+  // Update entitlement with server connection
   try {
-    await DiscordServerConnection.findOneAndUpdate(
-      { entitlementId: entitlement._id, guildId: guild_id },
+    await BotEntitlement.findByIdAndUpdate(
+      entitlement._id,
       {
-        userId: user._id,
-        entitlementId: entitlement._id,
-        subscriptionId: entitlement.subscriptionId,
         discordUserId: discord_user_id,
         guildId: guild_id,
         guildName: guild_name || 'Unknown Server',
-        status: 'connected',
-        verifiedAt: new Date(occurred_at),
-        removedAt: undefined,
+        serverStatus: 'connected',
+        serverConnectedAt: new Date(occurred_at),
+        serverRemovedAt: undefined,
       },
-      { upsert: true, new: true, runValidators: true }
+      { new: true, runValidators: true }
     );
 
     console.log(`[Webhook] Server added: ${guild_name} (${guild_id}) for user ${user._id}, entitlement ${entitlement._id}`);
     return true;
   } catch (error) {
-    console.error(`[Webhook] Database error updating connection for guild ${guild_id}:`, error);
+    console.error(`[Webhook] Database error updating entitlement for guild ${guild_id}:`, error);
     return false;
   }
 }
@@ -294,30 +286,30 @@ async function handleServerRemoved(payload: SentinelWebhookPayload): Promise<boo
     return false;
   }
 
-  // Update connection status to removed
+  // Update entitlement server status to removed
   try {
-    const connection = await DiscordServerConnection.findOneAndUpdate(
+    const entitlement = await BotEntitlement.findOneAndUpdate(
       {
         userId: user._id,
         guildId: guild_id,
-        status: 'connected',
+        serverStatus: 'connected',
       },
       {
-        status: 'removed',
-        removedAt: new Date(occurred_at),
+        serverStatus: 'removed',
+        serverRemovedAt: new Date(occurred_at),
       },
       { new: true }
     );
 
-    if (connection) {
-      console.log(`[Webhook] Server removed: ${guild_id} for user ${user._id}`);
+    if (entitlement) {
+      console.log(`[Webhook] Server removed: ${guild_id} for user ${user._id}, entitlement ${entitlement._id}`);
       return true;
     } else {
-      console.log(`[Webhook] No active connection found for guild ${guild_id}, user ${user._id}`);
+      console.log(`[Webhook] No active entitlement found for guild ${guild_id}, user ${user._id}`);
       return true; // Not an error - connection may already be removed or never existed
     }
   } catch (error) {
-    console.error(`[Webhook] Database error updating connection for guild ${guild_id}:`, error);
+    console.error(`[Webhook] Database error updating entitlement for guild ${guild_id}:`, error);
     return false;
   }
 }
@@ -354,29 +346,29 @@ async function handleServerStatus(payload: SentinelWebhookPayload): Promise<bool
     return false;
   }
 
-  // Update connection status
+  // Update entitlement server status
   try {
-    const connection = await DiscordServerConnection.findOneAndUpdate(
+    const entitlement = await BotEntitlement.findOneAndUpdate(
       {
         userId: user._id,
         guildId: guild_id,
       },
       {
-        status: mappedStatus,
-        ...(mappedStatus === 'connected' ? { verifiedAt: new Date(occurred_at), removedAt: undefined } : {}),
+        serverStatus: mappedStatus,
+        ...(mappedStatus === 'connected' ? { serverConnectedAt: new Date(occurred_at), serverRemovedAt: undefined } : {}),
       },
       { new: true }
     );
 
-    if (connection) {
-      console.log(`[Webhook] Server status updated: ${guild_id} -> ${mappedStatus} for user ${user._id}`);
+    if (entitlement) {
+      console.log(`[Webhook] Server status updated: ${guild_id} -> ${mappedStatus} for user ${user._id}, entitlement ${entitlement._id}`);
       return true;
     } else {
-      console.log(`[Webhook] No connection found for guild ${guild_id}, user ${user._id}`);
-      return true; // Not an error - connection may not exist
+      console.log(`[Webhook] No entitlement found for guild ${guild_id}, user ${user._id}`);
+      return true; // Not an error - entitlement may not exist
     }
   } catch (error) {
-    console.error(`[Webhook] Database error updating connection for guild ${guild_id}:`, error);
+    console.error(`[Webhook] Database error updating entitlement for guild ${guild_id}:`, error);
     return false;
   }
 }

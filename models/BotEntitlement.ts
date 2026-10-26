@@ -19,6 +19,13 @@ export interface IBotEntitlement extends Document {
   sentinelSyncError?: string;
   sentinelSyncedAt?: Date;
   sentinelRetryCount?: number;
+  // Discord server connection fields
+  discordUserId?: string;
+  guildId?: string;
+  guildName?: string;
+  serverStatus?: 'not_connected' | 'connected' | 'removed';
+  serverConnectedAt?: Date;
+  serverRemovedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -98,6 +105,30 @@ const BotEntitlementSchema: Schema<IBotEntitlement> = new Schema(
     sentinelRetryCount: {
       type: Number,
       default: 0,
+    },
+    // Discord server connection fields
+    discordUserId: {
+      type: String,
+      index: true,
+    },
+    guildId: {
+      type: String,
+      index: true,
+    },
+    guildName: {
+      type: String,
+    },
+    serverStatus: {
+      type: String,
+      enum: ['not_connected', 'connected', 'removed'],
+      default: 'not_connected',
+      index: true,
+    },
+    serverConnectedAt: {
+      type: Date,
+    },
+    serverRemovedAt: {
+      type: Date,
     },
   },
   {

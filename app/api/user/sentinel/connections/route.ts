@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { DiscordServerConnection } from '@/models';
+import { BotEntitlement } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
 
 export async function GET(request: NextRequest) {
@@ -10,14 +10,27 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
-    // Fetch all server connections for the user
-    const connections = await DiscordServerConnection.find({
+    // Fetch all entitlements with connected servers for the user
+    const entitlements = await BotEntitlement.find({
       userId: user._id,
-      status: 'connected',
+      serverStatus: 'connected',
     })
-      .populate('entitlementId')
       .populate('subscriptionId')
-      .sort({ verifiedAt: -1 });
+      .sort({ serverConnectedAt: -1 });
+
+    // Transform to match the expected connection format
+    const connections = entitlements.map((entitlement) => ({
+      _id: entitlement._id,
+      entitlementId: entitlement._id,
+      subscriptionId: entitlement.subscriptionId,
+      userId: entitlement.userId,
+      discordUserId: entitlement.discordUserId,
+      guildId: entitlement.guildId,
+      guildName: entitlement.guildName,
+      status: entitlement.serverStatus,
+      verifiedAt: entitlement.serverConnectedAt,
+      removedAt: entitlement.serverRemovedAt,
+    }));
 
     return NextResponse.json({
       connections,

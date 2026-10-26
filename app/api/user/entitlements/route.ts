@@ -50,9 +50,10 @@ export async function GET(request: NextRequest) {
           startedAt: entitlement.startedAt,
           expiresAt: entitlement.expiresAt,
           createdAt: entitlement.createdAt,
-          // Server connection status - will be implemented later with botInstallations collection
-          serverName: null,
-          serverId: null,
+          // Server connection status from BotEntitlement
+          serverName: entitlement.guildName || null,
+          serverId: entitlement.guildId || null,
+          serverStatus: entitlement.serverStatus || 'not_connected',
           // Include subscription details
           subscriptionDetails: subscription ? {
             billingPeriod: subscription.billingPeriod,

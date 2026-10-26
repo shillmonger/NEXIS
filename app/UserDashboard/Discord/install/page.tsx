@@ -23,15 +23,6 @@ export const fetchCache = 'force-no-store';
 
 type EntitlementStatus = "active" | "expired" | "revoked";
 
-interface ServerConnection {
-  _id: string;
-  guildId: string;
-  guildName: string;
-  status: 'pending' | 'connected' | 'removed';
-  verifiedAt: string;
-  entitlementId: string;
-}
-
 interface Entitlement {
   id: string;
   subscriptionId: string;
@@ -45,6 +36,7 @@ interface Entitlement {
   createdAt: string;
   serverName: string | null;
   serverId: string | null;
+  serverStatus: 'not_connected' | 'connected' | 'removed';
   subscriptionDetails?: {
     billingPeriod: string;
     amount: number;
@@ -96,7 +88,6 @@ function SubscriptionCard({
   featured,
   busy,
   verifying,
-  serverConnection,
   onAdd,
   onManage,
 }: {
@@ -104,12 +95,11 @@ function SubscriptionCard({
   featured: boolean;
   busy: boolean;
   verifying: boolean;
-  serverConnection: ServerConnection | null;
   onAdd: (id: string) => void;
   onManage: (id: string) => void;
 }) {
   const expired = entitlement.status === "expired" || entitlement.status === "revoked";
-  const connected = !expired && serverConnection !== null && serverConnection.status === 'connected';
+  const connected = !expired && entitlement.serverStatus === 'connected';
   const verifyingConnection = verifying && !connected;
 
   return (
@@ -165,9 +155,9 @@ function SubscriptionCard({
           </span>
         </InfoRow>
 
-        {connected && serverConnection && (
+        {connected && entitlement.serverName && (
           <InfoRow icon={<Server className="w-4 h-4" />} label="Discord server">
-            {serverConnection.guildName}
+            {entitlement.serverName}
           </InfoRow>
         )}
 
@@ -265,15 +255,13 @@ function VisualGuide() {
 export default function InstallBotPage() {
   const searchParams = useSearchParams();
   const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
-  const [serverConnections, setServerConnections] = useState<ServerConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
-  // Fetch entitlements and server connections on mount
+  // Fetch entitlements on mount
   useEffect(() => {
     fetchEntitlements();
-    fetchServerConnections();
   }, []);
 
   // Handle Sentinel redirect query parameters
@@ -324,19 +312,6 @@ export default function InstallBotPage() {
     }
   };
 
-  const fetchServerConnections = async () => {
-    try {
-      const response = await fetch('/api/user/sentinel/connections');
-      const data = await response.json();
-
-      if (response.ok) {
-        setServerConnections(data.connections || []);
-      }
-    } catch (error) {
-      console.error('Error fetching server connections:', error);
-    }
-  };
-
   const verifyServerConnection = async (entitlementId: string, guildId: string) => {
     setVerifyingId(entitlementId);
     try {
@@ -352,7 +327,7 @@ export default function InstallBotPage() {
 
       if (response.ok && data.success) {
         toast.success('Server connected successfully!');
-        await fetchServerConnections(); // Refresh connections
+        await fetchEntitlements(); // Refresh entitlements to get updated server status
       } else {
         toast.error(data.error || 'Failed to verify server connection');
       }
@@ -366,8 +341,7 @@ export default function InstallBotPage() {
 
   // The first active, not-yet-connected entitlement is the most prominent card.
   const featuredId = entitlements.find((e) => {
-    const connection = serverConnections.find((c) => c.entitlementId === e.id);
-    return e.status === "active" && (!connection || connection.status !== 'connected');
+    return e.status === "active" && e.serverStatus !== 'connected';
   })?.id;
 
   const handleAddToDiscord = async (id: string) => {
@@ -430,102 +404,55 @@ export default function InstallBotPage() {
         </header>
 
         {/* INFO BANNER */}
-        <div className="flex items-start gap-3 rounded-xl border border-violet-600/20 bg-violet-600/5 p-4">
-          <Info className="w-4 h-4 text-violet-600 mt-0.5 shrink-0" />
-          <p className="text-xs text-muted-foreground font-medium">
-            Your approved subscriptions are listed below. Select an active subscription to connect your bot to a
-            Discord server. Each subscription can be connected to one server.
-          </p>
+        <div className="bg-violet-500/10 border border-violet-500/20 rounded-2xl p-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-violet-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-xs font-bold text-violet-600">
+              Before you begin
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Make sure you have linked your Discord account in Settings and have admin permissions on the server where you want to add the bot.
+            </p>
+          </div>
         </div>
 
-        {/* SUBSCRIPTION CARDS — active, connected, expired */}
+        {/* ENTITLEMENTS GRID */}
         {loading ? (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex flex-col rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse">
-                <div className="flex items-start gap-4 pb-5 border-b border-border/60">
-                  <div className="w-14 h-14 rounded-full bg-muted shrink-0"></div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <div className="h-5 bg-muted rounded w-32"></div>
-                    <div className="h-4 bg-muted rounded w-24"></div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="h-4 bg-muted rounded w-full"></div>
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-4 bg-muted rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         ) : entitlements.length === 0 ? (
-          <div className="bg-card border border-border rounded-2xl p-12 text-center max-w-full mx-auto shadow-xl">
-            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground">
-              <Server className="w-8 h-8" />
-            </div>
-            <h3 className="text-lg font-black uppercase tracking-tight">No Active Entitlements</h3>
-            <p className="text-sm text-muted-foreground mt-2 mb-6">
-              You don't have any active bot entitlements. Purchase a subscription to get started.
+          <div className={`${card} text-center py-12`}>
+            <Hash className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-sm font-black uppercase tracking-tight mb-2">No Active Subscriptions</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              You don&apos;t have any active subscriptions yet. Purchase a plan to get started.
             </p>
             <a
               href="/UserDashboard/Discord/pricing"
-              className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20"
+              className={`${primaryBtn} inline-flex`}
             >
               View Plans
             </a>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 max-w-7xl mx-auto">
-            {entitlements.map((entitlement) => {
-              const serverConnection = serverConnections.find((c) => c.entitlementId === entitlement.id) || null;
-              return (
-                <SubscriptionCard
-                  key={entitlement.id}
-                  entitlement={entitlement}
-                  featured={entitlement.id === featuredId}
-                  busy={busyId === entitlement.id}
-                  verifying={verifyingId === entitlement.id}
-                  serverConnection={serverConnection}
-                  onAdd={handleAddToDiscord}
-                  onManage={handleManageServer}
-                />
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {entitlements.map((entitlement) => (
+              <SubscriptionCard
+                key={entitlement.id}
+                entitlement={entitlement}
+                featured={entitlement.id === featuredId}
+                busy={busyId === entitlement.id}
+                verifying={verifyingId === entitlement.id}
+                onAdd={handleAddToDiscord}
+                onManage={handleManageServer}
+              />
+            ))}
           </div>
         )}
 
-        {/* GUIDE SECTIONS (kept) */}
-        <div className="grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-7">
-            <VisualGuide />
-          </div>
-
-          <div className="lg:col-span-5">
-            {/* What happens next */}
-            <section className={`${card} space-y-3 text-xs text-muted-foreground h-full`}>
-              <h2 className="text-sm font-black uppercase tracking-tight text-foreground flex items-center gap-1.5">
-                <Hash className="w-4 h-4 text-violet-500" /> What happens next?
-              </h2>
-              <p>
-                When you click connect, you will be securely redirected to Discord. After completing authorization on
-                Discord, the bot will return a status response to link your server automatically.
-              </p>
-              <p>
-                You must have the <strong>Manage Server</strong> permission (or be the owner) on your Discord server
-                to add the bot successfully.
-              </p>
-            </section>
-          </div>
-        </div>
-
-        {/* BOTTOM NOTE */}
-        <div className="flex items-center gap-3 rounded-xl border border-violet-600/20 bg-violet-600/5 p-4">
-          <Info className="w-4 h-4 text-violet-600 shrink-0" />
-          <p className="text-xs text-muted-foreground font-medium">
-            Your bot&apos;s paid features become available after your Discord server is successfully connected and
-            verified.
-          </p>
-        </div>
+        {/* VISUAL GUIDE */}
+        {!loading && entitlements.length > 0 && <VisualGuide />}
       </div>
     </div>
   );

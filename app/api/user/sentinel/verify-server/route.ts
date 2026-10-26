@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { BotEntitlement, DiscordServerConnection, User } from '@/models';
+import { BotEntitlement, User } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
 import { getServers } from '@/lib/sentinel';
 
@@ -50,17 +50,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if connection already exists
-    const existingConnection = await DiscordServerConnection.findOne({
-      entitlementId,
-      guildId,
-    });
-
-    if (existingConnection && existingConnection.status === 'connected') {
+    // Check if entitlement already has server connected
+    if (entitlement.serverStatus === 'connected' && entitlement.guildId === guildId) {
       return NextResponse.json({
         success: true,
         message: 'Server already connected',
-        connection: existingConnection,
+        entitlement,
       });
     }
 
@@ -102,27 +97,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create or update the connection record
-    const connection = await DiscordServerConnection.findOneAndUpdate(
-      { entitlementId, guildId },
+    // Update the entitlement with server connection
+    const updatedEntitlement = await BotEntitlement.findByIdAndUpdate(
+      entitlement._id,
       {
-        userId: user._id,
-        entitlementId,
-        subscriptionId: entitlement.subscriptionId,
         discordUserId: user.discordId,
         guildId,
         guildName: sentinelServer.guild_name,
-        status: 'connected',
-        verifiedAt: new Date(),
-        removedAt: undefined,
+        serverStatus: 'connected',
+        serverConnectedAt: new Date(),
+        serverRemovedAt: undefined,
       },
-      { upsert: true, new: true, runValidators: true }
+      { new: true, runValidators: true }
     );
 
     return NextResponse.json({
       success: true,
       message: 'Server connection verified successfully',
-      connection,
+      entitlement: updatedEntitlement,
     });
   } catch (error) {
     console.error('Error verifying server connection:', error);
