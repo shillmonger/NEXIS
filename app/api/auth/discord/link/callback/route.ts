@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { User, OAuthState } from '@/models';
+import { User, OAuthState, BotEntitlement, Payment, Subscription } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
+import { postEntitlement, isSentinelConfigured } from '@/lib/sentinel';
 
 export async function GET(request: NextRequest) {
   try {
@@ -110,6 +111,99 @@ export async function GET(request: NextRequest) {
         : `https://cdn.discordapp.com/embed/avatars/${discordUser.discriminator % 5}.png`;
     }
     await user.save();
+
+    // Attempt to sync pending entitlements to Sentinel
+    // This handles the case where a user's payment was approved before they linked Discord
+    if (isSentinelConfigured()) {
+      try {
+        // Find active entitlements that haven't been synced yet
+        const pendingEntitlements = await BotEntitlement.find({
+          userId: user._id,
+          status: 'active',
+          sentinelSyncStatus: { $in: ['pending', 'failed'] },
+          sentinelEventId: { $exists: true },
+        }).populate('paymentId').populate('subscriptionId');
+
+        console.log(`Found ${pendingEntitlements.length} pending entitlements to sync for user ${user._id}`);
+
+        for (const entitlement of pendingEntitlements) {
+          const payment = entitlement.paymentId as any;
+          const subscription = entitlement.subscriptionId as any;
+
+          if (!payment || !subscription || !entitlement.sentinelEventId) {
+            console.log(`Skipping entitlement ${entitlement._id} - missing required data`);
+            continue;
+          }
+
+          try {
+            const payload = {
+              event_id: entitlement.sentinelEventId,
+              event: 'paid' as const,
+              discord_user_id: user.discordId!,
+              occurred_at: entitlement.startedAt.toISOString(),
+              ref: subscription._id.toString(),
+              plan: entitlement.planName,
+              amount: payment.amount,
+              currency: payment.currency,
+              expires_at: entitlement.expiresAt.toISOString(),
+            };
+
+            const result = await postEntitlement(payload);
+
+            if (result.success) {
+              const updateResult = await BotEntitlement.findByIdAndUpdate(
+                entitlement._id,
+                {
+                  sentinelSyncStatus: 'synced',
+                  sentinelSyncedAt: new Date(),
+                  sentinelSyncError: undefined,
+                  sentinelRetryCount: 0,
+                },
+                { new: true, runValidators: true }
+              );
+              if (!updateResult) {
+                console.error(`Sentinel: Failed to update entitlement ${entitlement._id} after successful sync`);
+              } else {
+                console.log(`Sentinel: Successfully synced pending entitlement ${entitlement.sentinelEventId}`);
+              }
+            } else {
+              const updateResult = await BotEntitlement.findByIdAndUpdate(
+                entitlement._id,
+                {
+                  sentinelSyncStatus: 'failed',
+                  sentinelSyncError: result.error || 'Unknown error',
+                },
+                { new: true, runValidators: true }
+              );
+              if (updateResult) {
+                await BotEntitlement.findByIdAndUpdate(entitlement._id, {
+                  $inc: { sentinelRetryCount: 1 },
+                });
+              }
+              console.error(`Sentinel: Failed to sync pending entitlement ${entitlement.sentinelEventId}:`, result.error);
+            }
+          } catch (syncError) {
+            const updateResult = await BotEntitlement.findByIdAndUpdate(
+              entitlement._id,
+              {
+                sentinelSyncStatus: 'failed',
+                sentinelSyncError: syncError instanceof Error ? syncError.message : 'Unknown error',
+              },
+              { new: true, runValidators: true }
+            );
+            if (updateResult) {
+              await BotEntitlement.findByIdAndUpdate(entitlement._id, {
+                $inc: { sentinelRetryCount: 1 },
+              });
+            }
+            console.error(`Sentinel sync error for entitlement ${entitlement._id}:`, syncError);
+          }
+        }
+      } catch (error) {
+        console.error('Error syncing pending entitlements after Discord link:', error);
+        // Don't fail the Discord link if sync fails
+      }
+    }
 
     // Generate new token and redirect to settings with success
     return NextResponse.redirect(

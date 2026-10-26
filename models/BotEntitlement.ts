@@ -13,6 +13,12 @@ export interface IBotEntitlement extends Document {
   status: 'active' | 'expired' | 'revoked';
   startedAt: Date;
   expiresAt: Date;
+  // Sentinel synchronization fields
+  sentinelEventId?: string;
+  sentinelSyncStatus?: 'pending' | 'synced' | 'failed';
+  sentinelSyncError?: string;
+  sentinelSyncedAt?: Date;
+  sentinelRetryCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +79,26 @@ const BotEntitlementSchema: Schema<IBotEntitlement> = new Schema(
       required: [true, 'Expiration date is required'],
       index: true,
     },
+    // Sentinel synchronization fields
+    sentinelEventId: {
+      type: String,
+      index: true,
+    },
+    sentinelSyncStatus: {
+      type: String,
+      enum: ['pending', 'synced', 'failed'],
+      default: 'pending',
+    },
+    sentinelSyncError: {
+      type: String,
+    },
+    sentinelSyncedAt: {
+      type: Date,
+    },
+    sentinelRetryCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -82,6 +108,12 @@ const BotEntitlementSchema: Schema<IBotEntitlement> = new Schema(
 // Index to prevent duplicate entitlements for the same subscription
 BotEntitlementSchema.index({ subscriptionId: 1 }, { unique: true });
 
-const BotEntitlement: Model<IBotEntitlement> = mongoose.models.BotEntitlement || mongoose.model<IBotEntitlement>('BotEntitlement', BotEntitlementSchema);
+// Delete the cached model to force schema reload (development only)
+// This ensures new schema fields are used after code changes
+if (mongoose.models.BotEntitlement) {
+  delete mongoose.models.BotEntitlement;
+}
+
+const BotEntitlement: Model<IBotEntitlement> = mongoose.model<IBotEntitlement>('BotEntitlement', BotEntitlementSchema);
 
 export default BotEntitlement;

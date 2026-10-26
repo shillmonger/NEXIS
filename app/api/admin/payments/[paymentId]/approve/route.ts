@@ -3,6 +3,8 @@ import connectDB from '@/lib/db';
 import { Payment, Subscription, BotEntitlement, User } from '@/models';
 import { requireAuth } from '@/lib/auth-helper';
 import { sendPaymentApprovedEmail } from '@/lib/emails';
+import { postEntitlement, isSentinelConfigured } from '@/lib/sentinel';
+import { randomUUID } from 'crypto';
 
 export async function POST(
   request: NextRequest,
@@ -57,6 +59,16 @@ export async function POST(
         );
       }
 
+      // Fetch user to check for Discord ID
+      const user = await User.findById(payment.userId).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        );
+      }
+
       // Check if entitlement already exists
       const existingEntitlement = await BotEntitlement.findOne({
         subscriptionId: subscription._id,
@@ -93,6 +105,13 @@ export async function POST(
           expiresAt.setMonth(expiresAt.getMonth() + 1);
       }
 
+      // Generate unique event ID for Sentinel
+      const sentinelEventId = randomUUID();
+
+      // Determine initial sync status based on Discord availability
+      const hasDiscordId = !!user.discordId;
+      const initialSyncStatus = hasDiscordId ? 'pending' : 'pending';
+
       // Create bot entitlement
       const entitlement = new BotEntitlement({
         userId: payment.userId,
@@ -106,6 +125,10 @@ export async function POST(
         status: 'active',
         startedAt,
         expiresAt,
+        // Sentinel synchronization fields
+        sentinelEventId,
+        sentinelSyncStatus: initialSyncStatus,
+        sentinelRetryCount: 0,
       });
 
       await entitlement.save({ session });
@@ -141,6 +164,76 @@ export async function POST(
       } catch (emailError) {
         console.error('Error sending approval email:', emailError);
         // Don't fail the request if email fails
+      }
+
+      // Attempt Sentinel synchronization after transaction commits
+      // This is done outside the transaction to avoid blocking on external API
+      if (hasDiscordId && isSentinelConfigured()) {
+        try {
+          const payload = {
+            event_id: sentinelEventId,
+            event: 'paid' as const,
+            discord_user_id: user.discordId!,
+            occurred_at: startedAt.toISOString(),
+            ref: subscription._id.toString(),
+            plan: payment.planName,
+            amount: payment.amount,
+            currency: payment.currency,
+            expires_at: expiresAt.toISOString(),
+          };
+
+          const result = await postEntitlement(payload);
+
+          if (result.success) {
+            // Update entitlement sync status
+            const updateResult = await BotEntitlement.findByIdAndUpdate(
+              entitlement._id,
+              {
+                sentinelSyncStatus: 'synced',
+                sentinelSyncedAt: new Date(),
+                sentinelSyncError: undefined,
+              },
+              { new: true, runValidators: true }
+            );
+            if (!updateResult) {
+              console.error(`Sentinel: Failed to update entitlement ${entitlement._id} after successful sync`);
+            } else {
+              console.log(`Sentinel: Successfully synced entitlement ${sentinelEventId}`);
+            }
+          } else {
+            // Mark as failed but keep payment approved
+            const updateResult = await BotEntitlement.findByIdAndUpdate(
+              entitlement._id,
+              {
+                sentinelSyncStatus: 'failed',
+                sentinelSyncError: result.error || 'Unknown error',
+              },
+              { new: true, runValidators: true }
+            );
+            if (!updateResult) {
+              console.error(`Sentinel: Failed to update entitlement ${entitlement._id} after sync failure`);
+            }
+            console.error(`Sentinel: Failed to sync entitlement ${sentinelEventId}:`, result.error);
+          }
+        } catch (syncError) {
+          // Mark as failed but keep payment approved
+          const updateResult = await BotEntitlement.findByIdAndUpdate(
+            entitlement._id,
+            {
+              sentinelSyncStatus: 'failed',
+              sentinelSyncError: syncError instanceof Error ? syncError.message : 'Unknown error',
+            },
+            { new: true, runValidators: true }
+          );
+          if (!updateResult) {
+            console.error(`Sentinel: Failed to update entitlement ${entitlement._id} after sync error`);
+          }
+          console.error('Sentinel sync error:', syncError);
+        }
+      } else if (!hasDiscordId) {
+        console.log(`Sentinel: Skipping sync - user ${user._id} has not linked Discord`);
+      } else {
+        console.log('Sentinel: Not configured - entitlement marked as pending');
       }
 
       return NextResponse.json({
