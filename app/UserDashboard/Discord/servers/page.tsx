@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Plus,
   Search,
@@ -21,6 +22,7 @@ import {
   Radio,
   ArrowUpRight,
   ArrowUpDown,
+  RefreshCw,
 } from "lucide-react";
 
 import {
@@ -39,7 +41,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// ─── TYPES & MOCK DATA ────────────────────────────────────────────────────────
+// ─── TYPES ────────────────────────────────────────────────────────────────
 
 type BotStatus = "online" | "offline" | "installing";
 type HealthStatus = "healthy" | "warning" | "critical";
@@ -59,48 +61,6 @@ interface DiscordServer {
   healthStatus: HealthStatus;
   activity: number[]; // moderation events per day, last 7 days
 }
-
-const MOCK_SERVERS: DiscordServer[] = [
-  {
-    id: "srv_1",
-    name: "AMD Investor Hub",
-    icon: "https://i.postimg.cc/pLhcx2Vd/bitcoin-128.png",
-    serverId: "982301928374810293",
-    botStatus: "online",
-    subscriptionPlan: "Pro Sentinel Tier",
-    memberCount: 24500,
-    lastActivity: "2 mins ago",
-    moderationEventsCount: 1420,
-    healthStatus: "healthy",
-    activity: [120, 180, 150, 240, 210, 300, 220],
-  },
-  {
-    id: "srv_2",
-    name: "Alpha Signal Network",
-    icon: "https://i.postimg.cc/FzHG6vnh/solana-128.png",
-    serverId: "847192038102938471",
-    botStatus: "online",
-    subscriptionPlan: "Pro Sentinel Tier",
-    memberCount: 8900,
-    lastActivity: "14 mins ago",
-    moderationEventsCount: 680,
-    healthStatus: "healthy",
-    activity: [60, 90, 120, 80, 110, 130, 90],
-  },
-  {
-    id: "srv_3",
-    name: "Crypto Traders Lounge",
-    icon: "https://i.postimg.cc/nLKkcr6W/tether-128.png",
-    serverId: "129038471920384712",
-    botStatus: "offline",
-    subscriptionPlan: "Starter Bot Tier",
-    memberCount: 1200,
-    lastActivity: "3 hours ago",
-    moderationEventsCount: 94,
-    healthStatus: "warning",
-    activity: [20, 14, 18, 9, 12, 6, 0],
-  },
-];
 
 const BASE = "/UserDashboard/Discord/servers";
 
@@ -235,7 +195,7 @@ function ServerMenu({
         <MoreVertical className="w-5 h-5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-card border-border">
-        <Link href={`${BASE}/${server.serverId}/settings`}>
+        <Link href={`${BASE}/${server.serverId}`}>
           <DropdownMenuItem className="cursor-pointer text-xs font-bold flex items-center gap-2">
             <Settings className="w-4 h-4 text-muted-foreground" /> Server Settings
           </DropdownMenuItem>
@@ -421,38 +381,36 @@ function ServerRow({
 }
 
 function AddServerCard() {
- 
-return (
-  <Link
-    href="/UserDashboard/Discord/install"
-    className="group block h-full"
-  >
-    <button
-      type="button"
-      className="relative flex min-h-[200px] w-full cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border border-border/70 bg-card p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/50 hover:shadow-xl hover:shadow-violet-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+  return (
+    <Link
+      href="/UserDashboard/Discord/install"
+      className="group block h-full"
     >
-      {/* Subtle hover glow */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] via-transparent to-indigo-500/[0.08] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <button
+        type="button"
+        className="relative flex min-h-[200px] w-full cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border border-border/70 bg-card p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/50 hover:shadow-xl hover:shadow-violet-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+      >
+        {/* Subtle hover glow */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] via-transparent to-indigo-500/[0.08] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-      {/* Icon */}
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-500/15 bg-violet-500/10 text-violet-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-500 group-hover:text-white">
-        <Plus className="h-7 w-7 transition-transform duration-300 group-hover:rotate-90" />
-      </div>
+        {/* Icon */}
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-500/15 bg-violet-500/10 text-violet-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-violet-500 group-hover:text-white">
+          <Plus className="h-7 w-7 transition-transform duration-300 group-hover:rotate-90" />
+        </div>
 
-      {/* Text */}
-      <div className="relative space-y-1.5">
-        <h3 className="text-sm font-bold tracking-tight text-foreground transition-colors group-hover:text-violet-500">
-          Add Another Server
-        </h3>
+        {/* Text */}
+        <div className="relative space-y-1.5">
+          <h3 className="text-sm font-bold tracking-tight text-foreground transition-colors group-hover:text-violet-500">
+            Add Another Server
+          </h3>
 
-        <p className="mx-auto max-w-[210px] text-xs leading-relaxed text-muted-foreground">
-          Connect a Discord server to manage your bot integrations.
-        </p>
-      </div>
-    </button>
-  </Link>
-);
-
+          <p className="mx-auto max-w-[210px] text-xs leading-relaxed text-muted-foreground">
+            Connect a Discord server to manage your bot integrations.
+          </p>
+        </div>
+      </button>
+    </Link>
+  );
 }
 
 function StatTile({
@@ -484,12 +442,40 @@ function StatTile({
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 export default function BotServersPage() {
-  const [servers, setServers] = useState<DiscordServer[]>(MOCK_SERVERS);
+  const [servers, setServers] = useState<DiscordServer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | BotStatus>("all");
   const [sortKey, setSortKey] = useState<SortKey>("members");
   const [view, setView] = useState<ViewMode>("grid");
   const [serverToRemove, setServerToRemove] = useState<DiscordServer | null>(null);
+
+  // Fetch servers on mount
+  useEffect(() => {
+    fetchServers();
+  }, []);
+
+  const fetchServers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/user/sentinel/servers');
+      const data = await response.json();
+
+      if (response.ok) {
+        setServers(data.servers || []);
+      } else {
+        setError(data.error || 'Failed to fetch servers');
+        toast.error(data.error || 'Failed to fetch servers');
+      }
+    } catch (err) {
+      setError('Failed to fetch servers');
+      toast.error('Failed to fetch servers');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const stats = useMemo(
     () => ({
@@ -525,6 +511,7 @@ export default function BotServersPage() {
     if (serverToRemove) {
       setServers((prev) => prev.filter((s) => s.id !== serverToRemove.id));
       setServerToRemove(null);
+      toast.success('Bot removed from server');
     }
   };
 
@@ -548,7 +535,7 @@ export default function BotServersPage() {
               </p>
             </div>
           </div>
-<Link href="/UserDashboard/Discord/install">
+        <Link href="/UserDashboard/Discord/install">
             <button
               className="cursor-pointer bg-violet-600 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 active:scale-[0.99] transition-all flex items-center gap-2 shadow-md shadow-violet-600/20 self-start md:self-auto"
             >
@@ -558,7 +545,7 @@ export default function BotServersPage() {
         </div>
 
         {/* Stats */}
-        {servers.length > 0 && (
+        {!loading && servers.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatTile icon={Server} label="Servers" value={String(stats.total)} accent="bg-violet-600/10 text-violet-600" />
             <StatTile
@@ -572,8 +559,58 @@ export default function BotServersPage() {
           </div>
         )}
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-card border border-border rounded-3xl p-12 text-center max-w-full mx-auto shadow-xl">
+            <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-rose-500">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-black uppercase tracking-tight">
+              Failed to Load Servers
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2 mb-6">
+              {error}
+            </p>
+            <button
+              onClick={fetchServers}
+              className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" /> Retry
+            </button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && servers.length === 0 && (
+          <div className="bg-card border border-border rounded-3xl p-12 text-center max-w-full mx-auto shadow-xl">
+            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground">
+              <FolderOpen className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-black uppercase tracking-tight">
+              No Discord Servers Connected
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2 mb-6">
+              Your bot isn't connected to any Discord servers yet. Invite your bot to start automating moderation.
+            </p>
+            <Link href="/UserDashboard/Discord/install">
+              <button
+                className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add Server Now
+              </button>
+            </Link>
+          </div>
+        )}
+
         {/* Toolbar */}
-        {servers.length > 0 && (
+        {!loading && !error && servers.length > 0 && (
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card border border-border/80 p-4 rounded-2xl shadow-sm">
             <div className="relative w-full xl:w-96">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -656,53 +693,54 @@ export default function BotServersPage() {
         )}
 
         {/* Content */}
-        {filteredServers.length === 0 ? (
+        {!loading && !error && servers.length > 0 && filteredServers.length === 0 ? (
           <div className="bg-card border border-border rounded-3xl p-12 text-center max-w-full mx-auto shadow-xl">
             <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4 text-muted-foreground">
               <FolderOpen className="w-8 h-8" />
             </div>
             <h3 className="text-lg font-black uppercase tracking-tight">
-              {isFiltering ? "No Matching Servers" : "No Discord Servers Connected"}
+              No Matching Servers
             </h3>
             <p className="text-sm text-muted-foreground mt-2 mb-6">
-              {isFiltering
-                ? "No connected servers match your current search or filter."
-                : "Your bot isn't connected to any Discord servers yet. Invite your bot to start automating moderation."}
+              No connected servers match your current search or filter.
             </p>
-            {isFiltering ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  setStatusFilter("all");
-                }}
-                className="inline-flex items-center justify-center gap-2 bg-muted border border-border px-7 py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-muted/70 transition-all cursor-pointer"
-              >
-                Clear Filters
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" /> Add Server Now
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+              }}
+              className="inline-flex items-center justify-center gap-2 bg-muted border border-border px-7 py-4 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-muted/70 transition-all cursor-pointer"
+            >
+              Clear Filters
+            </button>
           </div>
-        ) : view === "grid" ? (
+        ) : !loading && !error && view === "grid" ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
             {filteredServers.map((server) => (
               <ServerCard key={server.id} server={server} onRemove={setServerToRemove} />
             ))}
-            {!isFiltering && <AddServerCard />}
+            {!isFiltering && servers.length > 0 && <AddServerCard />}
           </div>
-        ) : (
+        ) : !loading && !error && servers.length > 0 ? (
           <div className="space-y-3">
             {filteredServers.map((server) => (
               <ServerRow key={server.id} server={server} onRemove={setServerToRemove} />
             ))}
+            {!isFiltering && (
+              <Link href="/UserDashboard/Discord/install">
+                <button
+                  type="button"
+                  className="w-full bg-card border border-dashed border-border/60 rounded-2xl p-4 text-center hover:border-violet-500/50 hover:bg-violet-500/5 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center justify-center gap-2 text-xs font-bold text-muted-foreground group-hover:text-violet-600">
+                    <Plus className="w-4 h-4" /> Add Another Server
+                  </div>
+                </button>
+              </Link>
+            )}
           </div>
-        )}
+        ) : null}
 
         {/* Remove Bot Confirmation Modal */}
         <Dialog open={!!serverToRemove} onOpenChange={() => setServerToRemove(null)}>
@@ -722,26 +760,27 @@ export default function BotServersPage() {
 
             <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-xs space-y-2 text-rose-400 my-2">
               <p className="font-bold uppercase tracking-wider">Notice:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Automated moderation filters and custom AI responses will stop functioning immediately.</li>
-                <li>Your subscription allocation slot for this guild will be freed up.</li>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>This will stop all automated moderation features</li>
+                <li>Bot permissions will be revoked from the server</li>
+                <li>You can re-add the bot at any time from the install page</li>
               </ul>
             </div>
 
-            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-2">
+            <DialogFooter className="gap-3">
               <button
                 type="button"
                 onClick={() => setServerToRemove(null)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-muted hover:bg-muted/80 border border-border transition-colors cursor-pointer"
+                className="flex-1 bg-muted border border-border px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-muted/70 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleRemoveBot}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-md shadow-rose-600/20 cursor-pointer"
+                className="flex-1 bg-rose-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-rose-700 transition-all cursor-pointer"
               >
-                Confirm Removal
+                Remove Bot
               </button>
             </DialogFooter>
           </DialogContent>
