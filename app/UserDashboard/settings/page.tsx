@@ -94,7 +94,7 @@ function PersonalInfoSkeleton() {
 
 
 
-export default function UserSettingsPage() {
+function UserSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
@@ -870,5 +870,13 @@ export default function UserSettingsPage() {
             </div>
           </div>
         </div>
+  );
+}
+
+export default function UserSettingsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background text-foreground py-5"><div className="max-w-5xl mx-auto space-y-8 md:p-10"><div className="h-8 w-64 bg-muted rounded animate-pulse" /></div></div>}>
+      <UserSettingsContent />
+    </Suspense>
   );
 }
