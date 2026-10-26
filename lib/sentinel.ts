@@ -25,6 +25,14 @@ export interface SentinelResponse {
   data?: any;
 }
 
+export interface SentinelServer {
+  guild_id: string;
+  guild_name: string;
+  owner_id: string;
+  added_at: string;
+  ref?: string;
+}
+
 /**
  * Validates Sentinel configuration
  */
@@ -117,6 +125,54 @@ export async function postEntitlement(
     }
 
     console.error('Unknown Sentinel API error:', error);
+    return { success: false, error: 'Unknown error' };
+  }
+}
+
+/**
+ * Fetches servers from Sentinel API for a given Discord user ID
+ * @param discordUserId - Discord user ID
+ * @returns Array of Sentinel servers
+ */
+export async function getServers(discordUserId: string): Promise<SentinelResponse & { servers?: SentinelServer[] }> {
+  validateConfig();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+  try {
+    const response = await fetch(`${SENTINEL_API_BASE_URL}/servers?discord_user_id=${discordUserId}`, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'X-Sentinels-Key': SENTINEL_API_KEY!,
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Sentinel /servers error: HTTP ${response.status}`, errorText);
+      return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+    }
+
+    const data = await response.json();
+    return { success: true, message: 'Servers fetched successfully', servers: data };
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error('Sentinel /servers request timed out');
+        return { success: false, error: 'Request timed out' };
+      }
+      console.error('Sentinel /servers request error:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    console.error('Unknown Sentinel /servers error:', error);
     return { success: false, error: 'Unknown error' };
   }
 }

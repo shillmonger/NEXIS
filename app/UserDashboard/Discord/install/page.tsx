@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   CalendarDays,
@@ -18,6 +19,15 @@ import {
 // ─── TYPES ───────────────────────────────────────────────────────────────
 
 type EntitlementStatus = "active" | "expired" | "revoked";
+
+interface ServerConnection {
+  _id: string;
+  guildId: string;
+  guildName: string;
+  status: 'pending' | 'connected' | 'removed';
+  verifiedAt: string;
+  entitlementId: string;
+}
 
 interface Entitlement {
   id: string;
@@ -82,17 +92,22 @@ function SubscriptionCard({
   entitlement,
   featured,
   busy,
+  verifying,
+  serverConnection,
   onAdd,
   onManage,
 }: {
   entitlement: Entitlement;
   featured: boolean;
   busy: boolean;
+  verifying: boolean;
+  serverConnection: ServerConnection | null;
   onAdd: (id: string) => void;
   onManage: (id: string) => void;
 }) {
   const expired = entitlement.status === "expired" || entitlement.status === "revoked";
-  const connected = !expired && entitlement.serverName !== null;
+  const connected = !expired && serverConnection !== null && serverConnection.status === 'connected';
+  const verifyingConnection = verifying && !connected;
 
   return (
     <article
@@ -147,9 +162,9 @@ function SubscriptionCard({
           </span>
         </InfoRow>
 
-        {connected && (
+        {connected && serverConnection && (
           <InfoRow icon={<Server className="w-4 h-4" />} label="Discord server">
-            {entitlement.serverName}
+            {serverConnection.guildName}
           </InfoRow>
         )}
 
@@ -185,14 +200,19 @@ function SubscriptionCard({
             <RefreshCw className="w-4 h-4" />
             Renew Subscription
           </button>
+        ) : verifyingConnection ? (
+          <button type="button" disabled className={`${secondaryBtn} w-full`}>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Verifying connection…
+          </button>
         ) : connected ? (
           <button
             type="button"
             onClick={() => onManage(entitlement.id)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-violet-600/30 bg-violet-600/5 px-5 py-3 text-xs font-bold uppercase tracking-wider text-violet-600 transition-all hover:bg-violet-600/10 cursor-pointer"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/30 bg-emerald-600/5 px-5 py-3 text-xs font-bold uppercase tracking-wider text-emerald-600 transition-all hover:bg-emerald-600/10 cursor-pointer"
           >
-            <Settings2 className="w-4 h-4" />
-            Manage Server
+            <CheckCircle2 className="w-4 h-4" />
+            Discord Connected
           </button>
         ) : (
           <button
@@ -240,14 +260,47 @@ function VisualGuide() {
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 
 export default function InstallBotPage() {
+  const searchParams = useSearchParams();
   const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
+  const [serverConnections, setServerConnections] = useState<ServerConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
-  // Fetch entitlements on mount
+  // Fetch entitlements and server connections on mount
   useEffect(() => {
     fetchEntitlements();
+    fetchServerConnections();
   }, []);
+
+  // Handle Sentinel redirect query parameters
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const guildId = searchParams.get('guild_id');
+    const ref = searchParams.get('ref');
+
+    if (status === 'added' && guildId) {
+      // Find the entitlement matching the ref (subscription ID)
+      const matchingEntitlement = entitlements.find(
+        (e) => e.subscriptionId === ref
+      );
+
+      if (matchingEntitlement) {
+        verifyServerConnection(matchingEntitlement.id, guildId);
+      }
+    } else if (status === 'no_subscription') {
+      toast.error('No active subscription found in Sentinel');
+    } else if (status === 'cancelled') {
+      toast.info('Installation was cancelled');
+    } else if (status === 'error') {
+      toast.error('An error occurred during installation');
+    }
+
+    // Clean up URL parameters after handling
+    if (status) {
+      window.history.replaceState({}, '', '/UserDashboard/Discord/install');
+    }
+  }, [searchParams, entitlements]);
 
   const fetchEntitlements = async () => {
     setLoading(true);
@@ -268,8 +321,51 @@ export default function InstallBotPage() {
     }
   };
 
+  const fetchServerConnections = async () => {
+    try {
+      const response = await fetch('/api/user/sentinel/connections');
+      const data = await response.json();
+
+      if (response.ok) {
+        setServerConnections(data.connections || []);
+      }
+    } catch (error) {
+      console.error('Error fetching server connections:', error);
+    }
+  };
+
+  const verifyServerConnection = async (entitlementId: string, guildId: string) => {
+    setVerifyingId(entitlementId);
+    try {
+      const response = await fetch('/api/user/sentinel/verify-server', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entitlementId, guildId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Server connected successfully!');
+        await fetchServerConnections(); // Refresh connections
+      } else {
+        toast.error(data.error || 'Failed to verify server connection');
+      }
+    } catch (error) {
+      console.error('Error verifying server connection:', error);
+      toast.error('Failed to verify server connection');
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
   // The first active, not-yet-connected entitlement is the most prominent card.
-  const featuredId = entitlements.find((e) => e.status === "active" && e.serverName === null)?.id;
+  const featuredId = entitlements.find((e) => {
+    const connection = serverConnections.find((c) => c.entitlementId === e.id);
+    return e.status === "active" && (!connection || connection.status !== 'connected');
+  })?.id;
 
   const handleAddToDiscord = async (id: string) => {
     const entitlement = entitlements.find((e) => e.id === id);
@@ -377,16 +473,21 @@ export default function InstallBotPage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 max-w-7xl mx-auto">
-            {entitlements.map((entitlement) => (
-              <SubscriptionCard
-                key={entitlement.id}
-                entitlement={entitlement}
-                featured={entitlement.id === featuredId}
-                busy={busyId === entitlement.id}
-                onAdd={handleAddToDiscord}
-                onManage={handleManageServer}
-              />
-            ))}
+            {entitlements.map((entitlement) => {
+              const serverConnection = serverConnections.find((c) => c.entitlementId === entitlement.id) || null;
+              return (
+                <SubscriptionCard
+                  key={entitlement.id}
+                  entitlement={entitlement}
+                  featured={entitlement.id === featuredId}
+                  busy={busyId === entitlement.id}
+                  verifying={verifyingId === entitlement.id}
+                  serverConnection={serverConnection}
+                  onAdd={handleAddToDiscord}
+                  onManage={handleManageServer}
+                />
+              );
+            })}
           </div>
         )}
 
