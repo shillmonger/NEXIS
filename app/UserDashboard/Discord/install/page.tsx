@@ -16,6 +16,8 @@ import {
   Settings2,
 } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 // ─── TYPES ───────────────────────────────────────────────────────────────
 
 type EntitlementStatus = "active" | "expired" | "revoked";
