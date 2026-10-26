@@ -7,6 +7,9 @@ import UserLeftSidebar from "@/components/UserDashboard/UserSidebar";
 import UserHeader from "@/components/UserDashboard/UserHeader";
 import PromotionPopup from "@/components/UserDashboard/PromotionPopup";
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export default function UserDashboardLayout({
   children,
 }: {
