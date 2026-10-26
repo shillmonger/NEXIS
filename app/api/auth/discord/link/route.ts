@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helper';
 import { OAuthState } from '@/models';
 import connectDB from '@/lib/db';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
     // Generate OAuth state for link operation
     const state = randomBytes(32).toString('hex');
     const codeVerifier = randomBytes(32).toString('base64url');
-    const codeChallenge = Buffer.from(codeVerifier)
-      .toString('base64')
+    const codeChallenge = createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
