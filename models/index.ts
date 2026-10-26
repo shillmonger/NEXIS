@@ -9,6 +9,7 @@ import './DiscordServerConnection';
 import './Session';
 import './LoginHistory';
 import './OAuthState';
+import './WebhookEventLog';
 
 // Re-export models for convenience
 export { default as User } from './User';
@@ -19,3 +20,4 @@ export { default as DiscordServerConnection } from './DiscordServerConnection';
 export { default as Session } from './Session';
 export { default as LoginHistory } from './LoginHistory';
 export { default as OAuthState } from './OAuthState';
+export { default as WebhookEventLog } from './WebhookEventLog';
