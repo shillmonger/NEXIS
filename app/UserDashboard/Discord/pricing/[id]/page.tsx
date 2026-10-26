@@ -289,56 +289,6 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
               </div>
             </section>
 
-            {/* DISCORD CONNECTION REQUIREMENT */}
-            <section className={`rounded-3xl p-6 shadow-lg border ${
-              discordLinked
-                ? 'bg-emerald-500/10 border-emerald-500/20'
-                : 'bg-amber-500/10 border-amber-500/20'
-            }`}>
-              <div className="flex items-start gap-4">
-                {isLoadingUser ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                ) : discordLinked ? (
-                  <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0 mt-1" />
-                ) : (
-                  <AlertCircle className="w-6 h-6 text-amber-500 shrink-0 mt-1" />
-                )}
-                <div className="flex-1">
-                  <h3 className="text-sm font-black uppercase tracking-widest mb-2">
-                    Discord Connection Required
-                  </h3>
-                  {isLoadingUser ? (
-                    <p className="text-xs text-muted-foreground">Checking Discord connection status...</p>
-                  ) : discordLinked ? (
-                    <p className="text-xs text-muted-foreground">
-                      Your Discord account is connected. You can proceed with payment submission.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-xs text-muted-foreground">
-                        You must connect your Discord account before submitting payment. This is required for bot service activation and is used to identify your account in the NEXIS service.
-                      </p>
-                      <button
-                        onClick={handleLinkDiscord}
-                        disabled={isLinkingDiscord}
-                        className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider disabled:opacity-50 cursor-pointer shadow-md shadow-indigo-600/20"
-                      >
-                        {isLinkingDiscord ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" /> Linking...
-                          </>
-                        ) : (
-                          <>
-                            <LinkIcon className="w-4 h-4" /> Connect Discord
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
-
             {/* PAYMENT DETAILS + SUBMIT (one card, like the reference) */}
             <section className="bg-card border border-border rounded-3xl p-6 shadow-lg space-y-6">
               {/* Payment details */}
@@ -440,6 +390,56 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
 
+              {/* DISCORD CONNECTION REQUIREMENT */}
+              <div className={`rounded-2xl p-5 border ${
+                discordLinked
+                  ? 'bg-emerald-500/10 border-emerald-500/20'
+                  : 'bg-amber-500/10 border-amber-500/20'
+              }`}>
+                <div className="flex items-start gap-4">
+                  {isLoadingUser ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  ) : discordLinked ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="text-xs font-black uppercase tracking-widest mb-2">
+                      Discord Connection Required
+                    </h3>
+                    {isLoadingUser ? (
+                      <p className="text-[10px] text-muted-foreground">Checking Discord connection status...</p>
+                    ) : discordLinked ? (
+                      <p className="text-[10px] text-muted-foreground">
+                        Your Discord account is connected. You can proceed with payment submission.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-[10px] text-muted-foreground">
+                          You must connect your Discord account before submitting payment. This is required for bot service activation and is used to identify your account in the NEXIS service.
+                        </p>
+                        <button
+                          onClick={handleLinkDiscord}
+                          disabled={isLinkingDiscord}
+                          className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider disabled:opacity-50 cursor-pointer shadow-md shadow-indigo-600/20"
+                        >
+                          {isLinkingDiscord ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Linking...
+                            </>
+                          ) : (
+                            <>
+                              <LinkIcon className="w-3.5 h-3.5" /> Connect Discord
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="border-t border-border/60" />
 
               {/* Submit transaction */}
@@ -451,15 +451,6 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
                     will verify and activate your plan.
                   </p>
                 </div>
-
-                {!discordLinked && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-                    <p className="text-xs text-amber-600 font-medium flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />
-                      Please connect your Discord account above before submitting payment.
-                    </p>
-                  </div>
-                )}
 
                 {/* Transaction ID */}
                 <div className="space-y-2">
