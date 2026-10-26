@@ -271,16 +271,38 @@ export default function InstallBotPage() {
   // The first active, not-yet-connected entitlement is the most prominent card.
   const featuredId = entitlements.find((e) => e.status === "active" && e.serverName === null)?.id;
 
-  const handleAddToDiscord = (id: string) => {
+  const handleAddToDiscord = async (id: string) => {
     const entitlement = entitlements.find((e) => e.id === id);
     // Only active entitlements can ever be installed.
     if (!entitlement || entitlement.status !== "active") return;
     setBusyId(id);
-    // TODO: Implement Discord OAuth2 authorization flow
-    setTimeout(() => {
+
+    try {
+      // Call the server-side installation route
+      const response = await fetch(`/api/user/sentinel/install/${id}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to initiate installation');
+        setBusyId(null);
+        return;
+      }
+
+      // The API route returns the Sentinel redirect URL
+      const data = await response.json();
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        toast.error('Failed to get installation URL');
+        setBusyId(null);
+      }
+    } catch (error) {
+      console.error('Error initiating installation:', error);
+      toast.error('Failed to initiate installation');
       setBusyId(null);
-      toast.info("Discord OAuth integration will be implemented in the next phase");
-    }, 1500);
+    }
   };
 
   const handleManageServer = (id: string) => {
